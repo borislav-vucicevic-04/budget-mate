@@ -1,3 +1,11 @@
 <resources>
-    <string name="app_name">BudgetMate</string>
+    <string name="app_name">Budget Mate</string>
+    <string name="full_name">Full name</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="repeat_password">Repeat password</string>
+    <string name="reset_password_link"><u>Forgot your password? Reset here...</u></string>
+    <string name="register_link"><u>Don\'t have an account? Register here...</u></string>
+    <string name="login_title">Log into your account</string>
+    <string name="login_button">Log in</string>
 </resources>
