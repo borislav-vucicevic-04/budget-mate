@@ -1,0 +1,60 @@
+package com.borislavvucicevic.budgetmate.models;
+
+import java.util.Arrays;
+
+import java.util.Arrays;
+
+/**
+ * Defines the custom application-specific mapping for Firebase Authentication error codes.
+ *
+ * <p>This enum is used to convert raw string error codes returned by the Firebase SDK
+ * into strongly-typed values for consistent internal error handling and localization.</p>
+ */
+public enum FirebaseAuthErrorCodes {
+  /**
+   * Indicates that the format of the provided email address is malformed or invalid.
+   */
+  ERROR_INVALID_EMAIL,
+
+  /**
+   * Indicates that an account already exists with the given email address.
+   */
+  ERROR_EMAIL_ALREADY_IN_USE,
+
+  /**
+   * Indicates that the password provided does not match the registered user account.
+   */
+  ERROR_WRONG_PASSWORD,
+
+  /**
+   * Indicates that no user record exists matching the provided identifiers.
+   */
+  ERROR_USER_NOT_FOUND,
+
+  /**
+   * Indicates that the user account has been disabled or suspended by an administrator.
+   */
+  ERROR_USER_DISABLED;
+
+  /**
+   * Parses a raw string value into its corresponding enum constant.
+   *
+   * <p>This method strips leading/trailing whitespace and performs a case-insensitive
+   * match against existing enum names.</p>
+   *
+   * @param value the raw error code string to evaluate, may be {@code null}
+   * @return the matching {@code FirebaseAuthErrorCodes} constant, or {@code null} if the
+   *         input is {@code null} or does not match any known error code
+   */
+  public static FirebaseAuthErrorCodes parse(String value) {
+    if (value == null) {
+      return null;
+    }
+
+    String normalized = value.trim();
+    return Arrays.stream(FirebaseAuthErrorCodes.values())
+            .filter(status -> status.name().equalsIgnoreCase(normalized))
+            .findFirst()
+            .orElse(null);
+  }
+}

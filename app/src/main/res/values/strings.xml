@@ -4,24 +4,32 @@
     <string name="email">Email</string>
     <string name="password">Password</string>
     <string name="repeat_password">Repeat password</string>
-    <string name="reset_password_link"><u>Forgot your password? Reset here...</u></string>
-    <string name="register_link"><u>Don\'t have an account? Register here...</u></string>
-    <string name="login_title">Log into your account</string>
-    <string name="login_button">Log in</string>
-    <string name="register_title">Create an account</string>
-    <string name="register_button">Register</string>
-    <string name="currency">Choose your home currency</string>
     <string name="home_currency">Choose your home currency</string>
     <string name="currency_bam">Bosnia and Herzegovina Convertible Mark (KM)</string>
     <string name="currency_rsd">Serbian Dinar (RSD)</string>
-    <string name="currency_usd">US Dolar ($)</string>
+    <string name="currency_usd">US Dollar ($)</string>
     <string name="currency_eur">Euro (€)</string>
-    <string name="login_link"><u>Already have an account? Login here..</u></string>
     <string name="full_name_required">Field <b>\"Full name\"</b> must not be empty</string>
     <string name="email_required">Field <b>\"Email\"</b> must not be empty</string>
-    <string name="password_required">Field <b>\"Passsword\"</b> must not be empty</string>
+    <string name="password_required">Field <b>\"Password\"</b> must not be empty</string>
     <string name="repeat_password_required">Field <b>\"Repeat password\"</b> must not be empty</string>
     <string name="home_currency_required">You must choose your home currency</string>
     <string name="password_too_short">Password must be at least 6 characters long</string>
     <string name="password_mismatch">Provided passwords do not match</string>
+    <string name="error_invalid_email">The email address is malformed</string>
+    <string name="error_email_already_in_use">The email address is already registered to another user.</string>
+    <string name="error_wrong_password">The password entered does not match the email address</string>
+    <string name="error_user_not_found">No user record exists for the provided email</string>
+    <string name="error_user_disabled">The user account has been disabled</string>
+    <string name="error_general">Internal application error (bug)</string>
+    <!-- Login Activity texts -->
+    <string name="reset_password_link"><u>Forgot your password? Reset here...</u></string>
+    <string name="register_link"><u>Don\'t have an account? Register here...</u></string>
+    <string name="login_title">Log into your account</string>
+    <string name="login_button">Log in</string>
+    <!-- Register Activity texts -->
+    <string name="register_title">Create an account</string>
+    <string name="register_button">Register</string>
+    <string name="login_link"><u>Already have an account? Login here...</u></string>
+    <string name="register_success">Account created successfully</string>
 </resources>

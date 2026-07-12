@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1043796084769",
+    "project_id": "bugetmate",
+    "storage_bucket": "bugetmate.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1043796084769:android:5f16247a6f43fe0b1c7b60",
+        "android_client_info": {
+          "package_name": "com.borislavvucicevic.budgetmate"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB23W1kD0Q77m_MsAgom1GhXPXWZgJzrJI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
