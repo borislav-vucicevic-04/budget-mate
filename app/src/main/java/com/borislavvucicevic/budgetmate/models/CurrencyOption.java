@@ -52,20 +52,33 @@ public class CurrencyOption {
   }
 
   /**
-   * Returns a string representation of the object, utilized directly by layout adapters
-   * to render content.
+   * Retrieves the raw currency code as a string for data processing or backend storage.
    * <p>
-   * To prevent formatting crashes when handling default placeholder elements, this override
-   * evaluates the internal state: if the backing code object is present, its textual representation
-   * is yielded; otherwise, an empty fallback sequence is provided.
+   * This method evaluates the underlying currency enumeration: if a valid code is configured,
+   * its exact textual representation is returned; otherwise, it yields an empty fallback
+   * string sequence to safeguard against null pointer vulnerabilities.
    * </p>
    *
-   * @return A non-null {@link String} value identifying the currency option tracking data.
+   * @return A non-null {@link String} matching the currency identifier, or an empty string.
+   */
+  public String getCodeAsString() {
+    if (code != null) return code.toString();
+    else return "";
+  }
+
+  /**
+   * Returns the user-friendly presentation text, used directly by UI layout adapters to render content.
+   * <p>
+   * This override proxies the underlying display name properties. It allows standard Android UI components,
+   * such as {@link android.widget.Spinner Spinners}, to automatically discover and render the localized
+   * descriptive label within dropdown element listings without requiring a specialized view wrapper.
+   * </p>
+   *
+   * @return A {@link String} containing the descriptive option text intended for human view visibility.
    */
   @NonNull
   @Override
   public String toString() {
-    if (code != null) return code.toString();
-    else return "";
+    return this.getDisplayName();
   }
 }

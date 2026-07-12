@@ -84,11 +84,11 @@ public class RegisterActivity extends AppCompatActivity {
     currencies.add(new CurrencyOption(getString(R.string.currency_usd), CurrencyCode.USD));
     ArrayAdapter<CurrencyOption> adapter = new ArrayAdapter<>(
             this,
-            android.R.layout.simple_spinner_item,
+            R.layout.spinner_layout,
             currencies
     );
     adapter.setDropDownViewResource(
-            android.R.layout.simple_spinner_dropdown_item
+            R.layout.spinner_layout
     );
 
     Spinner spinner = findViewById(R.id.spHomeCurrency);
@@ -110,7 +110,7 @@ public class RegisterActivity extends AppCompatActivity {
     String fullName = etFullName.getText().toString().trim();
     String email = etEmail.getText().toString().trim();
     String password = etPassword.getText().toString().trim();
-    String homeCurrency = spHomeCurrency.getSelectedItem().toString();
+    String homeCurrency = ((CurrencyOption) spHomeCurrency.getSelectedItem()).getCodeAsString();
     progressBar.setVisibility(View.VISIBLE);
 
     Executors.newSingleThreadExecutor().execute(() -> {
@@ -256,7 +256,7 @@ public class RegisterActivity extends AppCompatActivity {
     String email = etEmail.getText().toString().trim();
     String password = etPassword.getText().toString();
     String repeatPassword = etRepeatPassword.getText().toString();
-    String homeCurrency = spHomeCurrency.getSelectedItem().toString();
+    String homeCurrency = ((CurrencyOption) spHomeCurrency.getSelectedItem()).getCodeAsString();
     if(fullName.isEmpty()) throw new ValidationException(getString(R.string.full_name_required), R.id.etFullName);
     if(email.isEmpty()) throw new ValidationException(getString(R.string.email_required), R.id.etEmail);
     if(homeCurrency.isEmpty()) throw new ValidationException(getString(R.string.home_currency_required), null);

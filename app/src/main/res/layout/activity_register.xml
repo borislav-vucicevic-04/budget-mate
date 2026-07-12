@@ -122,9 +122,10 @@
                 android:layout_height="48dp"
                 android:layout_margin="8dp"
                 android:background="@drawable/bg_input_field"
+                android:foregroundTint="@color/black"
                 android:paddingStart="12dp"
                 android:paddingEnd="12dp"
-                android:spinnerMode="dropdown" />
+                android:spinnerMode="dialog" />
 
             <!-- Password input -->
             <EditText
