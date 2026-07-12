@@ -30,7 +30,9 @@ public class RegisterActivity extends AppCompatActivity {
       v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
       return insets;
     });
-
+    // Setting up the currency spinner
+    this.setupCurrencySpinner();
+    
     // getting widgets
     TextView tvLoginLink = findViewById(R.id.tvLoginLink);
 
