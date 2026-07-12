@@ -75,4 +75,41 @@ public class AuthService {
       throw new AuthException("INTERRUPTED_ERROR", "Authentication process was interrupted.", e);
     }
   }
+
+  /**
+   * Sends a verification email to the currently authenticated user.
+   *
+   * <p>This method blocks until the email transmission process finishes on the background network thread.
+   * It expects a user session to already exist; if no user is signed in, it immediately throws an
+   * authentication exception.</p>
+   *
+   * @throws AuthException if no user is currently logged in, if email transmission fails due to
+   *                       Firebase errors (e.g., too many requests, expired session token), or if
+   *                       the thread is interrupted
+   */
+  public void sendVerificationEmail() throws AuthException {
+    FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
+
+    if (firebaseUser == null) {
+      throw new AuthException("ERROR_NO_SIGNED_IN_USER", "No user is currently signed in to receive a verification email.");
+    }
+
+    try {
+      Tasks.await(firebaseUser.sendEmailVerification());
+    } catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+
+      if (cause instanceof FirebaseAuthException) {
+        FirebaseAuthException firebaseEx = (FirebaseAuthException) cause;
+        String firebaseErrorCode = firebaseEx.getErrorCode();
+        throw new AuthException(firebaseErrorCode, firebaseEx.getMessage(), firebaseEx);
+      }
+
+      throw new AuthException("EXECUTION_ERROR", "Execution failed while sending verification email.", e);
+    } catch (InterruptedException e) {
+      Log.e(AUTH_SERVICE, e.getMessage(), e);
+      Thread.currentThread().interrupt();
+      throw new AuthException("INTERRUPTED_ERROR", "Verification email process was interrupted.", e);
+    }
+  }
 }

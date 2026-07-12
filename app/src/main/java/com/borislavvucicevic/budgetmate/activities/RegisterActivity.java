@@ -118,6 +118,7 @@ public class RegisterActivity extends AppCompatActivity {
         // validating user inputs
         this.validateForm();
         authService.createUserAccount(email, password);
+        authService.sendVerificationEmail();
         // if everything went without throwing an exception and account has been created successfully
         runOnUiThread(this::handleSuccess);
       } catch(ValidationException exception) {
@@ -134,7 +135,7 @@ public class RegisterActivity extends AppCompatActivity {
    * Handles the successful completion of the registration process.
    * <p>
    * This method displays a brief success toast message to the user and
-   * navigates the application from the registration screen to the main dashboard.
+   * navigates the application from the registration screen to login page.
    * </p>
    */
   private void handleSuccess() {
@@ -143,7 +144,7 @@ public class RegisterActivity extends AppCompatActivity {
             getString(R.string.register_success),
             Toast.LENGTH_SHORT
     ).show();
-    startActivity(new Intent(getApplicationContext(), MainActivity.class));
+    finish();
   }
 
   /**
