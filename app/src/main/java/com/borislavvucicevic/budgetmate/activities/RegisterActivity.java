@@ -26,13 +26,13 @@ public class RegisterActivity extends AppCompatActivity {
     EdgeToEdge.enable(this);
     setContentView(R.layout.activity_register);
     ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.activity_register), (v, insets) -> {
-      Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-      v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+      int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
+      v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), imeBottom);
       return insets;
     });
     // Setting up the currency spinner
     this.setupCurrencySpinner();
-    
+
     // getting widgets
     TextView tvLoginLink = findViewById(R.id.tvLoginLink);
 
