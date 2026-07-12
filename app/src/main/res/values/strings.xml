@@ -8,4 +8,13 @@
     <string name="register_link"><u>Don\'t have an account? Register here...</u></string>
     <string name="login_title">Log into your account</string>
     <string name="login_button">Log in</string>
+    <string name="register_title">Create an account</string>
+    <string name="register_button">Register</string>
+    <string name="currency">Choose your home currency</string>
+    <string name="home_currency">Choose your home currency</string>
+    <string name="currency_bam">Bosnia and Herzegovina Convertible Mark (KM)</string>
+    <string name="currency_rsd">Serbian Dinar (RSD)</string>
+    <string name="currency_usd">US Dolar ($)</string>
+    <string name="currency_eur">Euro (€)</string>
+    <string name="login_link"><u>Already have an account? Login here..</u></string>
 </resources>
