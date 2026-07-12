@@ -1,6 +1,8 @@
 package com.borislavvucicevic.budgetmate.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -22,5 +24,15 @@ public class LoginActivity extends AppCompatActivity {
       v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), imeBottom);
       return insets;
     });
+
+    // getting widgets
+    TextView tvRegisterLink = findViewById(R.id.tvRegisterLink);
+
+    // setting event handlers
+    tvRegisterLink.setOnClickListener(v -> handleRegisterLink());
+  }
+
+  private void handleRegisterLink() {
+    startActivity(new Intent(getApplicationContext(), RegisterActivity.class));
   }
 }

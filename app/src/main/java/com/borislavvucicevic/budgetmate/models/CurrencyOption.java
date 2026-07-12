@@ -22,6 +22,7 @@ public class CurrencyOption {
   @NonNull
   @Override
   public String toString() {
-    return code.toString();
+    if (code != null) return code.toString();
+    else return "";
   }
 }
