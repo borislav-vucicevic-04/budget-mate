@@ -1,4 +1,4 @@
-package com.borislavvucicevic.budgetmate.models;
+package com.borislavvucicevic.budgetmate.models.enums;
 
 /**
  * Represents the standard ISO-4217-aligned currency codes supported by the application.

@@ -1,6 +1,8 @@
-package com.borislavvucicevic.budgetmate.models;
+package com.borislavvucicevic.budgetmate.models.classes;
 
 import androidx.annotation.NonNull;
+
+import com.borislavvucicevic.budgetmate.models.enums.CurrencyCode;
 
 /**
  * Data model representing a selectable currency configuration option within the application UI.

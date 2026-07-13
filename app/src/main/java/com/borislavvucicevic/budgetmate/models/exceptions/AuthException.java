@@ -1,4 +1,4 @@
-package com.borislavvucicevic.budgetmate.models;
+package com.borislavvucicevic.budgetmate.models.exceptions;
 
 /**
  * Signals that an authentication or authorization operation has failed.

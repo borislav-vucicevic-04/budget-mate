@@ -17,9 +17,9 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.borislavvucicevic.budgetmate.MainActivity;
 import com.borislavvucicevic.budgetmate.R;
-import com.borislavvucicevic.budgetmate.models.AuthException;
-import com.borislavvucicevic.budgetmate.models.FirebaseAuthErrorCodes;
-import com.borislavvucicevic.budgetmate.models.ValidationException;
+import com.borislavvucicevic.budgetmate.models.exceptions.AuthException;
+import com.borislavvucicevic.budgetmate.models.enums.FirebaseAuthErrorCodes;
+import com.borislavvucicevic.budgetmate.models.exceptions.ValidationException;
 import com.borislavvucicevic.budgetmate.services.AuthService;
 
 import java.util.concurrent.Executors;
@@ -243,7 +243,7 @@ public class LoginActivity extends AppCompatActivity {
       }
     });
   }
-  
+
   /**
    * Validates the user input fields within the registration form.
    * This method extracts data from the email and password. It performs presence

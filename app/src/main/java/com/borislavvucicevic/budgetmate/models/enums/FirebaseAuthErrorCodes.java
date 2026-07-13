@@ -1,4 +1,4 @@
-package com.borislavvucicevic.budgetmate.models;
+package com.borislavvucicevic.budgetmate.models.enums;
 
 import java.util.Arrays;
 
