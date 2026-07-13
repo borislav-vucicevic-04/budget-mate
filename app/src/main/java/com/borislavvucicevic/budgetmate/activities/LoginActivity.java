@@ -229,7 +229,7 @@ public class LoginActivity extends AppCompatActivity {
         authService.sendVerificationEmail();
         runOnUiThread(() -> {
           progressBar.setVisibility(View.INVISIBLE);
-          tvVerifyEmailLink.setText(getString(R.string.resend_verification_email));
+          tvVerifyEmailLink.setText(getText(R.string.resend_verification_email));
           Toast.makeText(
                   LoginActivity.this,
                   getString(R.string.verification_email_sent),
