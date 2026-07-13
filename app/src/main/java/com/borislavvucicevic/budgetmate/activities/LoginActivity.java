@@ -34,5 +34,6 @@ public class LoginActivity extends AppCompatActivity {
 
   private void handleRegisterLink() {
     startActivity(new Intent(getApplicationContext(), RegisterActivity.class));
+    finish();
   }
 }

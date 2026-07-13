@@ -239,6 +239,7 @@ public class RegisterActivity extends AppCompatActivity {
    */
   private void handleLoginLink() {
     startActivity(new Intent(getApplicationContext(), LoginActivity.class));
+    finish();
   }
 
   /**
