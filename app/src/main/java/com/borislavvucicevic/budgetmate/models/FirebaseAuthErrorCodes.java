@@ -34,7 +34,11 @@ public enum FirebaseAuthErrorCodes {
   /**
    * Indicates that the user account has been disabled or suspended by an administrator.
    */
-  ERROR_USER_DISABLED;
+  ERROR_USER_DISABLED,
+  /**
+   * Indicates that the user's email is not verified.
+   * */
+  ERROR_EMAIL_NOT_VERIFIED;
 
   /**
    * Parses a raw string value into its corresponding enum constant.

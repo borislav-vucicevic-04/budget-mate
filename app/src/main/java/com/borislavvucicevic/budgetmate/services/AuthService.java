@@ -112,4 +112,52 @@ public class AuthService {
       throw new AuthException("INTERRUPTED_ERROR", "Verification email process was interrupted.", e);
     }
   }
+  /**
+   * Signs in a user with the specified email address and password.
+   *
+   * <p>This method blocks until the authentication process finishes on the background network thread.</p>
+   *
+   * @param email    the registered email address of the user
+   * @param password the password for the account
+   * @return the unique Firebase User ID (UID) assigned to the authenticated account
+   * @throws AuthException if sign-in fails due to Firebase errors (e.g., wrong password),
+   *                       thread interruption, if the server returns an empty profile,
+   *                       or if the user's email address is not verified
+   */
+  public String signInUser(String email, String password) throws AuthException {
+    try {
+      AuthResult result = Tasks.await(firebaseAuth.signInWithEmailAndPassword(email, password));
+      FirebaseUser firebaseUser = result.getUser();
+
+      if (firebaseUser == null) {
+        throw new AuthException("UNKNOWN_ERROR", "Sign-in completed, but user data is null.");
+      }
+
+      // Enforce email verification check
+      if (!firebaseUser.isEmailVerified()) {
+        throw new AuthException("ERROR_EMAIL_NOT_VERIFIED", "The email address for this account has not been verified.");
+      }
+
+      return firebaseUser.getUid();
+    } catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+
+      // Check if the underlying failure was thrown by the Firebase SDK
+      if (cause instanceof FirebaseAuthException) {
+        FirebaseAuthException firebaseEx = (FirebaseAuthException) cause;
+        String firebaseErrorCode = firebaseEx.getErrorCode(); // Returns "ERROR_WRONG_PASSWORD", etc.
+
+        // Map the Firebase Error Code to your custom localized Exception architecture
+        throw new AuthException(firebaseErrorCode, firebaseEx.getMessage(), firebaseEx);
+      }
+
+      // Handle fallback execution failures
+      throw new AuthException("EXECUTION_ERROR", "Execution failed on background thread.", e);
+
+    } catch (InterruptedException e) {
+      Log.e(AUTH_SERVICE, e.getMessage(), e);
+      Thread.currentThread().interrupt(); // Restore interrupted status
+      throw new AuthException("INTERRUPTED_ERROR", "Authentication process was interrupted.", e);
+    }
+  }
 }

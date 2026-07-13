@@ -21,6 +21,7 @@
     <string name="error_wrong_password">The password entered does not match the email address</string>
     <string name="error_user_not_found">No user record exists for the provided email</string>
     <string name="error_user_disabled">The user account has been disabled</string>
+    <string name="error_email_not_verified">You did not verify your email. Verify it in order to be able to log in.</string>
     <string name="error_general">Internal application error (bug)</string>
     <!-- Login Activity texts -->
     <string name="reset_password_link"><u>Forgot your password? Reset here...</u></string>
