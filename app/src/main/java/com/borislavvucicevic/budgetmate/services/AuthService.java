@@ -99,6 +99,14 @@ public class AuthService {
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
 
+      if (cause instanceof com.google.firebase.FirebaseTooManyRequestsException) {
+        throw new AuthException(
+                "ERROR_TOO_MANY_REQUESTS",
+                "Email verification requests blocked due to unusual activity. Please try again later.",
+                cause
+        );
+      }
+
       if (cause instanceof FirebaseAuthException) {
         FirebaseAuthException firebaseEx = (FirebaseAuthException) cause;
         String firebaseErrorCode = firebaseEx.getErrorCode();
