@@ -10,4 +10,5 @@
     <color name="lighter_blue">#7f9dcc</color>
     <color name="red">#DC2626</color>
     <color name="link_color">#2563EB</color>
+    <color name="tomato">#FF6347</color>
 </resources>
