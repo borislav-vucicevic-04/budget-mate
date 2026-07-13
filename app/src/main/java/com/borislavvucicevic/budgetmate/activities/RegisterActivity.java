@@ -144,7 +144,7 @@ public class RegisterActivity extends AppCompatActivity {
             getString(R.string.register_success),
             Toast.LENGTH_SHORT
     ).show();
-    finish();
+    this.handleLoginLink();
   }
 
   /**
