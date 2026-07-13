@@ -15,18 +15,21 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.borislavvucicevic.budgetmate.MainActivity;
 import com.borislavvucicevic.budgetmate.R;
 import com.borislavvucicevic.budgetmate.models.AuthException;
 import com.borislavvucicevic.budgetmate.models.FirebaseAuthErrorCodes;
 import com.borislavvucicevic.budgetmate.models.ValidationException;
+import com.borislavvucicevic.budgetmate.services.AuthService;
 
 import java.util.concurrent.Executors;
 
 public class LoginActivity extends AppCompatActivity {
   public static final String LOGIN_ACTIVITY = "LOGIN_ACTIVITY";
   private EditText etEmail, etPassword;
-  private TextView tvErrorWrapper;
+  private TextView tvErrorWrapper, tvVerifyEmailLink;
   private ProgressBar progressBar;
+  private AuthService authService;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -39,10 +42,14 @@ public class LoginActivity extends AppCompatActivity {
       return insets;
     });
 
+    // creating services classes
+    authService = new AuthService();
+
     // getting widgets
     etEmail = findViewById(R.id.etEmail);
     etPassword = findViewById(R.id.etPassword);
     tvErrorWrapper = findViewById(R.id.tvErrorWrapper);
+    tvVerifyEmailLink = findViewById(R.id.tvVerifyEmailLink);
     progressBar = findViewById(R.id.progressBar);
     Button btnLogin = findViewById(R.id.btnLogin);
     TextView tvRegisterLink = findViewById(R.id.tvRegisterLink);
@@ -50,8 +57,19 @@ public class LoginActivity extends AppCompatActivity {
     // setting event handlers
     btnLogin.setOnClickListener(v -> this.handleLogin());
     tvRegisterLink.setOnClickListener(v -> this.handleRegisterLink());
+    tvVerifyEmailLink.setOnClickListener(v -> this.handleVerifyEmailLink());
   }
 
+  /**
+   * Initiates the asynchronous user login process.
+   * <p>
+   * This method extracts the user inputs from the form fields, activates the
+   * background progress bar indicator, and offloads processing to a single-thread background
+   * executor. On the background thread, it performs input validation and makes an
+   * authentication API call to sign in the user. Results and encountered exceptions
+   * are subsequently piped back to the main UI thread via dedicated handler methods.
+   * </p>
+   */
   private void handleLogin() {
     String email = etEmail.getText().toString().trim();
     String password = etPassword.getText().toString();
@@ -60,12 +78,34 @@ public class LoginActivity extends AppCompatActivity {
     Executors.newSingleThreadExecutor().execute(() -> {
       try {
         this.validateForm();
+        authService.signInUser(email, password);
+        runOnUiThread(this::handleSuccess);
       } catch (ValidationException exception)  {
+        runOnUiThread(() -> this.handleException(exception));
+      } catch (AuthException exception){
         runOnUiThread(() -> this.handleException(exception));
       } catch(Exception exception) {
         runOnUiThread(() -> this.handleException(exception));
       }
     });
+  }
+
+  /**
+   * Finalizes the authentication process upon a successful user operation.
+   * <p>
+   * This method displays a brief success toast notification to the user,
+   * routes the application flow to the main activity screen, and terminates
+   * the current activity to remove it from the back stack.
+   * </p>
+   */
+  private void handleSuccess() {
+    Toast.makeText(
+            LoginActivity.this,
+            getString(R.string.login_success),
+            Toast.LENGTH_SHORT
+    ).show();
+    startActivity(new Intent(getApplicationContext(), MainActivity.class));
+    finish();
   }
 
   /**
@@ -111,15 +151,22 @@ public class LoginActivity extends AppCompatActivity {
     String message = "";
     FirebaseAuthErrorCodes code = FirebaseAuthErrorCodes.parse(exception.getErrorCode());
     // extracting localized message shown to user
-    switch (code) {
-      case ERROR_INVALID_EMAIL: message = getString(R.string.error_invalid_email); break;
-      case ERROR_USER_NOT_FOUND: message = getString(R.string.error_user_not_found); break;
-      case ERROR_WRONG_PASSWORD: message = getString(R.string.error_wrong_password); break;
-      case ERROR_EMAIL_NOT_VERIFIED: message = getString(R.string.error_email_not_verified); break;
-      default: message = getString(R.string.error_general);
+    if(code != null) {
+      switch (code) {
+        case ERROR_INVALID_EMAIL: message = getString(R.string.error_invalid_email); break;
+        case ERROR_INVALID_CREDENTIAL: message = getString(R.string.error_invalid_credential); break;
+        case ERROR_TOO_MANY_REQUESTS: message = getString(R.string.error_too_many_requests); break;
+        case ERROR_EMAIL_NOT_VERIFIED:
+          message = getString(R.string.error_email_not_verified);
+          tvVerifyEmailLink.setVisibility(View.VISIBLE);
+          break;
+        default: message = getString(R.string.error_general);
+      }
+    } else {
+      message = getString(R.string.error_general);
     }
     // logging and displaying the message
-    Log.e(LOGIN_ACTIVITY, exception.getMessage(), exception);
+    Log.e(LOGIN_ACTIVITY, exception.getErrorCode() + ": " + exception.getMessage(), exception);
     tvErrorWrapper.setVisibility(TextView.VISIBLE);
     tvErrorWrapper.setText(message);
     Toast.makeText(
@@ -161,10 +208,42 @@ public class LoginActivity extends AppCompatActivity {
    * </p>
    */
   private void handleRegisterLink() {
-    startActivity(new Intent(getApplicationContext(), LoginActivity.class));
+    startActivity(new Intent(getApplicationContext(), RegisterActivity.class));
     finish();
   }
 
+  /**
+   * Initiates the asynchronous email verification delivery process.
+   * <p>
+   * This method activates the background progress bar indicator and offloads
+   * processing to a single-thread background executor. On the background thread,
+   * it makes an authentication API call to dispatch the verification link. Results
+   * and encountered exceptions are subsequently piped back to the main UI thread to
+   * update the text fields, reset the progress indicator, and display a confirmation toast.
+   * </p>
+   */
+  private void handleVerifyEmailLink() {
+    progressBar.setVisibility(View.VISIBLE);
+    Executors.newSingleThreadExecutor().execute(() -> {
+      try {
+        authService.sendVerificationEmail();
+        runOnUiThread(() -> {
+          progressBar.setVisibility(View.INVISIBLE);
+          tvVerifyEmailLink.setText(getString(R.string.resend_verification_email));
+          Toast.makeText(
+                  LoginActivity.this,
+                  getString(R.string.verification_email_sent),
+                  Toast.LENGTH_SHORT
+          ).show();
+        });
+      } catch (AuthException exception) {
+        runOnUiThread(() -> this.handleException(exception));
+      } catch (Exception exception) {
+        runOnUiThread(() -> handleException(exception));
+      }
+    });
+  }
+  
   /**
    * Validates the user input fields within the registration form.
    * This method extracts data from the email and password. It performs presence

@@ -19,18 +19,23 @@
     <string name="error_invalid_email">The email address is malformed</string>
     <string name="error_email_already_in_use">The email address is already registered to another user.</string>
     <string name="error_wrong_password">The password entered does not match the email address</string>
-    <string name="error_user_not_found">No user record exists for the provided email</string>
+    <string name="error_invalid_credential">Email or password is wrong.</string>
     <string name="error_user_disabled">The user account has been disabled</string>
     <string name="error_email_not_verified">You did not verify your email. Verify it in order to be able to log in.</string>
+    <string name="error_too_many_requests">You have requested emails too many times. Try again later. </string>
     <string name="error_general">Internal application error (bug)</string>
     <!-- Login Activity texts -->
     <string name="reset_password_link"><u>Forgot your password? Reset here...</u></string>
     <string name="register_link"><u>Don\'t have an account? Register here...</u></string>
     <string name="login_title">Log into your account</string>
     <string name="login_button">Log in</string>
+    <string name="verify_email_link"><u>Get a verification email...</u></string>
+    <string name="resend_verification_email"><u>Resend the verification email...</u></string>
+    <string name="verification_email_sent">We sent you a verification email.</string>
+    <string name="login_success">You have logged in successfully!</string>
     <!-- Register Activity texts -->
     <string name="register_title">Create an account</string>
     <string name="register_button">Register</string>
     <string name="login_link"><u>Already have an account? Login here...</u></string>
-    <string name="register_success"> Success! Verification email sent to you!</string>
+    <string name="register_success">" Success! Verification email sent to you! (Make sure to check spam folder)"</string>
 </resources>

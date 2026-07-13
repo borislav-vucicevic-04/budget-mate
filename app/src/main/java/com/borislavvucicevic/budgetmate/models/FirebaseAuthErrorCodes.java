@@ -2,8 +2,6 @@ package com.borislavvucicevic.budgetmate.models;
 
 import java.util.Arrays;
 
-import java.util.Arrays;
-
 /**
  * Defines the custom application-specific mapping for Firebase Authentication error codes.
  *
@@ -22,14 +20,9 @@ public enum FirebaseAuthErrorCodes {
   ERROR_EMAIL_ALREADY_IN_USE,
 
   /**
-   * Indicates that the password provided does not match the registered user account.
+   * Indicates that user provided wrong email or password.
    */
-  ERROR_WRONG_PASSWORD,
-
-  /**
-   * Indicates that no user record exists matching the provided identifiers.
-   */
-  ERROR_USER_NOT_FOUND,
+  ERROR_INVALID_CREDENTIAL,
 
   /**
    * Indicates that the user account has been disabled or suspended by an administrator.
@@ -38,8 +31,12 @@ public enum FirebaseAuthErrorCodes {
   /**
    * Indicates that the user's email is not verified.
    * */
-  ERROR_EMAIL_NOT_VERIFIED;
+  ERROR_EMAIL_NOT_VERIFIED,
 
+  /**
+   * Indicates that user sent too many requests
+   * */
+  ERROR_TOO_MANY_REQUESTS;
   /**
    * Parses a raw string value into its corresponding enum constant.
    *
