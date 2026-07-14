@@ -120,6 +120,44 @@ public class AuthService {
       throw new AuthException("INTERRUPTED_ERROR", "Verification email process was interrupted.", e);
     }
   }
+
+  /**
+   * Sends a password reset email to the specified email address.
+   *
+   * <p>This method blocks until the email transmission process finishes on the background network thread.</p>
+   *
+   * @param email the recipient email address to send the password reset link to
+   * @throws AuthException if email transmission fails due to Firebase errors (e.g., invalid email,
+   *                       user not found, too many requests), or if the thread is interrupted
+   */
+  public void sendPasswordResetEmail(String email) throws AuthException {
+    try {
+      Tasks.await(firebaseAuth.sendPasswordResetEmail(email));
+    } catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+
+      if (cause instanceof com.google.firebase.FirebaseTooManyRequestsException) {
+        throw new AuthException(
+                "ERROR_TOO_MANY_REQUESTS",
+                "Password reset requests blocked due to unusual activity. Please try again later.",
+                cause
+        );
+      }
+
+      if (cause instanceof FirebaseAuthException) {
+        FirebaseAuthException firebaseEx = (FirebaseAuthException) cause;
+        String firebaseErrorCode = firebaseEx.getErrorCode();
+        throw new AuthException(firebaseErrorCode, firebaseEx.getMessage(), firebaseEx);
+      }
+
+      throw new AuthException("EXECUTION_ERROR", "Execution failed while sending password reset email.", e);
+    } catch (InterruptedException e) {
+      Log.e(AUTH_SERVICE, e.getMessage(), e);
+      Thread.currentThread().interrupt();
+      throw new AuthException("INTERRUPTED_ERROR", "Password reset email process was interrupted.", e);
+    }
+  }
+
   /**
    * Signs in a user with the specified email address and password.
    *

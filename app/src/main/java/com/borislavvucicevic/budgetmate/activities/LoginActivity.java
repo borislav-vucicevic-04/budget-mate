@@ -1,5 +1,6 @@
 package com.borislavvucicevic.budgetmate.activities;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -11,6 +12,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -27,7 +29,7 @@ import java.util.concurrent.Executors;
 public class LoginActivity extends AppCompatActivity {
   public static final String LOGIN_ACTIVITY = "LOGIN_ACTIVITY";
   private EditText etEmail, etPassword;
-  private TextView tvErrorWrapper, tvVerifyEmailLink;
+  private TextView tvErrorWrapper, tvVerifyEmailLink, tvPasswordResetLink;
   private ProgressBar progressBar;
   private AuthService authService;
 
@@ -51,6 +53,7 @@ public class LoginActivity extends AppCompatActivity {
     tvErrorWrapper = findViewById(R.id.tvErrorWrapper);
     tvVerifyEmailLink = findViewById(R.id.tvVerifyEmailLink);
     progressBar = findViewById(R.id.progressBar);
+    tvPasswordResetLink = findViewById(R.id.tvPasswordResetLink);
     Button btnLogin = findViewById(R.id.btnLogin);
     TextView tvRegisterLink = findViewById(R.id.tvRegisterLink);
 
@@ -58,6 +61,7 @@ public class LoginActivity extends AppCompatActivity {
     btnLogin.setOnClickListener(v -> this.handleLogin());
     tvRegisterLink.setOnClickListener(v -> this.handleRegisterLink());
     tvVerifyEmailLink.setOnClickListener(v -> this.handleVerifyEmailLink());
+    tvPasswordResetLink.setOnClickListener(this::handleResetPasswordLink);
   }
 
   /**
@@ -240,6 +244,43 @@ public class LoginActivity extends AppCompatActivity {
         runOnUiThread(() -> this.handleException(exception));
       } catch (Exception exception) {
         runOnUiThread(() -> handleException(exception));
+      }
+    });
+  }
+
+  private void handleResetPasswordLink(View v) {
+    EditText resetMail = new EditText(v.getContext());
+    AlertDialog.Builder passwordResetDialog = new AlertDialog.Builder(v.getContext());
+    passwordResetDialog.setTitle(getString(R.string.password_reset_dialog_title));
+    passwordResetDialog.setMessage(getString(R.string.password_reset_dialog_message));
+    passwordResetDialog.setView(resetMail);
+    passwordResetDialog.setPositiveButton(
+            getString(R.string.password_reset_dialog_positive),
+            (dialog, which) -> this.handleResetPassword(resetMail.getText().toString().trim())
+    );
+    passwordResetDialog.setNegativeButton(
+            getString(R.string.password_reset_dialog_negative),
+            (dialog, which) -> {
+              // DO NOTHING
+            }
+    );
+    passwordResetDialog.show();
+  }
+  private void handleResetPassword(String email) {
+    Executors.newSingleThreadExecutor().execute(() -> {
+      try {
+        authService.sendPasswordResetEmail(email);
+        runOnUiThread(() -> {
+          Toast.makeText(
+                  getApplicationContext(),
+                  getString(R.string.password_reset_dialog_success),
+                  Toast.LENGTH_SHORT
+          ).show();
+        });
+      } catch(AuthException exception) {
+        runOnUiThread(() -> this.handleException(exception));
+      } catch (Exception exception) {
+        runOnUiThread(() -> this.handleException(exception));
       }
     });
   }
