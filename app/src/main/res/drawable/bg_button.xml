@@ -6,7 +6,7 @@
 
             <solid android:color="@color/lighter_blue" />
 
-            <corners android:radius="8dp" />
+            <corners android:radius="1000dp" />
 
         </shape>
 
@@ -19,7 +19,7 @@
 
             <solid android:color="@color/blue" />
 
-            <corners android:radius="8dp" />
+            <corners android:radius="1000dp" />
 
         </shape>
 
