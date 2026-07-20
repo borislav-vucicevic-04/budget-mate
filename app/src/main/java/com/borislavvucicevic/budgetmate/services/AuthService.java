@@ -36,6 +36,10 @@ public class AuthService {
     this.firebaseAuth = FirebaseAuth.getInstance();
   }
 
+  public boolean isLoggedIn() {
+    return firebaseAuth.getCurrentUser() != null;
+  }
+
   /**
    * Creates a new user account with the specified email address and password.
    *

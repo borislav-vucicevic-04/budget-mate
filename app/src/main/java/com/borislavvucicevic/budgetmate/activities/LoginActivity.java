@@ -29,7 +29,8 @@ import java.util.concurrent.Executors;
 public class LoginActivity extends AppCompatActivity {
   public static final String LOGIN_ACTIVITY = "LOGIN_ACTIVITY";
   private EditText etEmail, etPassword;
-  private TextView tvErrorWrapper, tvVerifyEmailLink, tvPasswordResetLink;
+  private TextView tvErrorWrapper;
+  private TextView tvVerifyEmailLink;
   private ProgressBar progressBar;
   private AuthService authService;
 
@@ -47,14 +48,22 @@ public class LoginActivity extends AppCompatActivity {
     // creating services classes
     authService = new AuthService();
 
+    // checking if the user is already logged in. If true, redirect them to the
+    // main activity immediately
+
+    if(authService.isLoggedIn()) {
+      startActivity(new Intent(getApplicationContext(), MainActivity.class));
+      finish();
+    }
+
     // getting widgets
     etEmail = findViewById(R.id.etEmail);
     etPassword = findViewById(R.id.etPassword);
     tvErrorWrapper = findViewById(R.id.tvErrorWrapper);
     tvVerifyEmailLink = findViewById(R.id.tvVerifyEmailLink);
     progressBar = findViewById(R.id.progressBar);
-    tvPasswordResetLink = findViewById(R.id.tvPasswordResetLink);
     Button btnLogin = findViewById(R.id.btnLogin);
+    TextView tvPasswordResetLink = findViewById(R.id.tvPasswordResetLink);
     TextView tvRegisterLink = findViewById(R.id.tvRegisterLink);
 
     // setting event handlers
