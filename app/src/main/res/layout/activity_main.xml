@@ -7,13 +7,133 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!"
+    <!-- Background image -->
+    <ImageView
+        android:id="@+id/backgroundImage"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:contentDescription="@null"
+        android:scaleType="centerCrop"
+        android:src="@drawable/activity_background"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Overlay -->
+    <View
+        android:id="@+id/backgroundOverlay"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/overlay_color"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Application title -->
+    <TextView
+        android:id="@+id/appTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="48dp"
+        android:text="@string/app_name"
+        android:textColor="@color/title_color"
+        android:textSize="40sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Activity title -->
+    <TextView
+        android:id="@+id/activityTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="@string/dashboard_title"
+        android:textColor="@color/title_color"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/appTitle" />
+
+    <!-- Scrollable login form -->
+    <ScrollView
+        android:id="@+id/formWrapper"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginBottom="8dp"
+        android:fillViewport="true"
+        android:overScrollMode="ifContentScrolls"
+        app:layout_constraintTop_toBottomOf="@id/activityTitle"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:id="@+id/form"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="vertical">
+
+            <Button
+                android:id="@+id/btnViewTransactions"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_margin="8dp"
+                android:background="@drawable/bg_button"
+                android:backgroundTint="@null"
+                android:text="@string/dashboard_view_transactions_button"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:backgroundTint="@null"
+                app:iconTint="@null"
+                app:iconSize="28dp"
+                app:icon="@drawable/transactions" />
+
+            <Button
+                android:id="@+id/btnGenerateReports"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_margin="8dp"
+                android:background="@drawable/bg_button"
+                android:backgroundTint="@null"
+                android:text="@string/dashboard_generate_reports_button"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:backgroundTint="@null"
+                app:iconTint="@null"
+                app:iconSize="28dp"
+                app:icon="@drawable/reports" />
+
+            <Button
+                android:id="@+id/btnUserProfile"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_margin="8dp"
+                android:background="@drawable/bg_button"
+                android:backgroundTint="@null"
+                android:text="@string/dashboard_user_profile_button"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:backgroundTint="@null"
+                app:iconTint="@null"
+                app:iconSize="28dp"
+                app:icon="@drawable/user_profile" />
+        </LinearLayout>
+
+    </ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

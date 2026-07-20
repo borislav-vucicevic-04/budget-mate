@@ -43,4 +43,8 @@
     <string name="register_button">Register</string>
     <string name="login_link"><u>Already have an account? Login here...</u></string>
     <string name="register_success">" Success! Verification email sent to you! (Make sure to check spam folder)"</string>
+    <string name="dashboard_title">Dashboard</string>
+    <string name="dashboard_user_profile_button">Your profile</string>
+    <string name="dashboard_view_transactions_button">View transactions</string>
+    <string name="dashboard_generate_reports_button">Generate reports</string>
 </resources>
