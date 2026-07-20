@@ -17,10 +17,10 @@
     <string name="password_too_short">Password must be at least 6 characters long</string>
     <string name="password_mismatch">Provided passwords do not match</string>
     <string name="error_invalid_email">The email address is malformed</string>
-    <string name="error_email_already_in_use">The email address is already registered to another user.</string>
+    <string name="error_email_already_in_use">The email address is already registered to another userProfile.</string>
     <string name="error_wrong_password">The password entered does not match the email address</string>
     <string name="error_invalid_credential">Email or password is wrong.</string>
-    <string name="error_user_disabled">The user account has been disabled</string>
+    <string name="error_user_disabled">The userProfile account has been disabled</string>
     <string name="error_email_not_verified">You did not verify your email. Verify it in order to be able to log in.</string>
     <string name="error_too_many_requests">You have requested emails too many times. Try again later. </string>
     <string name="error_general">Internal application error (bug)</string>

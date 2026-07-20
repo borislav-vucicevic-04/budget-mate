@@ -18,12 +18,15 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.borislavvucicevic.budgetmate.R;
+import com.borislavvucicevic.budgetmate.models.classes.UserProfile;
 import com.borislavvucicevic.budgetmate.models.exceptions.AuthException;
 import com.borislavvucicevic.budgetmate.models.enums.CurrencyCode;
 import com.borislavvucicevic.budgetmate.models.classes.CurrencyOption;
 import com.borislavvucicevic.budgetmate.models.enums.FirebaseAuthErrorCodes;
+import com.borislavvucicevic.budgetmate.models.exceptions.DatabaseException;
 import com.borislavvucicevic.budgetmate.models.exceptions.ValidationException;
 import com.borislavvucicevic.budgetmate.services.AuthService;
+import com.borislavvucicevic.budgetmate.services.DatabaseService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +39,7 @@ public class RegisterActivity extends AppCompatActivity {
   private Spinner spHomeCurrency;
   private ProgressBar progressBar;
   private AuthService authService;
+  private DatabaseService databaseService;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +55,7 @@ public class RegisterActivity extends AppCompatActivity {
     this.setupCurrencySpinner();
     // creating an instance of AuthService
     authService = new AuthService();
+    databaseService = new DatabaseService();
     // getting widgets
     etFullName = findViewById(R.id.etFullName);
     etEmail = findViewById(R.id.etEmail);
@@ -116,8 +121,9 @@ public class RegisterActivity extends AppCompatActivity {
       try {
         // validating user inputs
         this.validateForm();
-        authService.createUserAccount(email, password);
+        String uid = authService.createUserAccount(email, password);
         authService.sendVerificationEmail();
+        databaseService.createUserProfile(uid, new UserProfile(fullName, email, homeCurrency));
         // if everything went without throwing an exception and account has been created successfully
         runOnUiThread(this::handleSuccess);
       } catch(ValidationException exception) {

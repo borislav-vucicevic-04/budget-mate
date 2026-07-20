@@ -43,7 +43,7 @@ public class AuthService {
    *
    * @param email    the unique email address for the new user account
    * @param password the secure password for the new user account
-   * @return the unique Firebase User ID (UID) assigned to the newly created account
+   * @return the unique Firebase UserProfile ID (UID) assigned to the newly created account
    * @throws AuthException if account creation fails due to Firebase errors (e.g., email already in use),
    *                       thread interruption, or if the server returns an empty user profile
    */
@@ -165,7 +165,7 @@ public class AuthService {
    *
    * @param email    the registered email address of the user
    * @param password the password for the account
-   * @return the unique Firebase User ID (UID) assigned to the authenticated account
+   * @return the unique Firebase UserProfile ID (UID) assigned to the authenticated account
    * @throws AuthException if sign-in fails due to Firebase errors (e.g., wrong password),
    *                       thread interruption, if the server returns an empty profile,
    *                       or if the user's email address is not verified
