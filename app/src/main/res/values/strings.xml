@@ -47,4 +47,5 @@
     <string name="dashboard_user_profile_button">Your profile</string>
     <string name="dashboard_view_transactions_button">View transactions</string>
     <string name="dashboard_generate_reports_button">Generate reports</string>
+    <string name="user_profile_title">Your profile</string>
 </resources>

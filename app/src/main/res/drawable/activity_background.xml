@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Bottom Layer: Your Background Image -->
+    <!-- Note: android:gravity="fill" replicates scaleType="centerCrop" behavior -->
+    <item 
+        android:drawable="@drawable/activity_background_image"
+        android:gravity="fill" />
+
+    <!-- Top Layer: Your Color Overlay -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/overlay_color" />
+        </shape>
+    </item>
+</layer-list>

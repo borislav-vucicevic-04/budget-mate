@@ -14,7 +14,7 @@
         android:layout_height="0dp"
         android:contentDescription="@null"
         android:scaleType="centerCrop"
-        android:src="@drawable/activity_background"
+        android:src="@drawable/activity_background_image"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -97,7 +97,7 @@
                 app:backgroundTint="@null"
                 app:iconTint="@null"
                 app:iconSize="28dp"
-                app:icon="@drawable/transactions" />
+                app:icon="@drawable/ic_transactions" />
 
             <Button
                 android:id="@+id/btnGenerateReports"
@@ -114,7 +114,7 @@
                 app:backgroundTint="@null"
                 app:iconTint="@null"
                 app:iconSize="28dp"
-                app:icon="@drawable/reports" />
+                app:icon="@drawable/ic_reports" />
 
             <Button
                 android:id="@+id/btnUserProfile"
@@ -131,7 +131,7 @@
                 app:backgroundTint="@null"
                 app:iconTint="@null"
                 app:iconSize="28dp"
-                app:icon="@drawable/user_profile" />
+                app:icon="@drawable/ic_user_profile" />
         </LinearLayout>
 
     </ScrollView>
