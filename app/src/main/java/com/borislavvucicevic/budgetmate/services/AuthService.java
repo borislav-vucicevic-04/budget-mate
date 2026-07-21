@@ -40,6 +40,12 @@ public class AuthService {
     return firebaseAuth.getCurrentUser() != null;
   }
 
+  public String getUserID() {
+    FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
+    if (firebaseUser == null) return null;
+    return firebaseUser.getUid();
+  }
+
   /**
    * Creates a new user account with the specified email address and password.
    *

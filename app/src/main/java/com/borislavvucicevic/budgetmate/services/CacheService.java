@@ -41,7 +41,7 @@ public class CacheService {
   public static void store(CacheKey key, Object object) throws CacheException {
     try {
       switch (key) {
-        case USER:
+        case USER_PROFILE:
           if (object instanceof UserProfile) userProfile = (UserProfile) object;
           else throw new ClassCastException("Expected UserProfile but received " + object.getClass().getSimpleName());
           break;
@@ -65,7 +65,7 @@ public class CacheService {
    */
   public static Object read(CacheKey key) {
     switch (key) {
-      case USER:
+      case USER_PROFILE:
         return userProfile;
       default:
         return null;
@@ -79,7 +79,7 @@ public class CacheService {
    */
   public static void clear(CacheKey key) {
     switch (key) {
-      case USER:
+      case USER_PROFILE:
         userProfile = null;
         break;
       default:

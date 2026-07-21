@@ -68,11 +68,12 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginRight="48dp"
                 android:layout_marginBottom="8dp"
-                android:drawableStart="@drawable/ic_user_profile_tiny"
+                android:drawableStart="@drawable/ic_user_profile_tiny_blue"
                 android:drawablePadding="16dp"
                 android:drawableTint="@null"
                 android:gravity="center_vertical"
                 android:text="[User's full name]"
+                android:textColor="@color/black"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 tools:drawableTint="@color/blue" />
@@ -90,12 +91,13 @@
                 android:drawableTint="@null"
                 android:gravity="center_vertical"
                 android:text="[User's email]"
+                android:textColor="@color/black"
                 android:textSize="16sp"
                 android:textStyle="bold"
-                tools:drawableTint="@color/blue" />
+                tools:textColor="@color/black" />
 
             <TextView
-                android:id="@+id/tvCurrency"
+                android:id="@+id/tvHomeCurrency"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="48dp"
@@ -107,6 +109,7 @@
                 android:drawableTint="@null"
                 android:gravity="center_vertical"
                 android:text="[User's email]"
+                android:textColor="@color/black"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 tools:drawableTint="@null" />
