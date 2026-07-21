@@ -55,4 +55,5 @@
     <string name="category">Category</string>
 
     <string name="notes">Notes (Optional)</string>
+    <string name="transactions_categories_loaded">Your categories have been loaded</string>
 </resources>

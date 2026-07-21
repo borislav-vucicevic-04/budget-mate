@@ -72,7 +72,7 @@
                 android:textColor="@color/black"
                 android:textColorHint="@color/input_hint_color"
                 android:hint="@string/amount"
-                android:inputType="numberDecimal" />
+                android:inputType="numberDecimal|numberSigned" />
 
            <!-- 2. Category Field (Searchable Spinner/Dropdown) -->
             <AutoCompleteTextView

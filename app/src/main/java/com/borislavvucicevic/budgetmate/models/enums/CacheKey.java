@@ -1,5 +1,6 @@
 package com.borislavvucicevic.budgetmate.models.enums;
 
 public enum CacheKey {
-  USER_PROFILE
+  USER_PROFILE,
+  CATEGORIES
 }

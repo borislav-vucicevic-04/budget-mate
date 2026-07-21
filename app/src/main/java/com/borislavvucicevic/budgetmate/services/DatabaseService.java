@@ -2,6 +2,7 @@ package com.borislavvucicevic.budgetmate.services;
 
 import android.util.Log;
 
+import com.borislavvucicevic.budgetmate.models.classes.Category;
 import com.borislavvucicevic.budgetmate.models.classes.UserProfile;
 import com.borislavvucicevic.budgetmate.models.enums.CacheKey;
 import com.borislavvucicevic.budgetmate.models.exceptions.DatabaseException;
@@ -9,8 +10,12 @@ import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.QuerySnapshot;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -87,6 +92,51 @@ public class DatabaseService {
       throw new DatabaseException(errorMessage, cause);
     } catch (InterruptedException e) {
       Log.e(DATABASE, "The fetch operation thread was interrupted.", e);
+      Thread.currentThread().interrupt();
+      throw new DatabaseException("Database operation was interrupted before completion.", e);
+    }
+  }
+
+  /**
+   * Retrieves all custom budget categories belonging to a specific user.
+   * Checks the local cache first to minimize database reads, falling back to a
+   * synchronous Firestore collection query if the cache is empty.
+   *
+   * @param uid the unique identifier of the user whose categories are being retrieved.
+   * @return a {@link List} of {@link Category} objects matching the user ID.
+   * @throws DatabaseException if the network query fails or is interrupted.
+   */
+  public List<Category> getCategories(String uid) throws DatabaseException {
+    // Return immediately if we already have them in memory
+    List<Category> cachedCategories = (List<Category>) CacheService.read(CacheKey.CATEGORIES);
+    if (cachedCategories != null && !cachedCategories.isEmpty()) {
+      return cachedCategories;
+    }
+
+    try {
+      Log.d(DATABASE, "Users id (that must not be null): " + uid);
+      // Build the query to filter categories by the specific user's ID
+      Query query = firestore.collection("categories")
+              .whereEqualTo("userID", uid);
+
+      // Synchronously wait for the query snapshot fetch
+      QuerySnapshot snapshot = Tasks.await(query.get());
+
+      // Map the documents to your Category model class
+      List<Category> categoriesList = snapshot.toObjects(Category.class);
+
+      // Save to your cache system so subsequent lookups read from local memory
+      CacheService.store(categoriesList);
+
+      return categoriesList;
+
+    } catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+      String errorMessage = (cause != null) ? cause.getMessage() : "Unknown Firestore query error occurred";
+      Log.e(DATABASE, "Category fetch failed: " + errorMessage, cause);
+      throw new DatabaseException(errorMessage, cause);
+    } catch (InterruptedException e) {
+      Log.e(DATABASE, "The category fetch operation thread was interrupted.", e);
       Thread.currentThread().interrupt();
       throw new DatabaseException("Database operation was interrupted before completion.", e);
     }

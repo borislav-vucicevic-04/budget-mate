@@ -2,9 +2,15 @@ package com.borislavvucicevic.budgetmate.services;
 
 import android.util.Log;
 
+import com.borislavvucicevic.budgetmate.models.classes.Category;
 import com.borislavvucicevic.budgetmate.models.classes.UserProfile;
 import com.borislavvucicevic.budgetmate.models.enums.CacheKey;
 import com.borislavvucicevic.budgetmate.models.exceptions.CacheException;
+
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A centralized, in-memory caching service for the application.
@@ -25,6 +31,10 @@ public class CacheService {
    * Cached instance of the current user's profile data.
    */
   private static UserProfile userProfile = null;
+  /**
+   * Cached instance of the user's transaction categories.
+   */
+  private static final ArrayList<Category> categories = new ArrayList<>();
 
   /**
    * Stores an object in the in-memory cache associated with the specified cache key.
@@ -55,6 +65,22 @@ public class CacheService {
     }
   }
 
+  /**
+   * Stores a fresh list of categories in the local cache by overwriting any existing data.
+   *
+   * <p>This method clears the current category cache entirely before appending all items
+   * from the provided list. It ensures that the cache reflects the exact state of the
+   * passed collection, commonly used after pulling the latest updates from Firestore.</p>
+   *
+   * @param object the list of {@link Category} items to store in the cache;
+   *               must not be null.
+   * @throws NullPointerException if the internal {@code categories} list cache has not
+   *                              been initialized.
+   */
+  public static void store(@NotNull List<Category> object) {
+    categories.clear();
+    categories.addAll(object);
+  }
 
   /**
    * Retrieves an object from the in-memory cache associated with the specified cache key.
@@ -65,10 +91,9 @@ public class CacheService {
    */
   public static Object read(CacheKey key) {
     switch (key) {
-      case USER_PROFILE:
-        return userProfile;
-      default:
-        return null;
+      case USER_PROFILE: return userProfile;
+      case CATEGORIES: return categories;
+      default: return null;
     }
   }
 
@@ -81,6 +106,9 @@ public class CacheService {
     switch (key) {
       case USER_PROFILE:
         userProfile = null;
+        break;
+      case CATEGORIES:
+        categories.clear();
         break;
       default:
         /* DO NOTHING */
@@ -97,5 +125,6 @@ public class CacheService {
    */
   public static void clearAll() {
     userProfile = null;
+    categories.clear();
   }
 }

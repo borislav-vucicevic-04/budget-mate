@@ -10,11 +10,13 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.borislavvucicevic.budgetmate.activities.LoginActivity;
 import com.borislavvucicevic.budgetmate.activities.TransactionsActivity;
 import com.borislavvucicevic.budgetmate.activities.UserProfileActivity;
+import com.borislavvucicevic.budgetmate.services.AuthService;
 
 public class MainActivity extends AppCompatActivity {
-
+  private AuthService authService;
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -26,6 +28,16 @@ public class MainActivity extends AppCompatActivity {
       return insets;
     });
 
+    // setting up services
+    authService = new AuthService();
+
+    // Checking if user is logged in. If not redirect them to LoginActivity
+    if(!authService.isLoggedIn()) {
+      setIntent(new Intent(getApplicationContext(), LoginActivity.class));
+      finish();
+    }
+
+    // otherwise, continue execution
     // grabbing widgets
     Button btnUserProfile = findViewById(R.id.btnUserProfile);
     Button btnViewTransactions = findViewById(R.id.btnViewTransactions);
