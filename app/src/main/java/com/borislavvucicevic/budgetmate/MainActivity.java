@@ -10,6 +10,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.borislavvucicevic.budgetmate.activities.TransactionsActivity;
 import com.borislavvucicevic.budgetmate.activities.UserProfileActivity;
 
 public class MainActivity extends AppCompatActivity {
@@ -27,11 +28,16 @@ public class MainActivity extends AppCompatActivity {
 
     // grabbing widgets
     Button btnUserProfile = findViewById(R.id.btnUserProfile);
+    Button btnViewTransactions = findViewById(R.id.btnViewTransactions);
 
     // setting listeners
     btnUserProfile.setOnClickListener(v -> this.openUserProfileActivity());
+    btnViewTransactions.setOnClickListener(v -> this.openTransactionsActivity());
   }
   private void openUserProfileActivity() {
     startActivity(new Intent(MainActivity.this, UserProfileActivity.class));
+  }
+  private void openTransactionsActivity() {
+    startActivity(new Intent(MainActivity.this, TransactionsActivity.class));
   }
 }

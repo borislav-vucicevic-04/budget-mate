@@ -1,5 +1,6 @@
-package com.borislavvucicevic.budgetmate;
+package com.borislavvucicevic.budgetmate.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.activity.EdgeToEdge;
@@ -7,6 +8,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+
+import com.borislavvucicevic.budgetmate.MainActivity;
+import com.borislavvucicevic.budgetmate.R;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 public class TransactionsActivity extends AppCompatActivity {
 
@@ -20,5 +25,15 @@ public class TransactionsActivity extends AppCompatActivity {
       v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
       return insets;
     });
+
+    // grabbing widgets
+    FloatingActionButton floatingActionButton = findViewById(R.id.floatingActionButton);
+
+    // setting listeners
+    floatingActionButton.setOnClickListener(v -> this.openTransactionsAddNewActivity());
+  }
+
+  private void openTransactionsAddNewActivity() {
+    startActivity(new Intent(TransactionsActivity.this, TransactionsAddNewActivity.class));
   }
 }
