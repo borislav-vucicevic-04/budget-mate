@@ -33,6 +33,11 @@
             android:name=".activities.UserProfileActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".TransactionsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.BudgetMate"
+            android:windowSoftInputMode="adjustResize" />
     </application>
 
 </manifest>
