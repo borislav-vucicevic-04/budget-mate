@@ -2,8 +2,12 @@ package com.borislavvucicevic.budgetmate.activities;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -14,6 +18,7 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.borislavvucicevic.budgetmate.R;
 import com.borislavvucicevic.budgetmate.models.classes.Category;
+import com.borislavvucicevic.budgetmate.models.exceptions.ValidationException;
 import com.borislavvucicevic.budgetmate.services.AuthService;
 import com.borislavvucicevic.budgetmate.services.DatabaseService;
 
@@ -26,6 +31,9 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
   private DatabaseService databaseService;
   private AutoCompleteTextView etCategory;
   private TextView tvErrorWrapper;
+  private EditText etAmount;
+  private EditText etNotes;
+  private ProgressBar progressBar;
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -42,9 +50,14 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
     databaseService = new DatabaseService();
 
     // grabbing widgets
+    Button btnCreateTransaction = findViewById(R.id.btnCreateTransaction);
     etCategory = findViewById(R.id.etCategory);
     tvErrorWrapper = findViewById(R.id.tvErrorWrapper);
+    etAmount = findViewById(R.id.etAmount);
+    etNotes = findViewById(R.id.etNotes);
+    progressBar = findViewById(R.id.progressBar);
     // setting listeners
+    btnCreateTransaction.setOnClickListener(v -> this.handleCreateTransaction());
     etCategory.setOnFocusChangeListener((v, hasFocus) -> {
       if (hasFocus) {
         etCategory.showDropDown();
@@ -93,6 +106,45 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
         runOnUiThread(() -> this.handleException(exception));
       }
     });
+  }
+
+  private void handleCreateTransaction() {
+    progressBar.setVisibility(View.VISIBLE);
+    Executors.newSingleThreadExecutor().execute(() -> {
+      try {
+        this.handleValidation();
+      } catch (ValidationException exception) {
+        runOnUiThread(() -> this.handleException(exception));
+      } catch (Exception exception) {
+        runOnUiThread(() -> this.handleException(exception));
+      }
+    });
+  }
+
+  private void handleValidation() {
+    String amount = etAmount.getText().toString().trim();
+    String category = etCategory.getText().toString().trim();
+    String notes = etNotes.getText().toString().trim();
+
+    if(amount.isEmpty()) throw new ValidationException(getString(R.string.amount_required), R.id.etAmount);
+    if(Float.parseFloat(amount) == 0) throw new ValidationException(getString(R.string.amount_not_zero), R.id.etAmount);
+    if(category.isEmpty()) throw new ValidationException(getString(R.string.category_required), R.id.etCategory);
+    if(notes.length() > 256) throw new ValidationException(getString(R.string.notes_too_long), R.id.etNotes);
+  }
+
+  private void handleException(ValidationException exception) {
+    if(exception.getViewID() != null) {
+      ((EditText) findViewById(exception.getViewID())).setError(exception.getMessage());
+    }
+    Log.e(TRANSACTION_ADD_NEW_ACTIVITY, exception.getMessage(), exception);
+    tvErrorWrapper.setVisibility(TextView.VISIBLE);
+    tvErrorWrapper.setText(exception.getMessage());
+    Toast.makeText(
+            TransactionsAddNewActivity.this,
+            exception.getMessage(),
+            Toast.LENGTH_SHORT
+    ).show();
+    progressBar.setVisibility(View.GONE);
   }
 
   /**

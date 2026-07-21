@@ -56,4 +56,8 @@
 
     <string name="notes">Notes (Optional)</string>
     <string name="transactions_categories_loaded">Your categories have been loaded</string>
+    <string name="amount_required">Amount field is required</string>
+    <string name="amount_not_zero">The amount must not be equal to zero</string>
+    <string name="category_required">Category field is required</string>
+    <string name="notes_too_long">The notes cannot be longer than 256 characters</string>
 </resources>
