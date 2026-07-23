@@ -2,6 +2,7 @@ package com.borislavvucicevic.budgetmate.models.classes;
 
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentId;
+import com.google.firebase.firestore.Exclude;
 
 /**
  * Represents a financial transaction within the BudgetMate application.
@@ -33,9 +34,16 @@ public class Transaction {
   private Float amount;
 
   /**
-   * The budget category associated with this transaction (e.g., Food, Transport, Utilities).
+   * The unique identifier of the budget category associated with this transaction.
    */
-  private String category;
+  private String categoryID;
+
+  /**
+   * The full Category object mapping to this transaction.
+   * Annotated with @Exclude to prevent Firestore from attempting to serialize the nested object into the transaction document.
+   */
+  @Exclude
+  private Category category;
 
   /**
    * Optional custom descriptions, memos, or details regarding the transaction.
@@ -57,7 +65,9 @@ public class Transaction {
    * Default no-argument constructor.
    * Required by Cloud Firestore to instantiate the object before inflating its fields.
    */
-  public Transaction() { /* EMPTY CONSTRUCTOR REQUIRED BY FIREBASE */ }
+  public Transaction() {
+    /* EMPTY CONSTRUCTOR REQUIRED BY FIREBASE */
+  }
 
   /**
    * Gets the unique Firestore document identifier.
@@ -114,20 +124,42 @@ public class Transaction {
   }
 
   /**
-   * Gets the budget category associated with this transaction.
+   * Gets the unique identifier of the budget category associated with this transaction.
    *
-   * @return the transaction category string.
+   * @return the transaction category ID string.
    */
-  public String getCategory() {
+  public String getCategoryID() {
+    return categoryID;
+  }
+
+  /**
+   * Sets the unique identifier of the budget category associated with this transaction.
+   *
+   * @param categoryID the transaction category ID string to set.
+   */
+  public void setCategoryID(String categoryID) {
+    this.categoryID = categoryID;
+  }
+
+  /**
+   * Gets the full Category object associated with this transaction.
+   * Annotated with @Exclude to avoid Firestore database conflicts.
+   *
+   * @return the Category object.
+   */
+  @Exclude
+  public Category getCategory() {
     return category;
   }
 
   /**
-   * Sets the budget category associated with this transaction.
+   * Sets the full Category object associated with this transaction.
+   * Annotated with @Exclude to avoid Firestore database conflicts.
    *
-   * @param category the transaction category string to set.
+   * @param category the Category object to set.
    */
-  public void setCategory(String category) {
+  @Exclude
+  public void setCategory(Category category) {
     this.category = category;
   }
 
