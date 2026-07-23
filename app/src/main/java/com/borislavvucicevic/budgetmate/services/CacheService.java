@@ -2,7 +2,10 @@ package com.borislavvucicevic.budgetmate.services;
 
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import com.borislavvucicevic.budgetmate.models.classes.Category;
+import com.borislavvucicevic.budgetmate.models.classes.Transaction;
 import com.borislavvucicevic.budgetmate.models.classes.UserProfile;
 import com.borislavvucicevic.budgetmate.models.enums.CacheKey;
 import com.borislavvucicevic.budgetmate.models.exceptions.CacheException;
@@ -10,99 +13,154 @@ import com.borislavvucicevic.budgetmate.models.exceptions.CacheException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
- * A centralized, in-memory caching service for the application.
- * <p>
- * This class provides global, static access to store, retrieve, and clear volatile
- * application data across different activities and background services without
- * triggering repeated, costly database operations.
- * </p>
- * <p>
- * Data managed by this service is bound to the application lifecycle and will be
- * completely wiped from memory when the application process terminates.
- * </p>
+ * A static, centralized caching service for managing global application state.
+ * This class provides convenient methods to store, retrieve, update, and clear
+ * user profiles, categories, and transaction data throughout the life of the application.
  */
 public class CacheService {
 
-  public static final String CACHE_SERVICE = "CACHE_SERVICE";
   /**
-   * Cached instance of the current user's profile data.
+   * The cached profile information of the currently authenticated user.
    */
-  private static UserProfile userProfile = null;
-  /**
-   * Cached instance of the user's transaction categories.
-   */
-  private static final ArrayList<Category> categories = new ArrayList<>();
+  private static UserProfile userProfile;
 
   /**
-   * Stores an object in the in-memory cache associated with the specified cache key.
-   * <p>
-   * This method performs strict runtime type-checking before casting. If the provided
-   * object does not match the expected data type for the given key, the operation
-   * is aborted and a managed exception is thrown.
-   * </p>
-   *
-   * @param key    the {@link CacheKey} identifying the type of data to be stored
-   * @param object the data object to cache; must match the data type associated with the key
-   * @throws CacheException if the provided object type does not match the type required by the key
+   * A map storing user-defined transaction categories, indexed by their unique String ID.
    */
-  public static void store(CacheKey key, Object object) throws CacheException {
-    try {
-      switch (key) {
-        case USER_PROFILE:
-          if (object instanceof UserProfile) userProfile = (UserProfile) object;
-          else throw new ClassCastException("Expected UserProfile but received " + object.getClass().getSimpleName());
-          break;
-        default:
-          /* DO NOTHING */
-          break;
+  private static final HashMap<String, Category> categories = new HashMap<>();
+
+  /**
+   * A map storing the loaded user transactions, indexed by their unique String ID.
+   */
+  private static final HashMap<String, Transaction> transactions = new HashMap<>();
+
+  /**
+   * Private constructor to enforce utility class pattern and prevent instantiation.
+   */
+  private CacheService() {}
+
+  /**
+   * Stores a loaded user profile into the cache.
+   *
+   * @param profile the {@link UserProfile} object to cache
+   */
+  public static void storeUserProfile(@NonNull UserProfile profile) {
+    userProfile = profile;
+  }
+
+  /**
+   * Stores a list of loaded user-defined categories into the cache.
+   * Iterates through the list and maps each category by its unique ID.
+   * Null items or items with null IDs inside the list are safely ignored.
+   *
+   * @param categoryList the list of {@link Category} objects to map and store
+   */
+  public static void storeCategories(@NonNull List<Category> categoryList) {
+    for (Category category : categoryList) {
+      if (category != null && category.getID() != null) {
+        categories.put(category.getID(), category);
       }
-    } catch (ClassCastException e) {
-      Log.e(CACHE_SERVICE, "Cache insertion failed due to type mismatch.", e);
-      throw new CacheException("Failed to store data in cache due to a type mismatch for key: " + key, e);
     }
   }
 
   /**
-   * Stores a fresh list of categories in the local cache by overwriting any existing data.
+   * Stores a list of loaded user transactions into the cache.
+   * Iterates through the list and maps each transaction by its unique ID.
+   * Null items or items with null IDs inside the list are safely ignored.
    *
-   * <p>This method clears the current category cache entirely before appending all items
-   * from the provided list. It ensures that the cache reflects the exact state of the
-   * passed collection, commonly used after pulling the latest updates from Firestore.</p>
-   *
-   * @param object the list of {@link Category} items to store in the cache;
-   *               must not be null.
-   * @throws NullPointerException if the internal {@code categories} list cache has not
-   *                              been initialized.
+   * @param transactionList the list of {@link Transaction} objects to map and store
    */
-  public static void store(@NotNull List<Category> object) {
-    categories.clear();
-    categories.addAll(object);
-  }
-
-  /**
-   * Retrieves an object from the in-memory cache associated with the specified cache key.
-   *
-   * @param key the {@link CacheKey} identifying the type of data to retrieve
-   * @return the cached {@link Object} associated with the key, or {@code null} if no data is cached
-   *         or if the key is unrecognized
-   */
-  public static Object read(CacheKey key) {
-    switch (key) {
-      case USER_PROFILE: return userProfile;
-      case CATEGORIES: return categories;
-      default: return null;
+  public static void storeTransactions(@NonNull List<Transaction> transactionList) {
+    for (Transaction transaction : transactionList) {
+      if (transaction != null && transaction.getID() != null) {
+        transactions.put(transaction.getID(), transaction);
+      }
     }
   }
 
   /**
-   * Clears the cached data associated with a specific cache key, resetting it to {@code null}.
+   * Adds or updates a single category document inside the categories cache.
+   * The document is stored using its unique ID as the mapping key.
+   * Documents with missing IDs will be ignored.
    *
-   * @param key the {@link CacheKey} identifying the specific data to be evicted from the cache
+   * @param document the {@link Category} record to place into the cache
    */
-  public static void clear(CacheKey key) {
+  public static void putCategory(@NonNull Category document) {
+    if (document.getID() != null) {
+      categories.put(document.getID(), document);
+    }
+  }
+
+  /**
+   * Adds or updates a single transaction document inside the transactions cache.
+   * The document is stored using its unique ID as the mapping key.
+   * Documents with missing IDs will be ignored.
+   *
+   * @param document the {@link Transaction} record to place into the cache
+   */
+  public static void putTransaction(@NonNull Transaction document) {
+    if (document.getID() != null) {
+      transactions.put(document.getID(), document);
+    }
+  }
+
+  /**
+   * Safely removes a record from the categories cache based on its unique ID string.
+   * Fails silently without throwing an exception if the record does not exist in the hashmap.
+   *
+   * @param id the unique String identifier of the category to remove
+   */
+  public static void removeCategory(@NonNull String id) {
+    categories.remove(id);
+  }
+
+  /**
+   * Safely removes a record from the transactions cache based on its unique ID string.
+   * Fails silently without throwing an exception if the record does not exist in the hashmap.
+   *
+   * @param id the unique String identifier of the transaction to remove
+   */
+  public static void removeTransaction(@NonNull String id) {
+    transactions.remove(id);
+  }
+
+  /**
+   * Retrieves the currently cached user profile.
+   *
+   * @return the cached {@link UserProfile} object, or {@code null} if no profile is loaded
+   */
+  public static UserProfile readUserProfile() {
+    return userProfile;
+  }
+
+  /**
+   * Exposes the contents of the categories cache converted into a sequential collection.
+   *
+   * @return a new {@link List} containing all currently cached {@link Category} objects
+   */
+  public static List<Category> readCategories() {
+    return new ArrayList<>(categories.values());
+  }
+
+  /**
+   * Exposes the contents of the transactions cache converted into a sequential collection.
+   *
+   * @return a new {@link List} containing all currently cached {@link Transaction} objects
+   */
+  public static List<Transaction> readTransactions() {
+    return new ArrayList<>(transactions.values());
+  }
+
+  /**
+   * Clears a specific memory cache target depending on the provided key value.
+   *
+   * @param key the {@link CacheKey} targeting a specific internal field to wipe
+   */
+  public static void clear(@NonNull CacheKey key) {
     switch (key) {
       case USER_PROFILE:
         userProfile = null;
@@ -110,21 +168,19 @@ public class CacheService {
       case CATEGORIES:
         categories.clear();
         break;
-      default:
-        /* DO NOTHING */
+      case TRANSACTIONS:
+        transactions.clear();
         break;
     }
   }
 
   /**
-   * Clears all cached data across all keys simultaneously.
-   * <p>
-   * This method should typically be invoked during user sign-out sequences to prevent
-   * data leakage between different user sessions.
-   * </p>
+   * Clears all fields inside this cache service simultaneously, releasing memory references.
+   * Resets the user profile to {@code null} and clears out both internal map structures.
    */
   public static void clearAll() {
     userProfile = null;
     categories.clear();
+    transactions.clear();
   }
 }

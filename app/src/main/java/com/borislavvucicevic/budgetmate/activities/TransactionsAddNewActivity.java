@@ -24,6 +24,7 @@ import com.borislavvucicevic.budgetmate.services.DatabaseService;
 
 import java.util.List;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 public class TransactionsAddNewActivity extends AppCompatActivity {
   public static final String TRANSACTION_ADD_NEW_ACTIVITY = "TRANSACTION_ADD_NEW_ACTIVITY";
@@ -88,7 +89,7 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
       try {
         String uid = authService.getUserID();
         List<Category> categories = databaseService.getCategories(uid);
-        List<String> categoryNames = categories.stream().map(Category::getName).toList();
+        List<String> categoryNames = categories.stream().map(Category::getName).collect(Collectors.toList());
         runOnUiThread(() -> {
           ArrayAdapter<String> adapter = new ArrayAdapter<>(
                   this,

@@ -37,7 +37,7 @@ public class DatabaseService {
       user.put("homeCurrency", userProfile.getHomeCurrency());
 
       Tasks.await(documentReference.set(user));
-      CacheService.store(CacheKey.USER_PROFILE, userProfile);
+      CacheService.storeUserProfile(userProfile);
       Log.d(DATABASE, "Profile creation successfully executed.");
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
@@ -66,7 +66,7 @@ public class DatabaseService {
    *                           fails, or if the thread is interrupted while waiting
    */
   public UserProfile getUserProfile(String uid) throws DatabaseException {
-    UserProfile cachedProfile = (UserProfile) CacheService.read(CacheKey.USER_PROFILE);
+    UserProfile cachedProfile = CacheService.readUserProfile();
     // 1. Return immediately if we already have it in memory
     if (cachedProfile != null) return cachedProfile;
 
@@ -79,7 +79,7 @@ public class DatabaseService {
       if (snapshot.exists()) {
         // Save to memory cache so the next activity gets it for $0 billing reads
         cachedProfile = snapshot.toObject(UserProfile.class);
-        CacheService.store(CacheKey.USER_PROFILE, cachedProfile);
+        CacheService.storeUserProfile(cachedProfile);
         return cachedProfile;
       } else {
         throw new DatabaseException("User profile document does not exist on the server.", null);
@@ -108,8 +108,8 @@ public class DatabaseService {
    */
   public List<Category> getCategories(String uid) throws DatabaseException {
     // Return immediately if we already have them in memory
-    List<Category> cachedCategories = (List<Category>) CacheService.read(CacheKey.CATEGORIES);
-    if (cachedCategories != null && !cachedCategories.isEmpty()) {
+    List<Category> cachedCategories = CacheService.readCategories();
+    if (!cachedCategories.isEmpty()) {
       return cachedCategories;
     }
 
@@ -126,7 +126,7 @@ public class DatabaseService {
       List<Category> categoriesList = snapshot.toObjects(Category.class);
 
       // Save to your cache system so subsequent lookups read from local memory
-      CacheService.store(categoriesList);
+      CacheService.storeCategories(categoriesList);
 
       return categoriesList;
 
