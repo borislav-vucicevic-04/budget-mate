@@ -1,5 +1,7 @@
 package com.borislavvucicevic.budgetmate.models.classes;
 
+import com.google.firebase.firestore.DocumentId;
+
 /**
  * Represents a budget category within the BudgetMate application.
  * This model class is designed for seamless serialization and deserialization
@@ -10,7 +12,11 @@ package com.borislavvucicevic.budgetmate.models.classes;
  * for organizing their transactions.</p>
  */
 public class Category {
-
+  /**
+   * The unique identifier of the category.
+   * */
+  @DocumentId
+  private String ID;
   /**
    * The display name of the category.
    */
@@ -26,6 +32,25 @@ public class Category {
    * Required by Cloud Firestore to instantiate the object before inflating its fields.
    */
   public Category() { /* EMPTY CONSTRUCTOR REQUIRED BY THE FIREBASE */ }
+
+
+  /**
+   * Gets the unique identifier of the category
+   *
+   * @return the category ID string
+   * */
+  public String getID() {
+    return ID;
+  }
+
+  /**
+   * Sets the unique identifier of the category.
+   *
+   * @param ID the category name string to set.
+   */
+  public void setID(String ID) {
+    this.ID = ID;
+  }
 
   /**
    * Gets the display name of the category.
