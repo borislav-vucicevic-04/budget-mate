@@ -2,7 +2,10 @@ package com.borislavvucicevic.budgetmate.services;
 
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import com.borislavvucicevic.budgetmate.models.classes.Category;
+import com.borislavvucicevic.budgetmate.models.classes.Transaction;
 import com.borislavvucicevic.budgetmate.models.classes.UserProfile;
 import com.borislavvucicevic.budgetmate.models.enums.CacheKey;
 import com.borislavvucicevic.budgetmate.models.exceptions.DatabaseException;
@@ -12,6 +15,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.WriteBatch;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -137,6 +141,62 @@ public class DatabaseService {
       throw new DatabaseException(errorMessage, cause);
     } catch (InterruptedException e) {
       Log.e(DATABASE, "The category fetch operation thread was interrupted.", e);
+      Thread.currentThread().interrupt();
+      throw new DatabaseException("Database operation was interrupted before completion.", e);
+    }
+  }
+
+  public void insertTransaction(Transaction transaction) throws DatabaseException {
+    try {
+      Category category = transaction.getCategory();
+      String resolvedCategoryID;
+
+      // 1. Handle Category Logic
+      if (category.getID() == null) {
+        DocumentReference newCategoryRef = firestore.collection("categories").document();
+        resolvedCategoryID = newCategoryRef.getId();
+
+        category.setID(resolvedCategoryID);
+
+        Map<String, Object> categoryMap = new HashMap<>();
+        categoryMap.put("userID", transaction.getUserID());
+        categoryMap.put("name", category.getName());
+
+        Tasks.await(newCategoryRef.set(categoryMap));
+        CacheService.putCategory(category);
+        Log.d(DATABASE, "Category successfully inserted with generated ID: " + resolvedCategoryID);
+      } else {
+        resolvedCategoryID = category.getID();
+      }
+
+      // 2. Handle Transaction Logic
+      DocumentReference newTransactionRef = firestore.collection("transactions").document();
+      transaction.setID(newTransactionRef.getId());
+      transaction.setCategoryID(resolvedCategoryID);
+
+      Map<String, Object> transactionMap = new HashMap<>();
+      transactionMap.put("userID", transaction.getUserID());
+      transactionMap.put("amount", transaction.getAmount());
+      transactionMap.put("categoryID", resolvedCategoryID);
+      transactionMap.put("createdOn", transaction.getCreatedOn());
+
+      // Conditionally add optional fields to avoid inserting null values into Firestore
+      if (transaction.getNotes() != null) {
+        transactionMap.put("notes", transaction.getNotes());
+      }
+
+      Tasks.await(newTransactionRef.set(transactionMap));
+      CacheService.putTransaction(transaction);
+      Log.d(DATABASE, "Transaction successfully inserted with ID: " + transaction.getID());
+      Log.d(DATABASE, "insertTransaction completed successfully.");
+
+    } catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+      String errorMessage = (cause != null) ? cause.getMessage() : "Unknown Firestore error occurred";
+      Log.e(DATABASE, "Transaction insertion failed: " + errorMessage, cause);
+      throw new DatabaseException(errorMessage, cause);
+    } catch (InterruptedException e) {
+      Log.e(DATABASE, "The transaction write operation thread was interrupted.", e);
       Thread.currentThread().interrupt();
       throw new DatabaseException("Database operation was interrupted before completion.", e);
     }
