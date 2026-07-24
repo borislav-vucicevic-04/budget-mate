@@ -4,7 +4,7 @@
     <string name="email">Email</string>
     <string name="password">Password</string>
     <string name="repeat_password">Repeat password</string>
-    <string name="home_currency">Choose your home currency</string>
+    <string name="home_currency">Choose your home currency...</string>
     <string name="currency_bam">Bosnia and Herzegovina Convertible Mark (KM)</string>
     <string name="currency_rsd">Serbian Dinar (RSD)</string>
     <string name="currency_usd">US Dollar ($)</string>
@@ -65,4 +65,8 @@
     <string name="discard_changes_message">If you go back now, all your unsaved changes will be deleted permanently.</string>
     <string name="discard_changes_yes">Leave</string>
     <string name="discard_changes_no">Stay</string>
+    <string name="income">Income</string>
+    <string name="expense">Expense</string>
+    <string name="transaction_type">Choose the type of the transaction...</string>
+    <string name="transaction_type_required">You must choose the transaction type</string>
 </resources>

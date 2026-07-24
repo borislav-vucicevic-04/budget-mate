@@ -1,5 +1,6 @@
 package com.borislavvucicevic.budgetmate.models.classes;
 
+import com.borislavvucicevic.budgetmate.models.enums.TransactionType;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentId;
 import com.google.firebase.firestore.Exclude;
@@ -37,6 +38,11 @@ public class Transaction {
    * The unique identifier of the budget category associated with this transaction.
    */
   private String categoryID;
+
+  /**
+   * The indicator indicating if the transaction is income or expense
+   * */
+  private TransactionType type;
 
   /**
    * The full Category object mapping to this transaction.
@@ -77,10 +83,11 @@ public class Transaction {
    * @param createdOn  the timestamp indicating exactly when the transaction occurred
    * @param notes      additional details, comments, or descriptions about the transaction
    */
-  public Transaction(String userID, Float amount, Category category, Timestamp createdOn, String notes) {
+  public Transaction(String userID, Float amount, Category category, TransactionType type, Timestamp createdOn, String notes) {
     this.userID = userID;
     this.amount = amount;
     this.category = category;
+    this.type = type;
     this.createdOn = createdOn;
     this.notes = notes;
   }
@@ -177,6 +184,24 @@ public class Transaction {
   @Exclude
   public void setCategory(Category category) {
     this.category = category;
+  }
+
+  /**
+   * Gets the type of the transaction.
+   *
+   * @return the transaction type, which can be INCOME or EXPENSE
+   * */
+  public TransactionType getType() {
+    return type;
+  }
+
+  /**
+   * Sets the type of the transaction
+   *
+   * @param type the transaction type, represented by the {@link  TransactionType} enum
+   * */
+  public void setType(TransactionType type) {
+    this.type = type;
   }
 
   /**

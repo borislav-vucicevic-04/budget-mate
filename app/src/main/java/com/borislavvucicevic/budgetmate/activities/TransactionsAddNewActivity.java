@@ -8,6 +8,7 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,7 +22,10 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.borislavvucicevic.budgetmate.R;
 import com.borislavvucicevic.budgetmate.models.classes.Category;
+import com.borislavvucicevic.budgetmate.models.classes.CurrencyOption;
 import com.borislavvucicevic.budgetmate.models.classes.Transaction;
+import com.borislavvucicevic.budgetmate.models.classes.TransactionTypeOption;
+import com.borislavvucicevic.budgetmate.models.enums.TransactionType;
 import com.borislavvucicevic.budgetmate.models.exceptions.ValidationException;
 import com.borislavvucicevic.budgetmate.services.AuthService;
 import com.borislavvucicevic.budgetmate.services.CacheService;
@@ -29,6 +33,7 @@ import com.borislavvucicevic.budgetmate.services.DatabaseService;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.Timestamp;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -41,6 +46,7 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
   private TextView tvErrorWrapper;
   private EditText etAmount;
   private EditText etNotes;
+  private Spinner spTransactionType;
   private ProgressBar progressBar;
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -63,6 +69,7 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
     tvErrorWrapper = findViewById(R.id.tvErrorWrapper);
     etAmount = findViewById(R.id.etAmount);
     etNotes = findViewById(R.id.etNotes);
+    spTransactionType = findViewById(R.id.spTransactionType);
     progressBar = findViewById(R.id.progressBar);
     // setting listeners
     btnCreateTransaction.setOnClickListener(v -> this.handleCreateTransaction());
@@ -75,6 +82,9 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
 
     // setting the autocomplete textview
     this.setEtCategory();
+
+    // setting the spinner
+    this.setSpTransactionType();
 
     // setting up the back press interceptor
     getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
@@ -125,6 +135,24 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
     });
   }
 
+  private void setSpTransactionType() {
+    List<TransactionTypeOption> types = new ArrayList<>();
+    types.add(new TransactionTypeOption(getString(R.string.transaction_type), null));
+    types.add(new TransactionTypeOption(getString(R.string.income), TransactionType.INCOME));
+    types.add(new TransactionTypeOption(getString(R.string.expense), TransactionType.EXPENSE));
+    ArrayAdapter<TransactionTypeOption> adapter = new ArrayAdapter<>(
+            this,
+            R.layout.spinner_layout,
+            types
+    );
+    adapter.setDropDownViewResource(
+            R.layout.spinner_layout
+    );
+
+    Spinner spinner = findViewById(R.id.spTransactionType);
+    spinner.setAdapter(adapter);
+  }
+
   /**
    * Handles the asynchronous creation and insertion of a new financial transaction.
    * <p>
@@ -142,6 +170,7 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
     String amount = etAmount.getText().toString().trim();
     String notes = etNotes.getText().toString().trim();
     String categoryName = etCategory.getText().toString().trim();
+    TransactionType transactionType = ((TransactionTypeOption) spTransactionType.getSelectedItem()).getType();
     progressBar.setVisibility(View.VISIBLE);
     Executors.newSingleThreadExecutor().execute(() -> {
       try {
@@ -159,6 +188,7 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
                 authService.getUserID(),
                 Float.parseFloat(amount),
                 category,
+                transactionType,
                 Timestamp.now(),
                 !notes.isEmpty() ? notes : null
         );
@@ -224,9 +254,11 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
     String amount = etAmount.getText().toString().trim();
     String category = etCategory.getText().toString().trim();
     String notes = etNotes.getText().toString().trim();
+    String transactionType = ((TransactionTypeOption) spTransactionType.getSelectedItem()).getTypeAsString();
 
     if(amount.isEmpty()) throw new ValidationException(getString(R.string.amount_required), R.id.etAmount);
     if(Float.parseFloat(amount) == 0) throw new ValidationException(getString(R.string.amount_not_zero), R.id.etAmount);
+    if(transactionType.isEmpty()) throw new ValidationException(getString(R.string.transaction_type_required), null);
     if(category.isEmpty()) throw new ValidationException(getString(R.string.category_required), R.id.etCategory);
     if(notes.length() > 256) throw new ValidationException(getString(R.string.notes_too_long), R.id.etNotes);
   }

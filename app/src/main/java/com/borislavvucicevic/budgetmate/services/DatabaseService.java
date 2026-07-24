@@ -179,6 +179,7 @@ public class DatabaseService {
       transactionMap.put("amount", transaction.getAmount());
       transactionMap.put("categoryID", resolvedCategoryID);
       transactionMap.put("createdOn", transaction.getCreatedOn());
+      transactionMap.put("type", transaction.getType());
 
       // Conditionally add optional fields to avoid inserting null values into Firestore
       if (transaction.getNotes() != null) {
