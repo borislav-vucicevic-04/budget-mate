@@ -70,6 +70,22 @@ public class Transaction {
   }
 
   /**
+   * Constructs a new {@code Transaction} with all required and optional financial details.
+   *
+   * @param amount     the monetary value of the transaction
+   * @param category   the full {@code Category} object linked to this transaction
+   * @param createdOn  the timestamp indicating exactly when the transaction occurred
+   * @param notes      additional details, comments, or descriptions about the transaction
+   */
+  public Transaction(String userID, Float amount, Category category, Timestamp createdOn, String notes) {
+    this.userID = userID;
+    this.amount = amount;
+    this.category = category;
+    this.createdOn = createdOn;
+    this.notes = notes;
+  }
+
+  /**
    * Gets the unique Firestore document identifier.
    *
    * @return the unique document ID string.

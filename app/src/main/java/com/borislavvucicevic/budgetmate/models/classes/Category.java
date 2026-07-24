@@ -33,6 +33,18 @@ public class Category {
    */
   public Category() { /* EMPTY CONSTRUCTOR REQUIRED BY THE FIREBASE */ }
 
+  /**
+   * Constructs a new Category with the specified identifier, name, and owner.
+   *
+   * @param ID     the unique identifier for this category (e.g., a UUID or database primary key)
+   * @param name   the display name or title of the category
+   * @param userID the unique identifier of the user who owns or created this category
+   */
+  public Category(String ID, String name, String userID) {
+    this.ID = ID;
+    this.name = name;
+    this.userID = userID;
+  }
 
   /**
    * Gets the unique identifier of the category

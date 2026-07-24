@@ -18,9 +18,12 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.borislavvucicevic.budgetmate.R;
 import com.borislavvucicevic.budgetmate.models.classes.Category;
+import com.borislavvucicevic.budgetmate.models.classes.Transaction;
 import com.borislavvucicevic.budgetmate.models.exceptions.ValidationException;
 import com.borislavvucicevic.budgetmate.services.AuthService;
+import com.borislavvucicevic.budgetmate.services.CacheService;
 import com.borislavvucicevic.budgetmate.services.DatabaseService;
+import com.google.firebase.Timestamp;
 
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -109,11 +112,45 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
     });
   }
 
+  /**
+   * Handles the asynchronous creation and insertion of a new financial transaction.
+   * <p>
+   * This method extracts the transaction data (amount, notes, and category name) from the UI components
+   * and displays a loading indicator. It then spawns a background thread via an executor to perform
+   * input validation and database insertion to prevent blocking the main UI thread.
+   * </p>
+   *
+   * @see CacheService
+   * @see DatabaseService
+   * @see Transaction
+   * @see Category
+   */
   private void handleCreateTransaction() {
+    String amount = etAmount.getText().toString().trim();
+    String notes = etNotes.getText().toString().trim();
+    String categoryName = etCategory.getText().toString().trim();
     progressBar.setVisibility(View.VISIBLE);
     Executors.newSingleThreadExecutor().execute(() -> {
       try {
         this.handleValidation();
+        // targeting category
+        List<Category> categories = CacheService.readCategories();
+        Category category = categories
+                .stream().
+                filter(item -> categoryName.equals(item.getName()))
+                .findFirst()
+                .orElse(new Category(null, categoryName, authService.getUserID()));
+
+        // creating transaction
+        Transaction transaction = new Transaction(
+                authService.getUserID(),
+                Float.parseFloat(amount),
+                category,
+                Timestamp.now(),
+                !notes.isEmpty() ? notes : null
+        );
+        databaseService.insertTransaction(transaction);
+        runOnUiThread(this::handleSuccess);
       } catch (ValidationException exception) {
         runOnUiThread(() -> this.handleException(exception));
       } catch (Exception exception) {
@@ -122,6 +159,54 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
     });
   }
 
+  /**
+   * Finalizes the transaction creation process on the UI thread after a successful database insertion.
+   * <p>
+   * This method provides visual feedback to the user, stops active loading animations,
+   * and navigates the user back to the previous screen by popping this Activity off the application stack.
+   * </p>
+   *
+   * <p><b>UI Actions Performed:</b></p>
+   * <ul>
+   *   <li>Displays a short-duration {@link Toast} message notifying the user that the transaction was successfully saved.</li>
+   *   <li>Hides the active {@code progressBar} by setting its visibility to {@link android.view.View#GONE}.</li>
+   *   <li>Invokes {@link #finish()} to close the current {@code TransactionsAddNewActivity}.</li>
+   * </ul>
+   *
+   * @see android.widget.Toast
+   * @see android.view.View#GONE
+   * @see #finish()
+   */
+  private void handleSuccess() {
+    Toast.makeText(
+            TransactionsAddNewActivity.this,
+            getString(R.string.transaction_success),
+            Toast.LENGTH_SHORT
+    ).show();
+    progressBar.setVisibility(View.GONE);
+    finish();
+  }
+
+  /**
+   * Validates the transaction input fields against business logic rules before data submission.
+   * <p>
+   * This method extracts text from the UI components, trims whitespace, and evaluates the values sequentially.
+   * If any business rule is violated, it immediately stops execution and throws a custom exception
+   * bundled with a localized error message and the target resource ID of the failing input field.
+   * </p>
+   *
+   * <p><b>Validation Rules Applied:</b></p>
+   * <ul>
+   *   <li><b>Amount Required:</b> Evaluates if the amount field is empty.</li>
+   *   <li><b>Non-Zero Value:</b> Parses the amount to check if the numerical value equals exactly zero.</li>
+   *   <li><b>Category Required:</b> Evaluates if a budget or expense category name has been provided.</li>
+   *   <li><b>Notes Length Boundary:</b> Ensures that optional descriptive notes do not exceed a hard limit of 256 characters.</li>
+   * </ul>
+   *
+   * @throws ValidationException if any input field contains invalid, missing, or out-of-bounds data.
+   *
+   * @see ValidationException
+   */
   private void handleValidation() {
     String amount = etAmount.getText().toString().trim();
     String category = etCategory.getText().toString().trim();
@@ -133,6 +218,18 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
     if(notes.length() > 256) throw new ValidationException(getString(R.string.notes_too_long), R.id.etNotes);
   }
 
+  /**
+   * Processes targeted business logic validation errors to update the user interface and provide feedback.
+   * <p>
+   * This handler maps the details inside a {@link ValidationException} back to the specific input field
+   * that failed validation. It highlights the target component, logs the error stack trace, reveals
+   * a localized error label, pops up a short Toast notification, and hides the loading spinner.
+   * </p>
+   *
+   * @param exception the structural data payload tracking the invalid field ID and localized error text.
+   *
+   * @see ValidationException
+   */
   private void handleException(ValidationException exception) {
     if(exception.getViewID() != null) {
       ((EditText) findViewById(exception.getViewID())).setError(exception.getMessage());
