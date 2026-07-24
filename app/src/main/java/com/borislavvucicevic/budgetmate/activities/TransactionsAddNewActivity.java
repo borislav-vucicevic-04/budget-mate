@@ -12,7 +12,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.OnBackPressedCallback;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
@@ -23,6 +26,7 @@ import com.borislavvucicevic.budgetmate.models.exceptions.ValidationException;
 import com.borislavvucicevic.budgetmate.services.AuthService;
 import com.borislavvucicevic.budgetmate.services.CacheService;
 import com.borislavvucicevic.budgetmate.services.DatabaseService;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.Timestamp;
 
 import java.util.List;
@@ -71,6 +75,15 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
 
     // setting the autocomplete textview
     this.setEtCategory();
+
+    // setting up the back press interceptor
+    getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+      @Override
+      public void handleOnBackPressed() {
+        // Trigger the confirmation layout when the user attempts to exit
+        showDiscardChangesDialog();
+      }
+    });
   }
 
   /**
@@ -269,5 +282,33 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
     ).show();
     tvErrorWrapper.setText(getString(R.string.error_general));
     Log.e(TRANSACTION_ADD_NEW_ACTIVITY, exception.getMessage(), exception);
+  }
+
+  private void showDiscardChangesDialog() {
+    new MaterialAlertDialogBuilder(this, R.style.CustomAlertDialogTheme)
+            .setTitle(R.string.discard_changes_title)
+            .setMessage(R.string.discard_changes_message)
+            .setPositiveButton(R.string.discard_changes_yes, (d, which) -> finish())
+            .setNegativeButton(R.string.discard_changes_no, (d, which) -> d.dismiss())
+            .setCancelable(true)
+            .show();
+
+//    // 1. Force styling on the Positive Button (Yes, Leave)
+//    Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
+//    if (positiveButton != null) {
+//      // Force the background color layer
+//      positiveButton.setBackgroundColor(ContextCompat.getColor(this, R.color.red));
+//      // Force the text color layer
+//      positiveButton.setTextColor(ContextCompat.getColor(this, R.color.white));
+//    }
+//
+//    // 2. Force styling on the Negative Button (Keep Editing)
+//    Button negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+//    if (negativeButton != null) {
+//      // Force the background color layer
+//      negativeButton.setBackgroundColor(ContextCompat.getColor(this, R.color.gray));
+//      // Force the text color layer
+//      negativeButton.setTextColor(ContextCompat.getColor(this, R.color.white));
+//    }
   }
 }

@@ -61,4 +61,8 @@
     <string name="category_required">Category field is required</string>
     <string name="notes_too_long">The notes cannot be longer than 256 characters</string>
     <string name="transaction_success">Transaction has been created sucsessfully</string>
+    <string name="discard_changes_title">Are you sure?</string>
+    <string name="discard_changes_message">If you go back now, all your unsaved changes will be deleted permanently.</string>
+    <string name="discard_changes_yes">Leave</string>
+    <string name="discard_changes_no">Stay</string>
 </resources>
