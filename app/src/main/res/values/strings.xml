@@ -51,7 +51,7 @@
     <!-- Strings used for fragments for navigation -->
     <string name="transactions_title">Your transactions</string>
     <string name="transactions_create_new">Create new transaction</string>
-    <string name="amount">Amount</string>
+    <string name="amount">Amount ([ + Income ] [ - Expense ])</string>
     <string name="category">Category</string>
 
     <string name="notes">Notes (Optional)</string>

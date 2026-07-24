@@ -292,23 +292,5 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
             .setNegativeButton(R.string.discard_changes_no, (d, which) -> d.dismiss())
             .setCancelable(true)
             .show();
-
-//    // 1. Force styling on the Positive Button (Yes, Leave)
-//    Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-//    if (positiveButton != null) {
-//      // Force the background color layer
-//      positiveButton.setBackgroundColor(ContextCompat.getColor(this, R.color.red));
-//      // Force the text color layer
-//      positiveButton.setTextColor(ContextCompat.getColor(this, R.color.white));
-//    }
-//
-//    // 2. Force styling on the Negative Button (Keep Editing)
-//    Button negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE);
-//    if (negativeButton != null) {
-//      // Force the background color layer
-//      negativeButton.setBackgroundColor(ContextCompat.getColor(this, R.color.gray));
-//      // Force the text color layer
-//      negativeButton.setTextColor(ContextCompat.getColor(this, R.color.white));
-//    }
   }
 }
