@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 
 import com.borislavvucicevic.budgetmate.models.classes.Category;
 import com.borislavvucicevic.budgetmate.models.classes.Transaction;
+import com.borislavvucicevic.budgetmate.models.classes.TransactionPage;
 import com.borislavvucicevic.budgetmate.models.classes.UserProfile;
 import com.borislavvucicevic.budgetmate.models.enums.CacheKey;
 import com.borislavvucicevic.budgetmate.models.exceptions.DatabaseException;
@@ -16,6 +17,8 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.WriteBatch;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -199,6 +202,87 @@ public class DatabaseService {
     } catch (InterruptedException e) {
       Log.e(DATABASE, "The transaction write operation thread was interrupted.", e);
       Thread.currentThread().interrupt();
+      throw new DatabaseException("Database operation was interrupted before completion.", e);
+    }
+  }
+
+  public TransactionPage getTransactions(@NotNull String uid, int pageSize, DocumentSnapshot lastVisibleDocument) throws DatabaseException {
+    if (pageSize <= 0) {
+      throw new IllegalArgumentException("Page size must be bigger than 0.");
+    }
+
+    try {
+      Log.d(DATABASE, "Loading user's transactions");
+      /*
+       * Request one additional document so that we can determine
+       * whether another page exists without performing another query.
+       */
+      long queryLimit = (long) pageSize + 1L;
+
+      // creating a query
+      Query query = firestore
+              .collection("transactions")
+              .whereEqualTo("userID", uid)
+              .orderBy("createdOn", Query.Direction.DESCENDING)
+              .limit(queryLimit);
+
+      /*
+       * A null cursor means that this is the first page.
+       */
+      if (lastVisibleDocument != null) {
+        query = query.startAfter(lastVisibleDocument);
+      }
+
+      QuerySnapshot snapshot = Tasks.await(query.get());
+      List<DocumentSnapshot> documents = snapshot.getDocuments();
+      boolean hasNextPage = documents.size() > pageSize;
+
+      /*
+       * The extra document is used only to detect whether another
+       * page exists. Do not include it in the returned page.
+       */
+      int returnedDocumentCount =
+              Math.min(pageSize, documents.size());
+
+      List<Transaction> transactionList = new ArrayList<>(returnedDocumentCount);
+
+      for(int i = 0; i < returnedDocumentCount; i++) {
+        DocumentSnapshot document = documents.get(i);
+        Transaction transaction = document.toObject(Transaction.class);
+
+        if(transaction != null) {
+          transactionList.add(transaction);
+        } else {
+          Log.w(DATABASE, "Could not convert document snapshot to object. ID:  " + document.getId());
+        }
+      }
+
+      DocumentSnapshot newLastVisibleDocument = returnedDocumentCount > 0 ? documents.get(returnedDocumentCount - 1) : null;
+      Log.d(
+              DATABASE,
+              "Loaded "
+                      + transactionList.size()
+                      + " transactions. Has next page: "
+                      + hasNextPage
+      );
+
+      return new TransactionPage(transactionList, newLastVisibleDocument, hasNextPage);
+    } catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+
+      String errorMessage =
+              cause != null && cause.getMessage() != null
+                      ? cause.getMessage()
+                      : "Unknown Firestore transaction query error occurred.";
+
+      Log.e(DATABASE, "Transaction fetch failed: " + errorMessage, cause);
+
+      throw new DatabaseException(errorMessage, cause);
+    } catch (InterruptedException e) {
+      Log.e(DATABASE, "The transaction fetch operation was interrupted.", e);
+
+      Thread.currentThread().interrupt();
+
       throw new DatabaseException("Database operation was interrupted before completion.", e);
     }
   }
