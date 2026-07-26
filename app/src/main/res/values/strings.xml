@@ -69,4 +69,8 @@
     <string name="expense">Expense</string>
     <string name="transaction_type">Choose the type of the transaction...</string>
     <string name="transaction_type_required">You must choose the transaction type</string>
+    <string name="transaction_edit">Edit</string>
+    <string name="transaction_delete">Delete</string>
+    <string name="created_on">Created on</string>
+    <string name="modified_on">Modified on</string>
 </resources>

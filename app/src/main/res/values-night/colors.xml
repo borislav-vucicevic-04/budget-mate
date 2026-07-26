@@ -9,4 +9,7 @@
     <color name="input_hint_color">#6B7280</color>
     <color name="lighter_blue">#7f9dcc</color>
     <color name="tomato">#FF6347</color>
+    <color name="green">#16863D</color>
+    <color name="transaction_notes_background">#FAFBFD</color>
+    <color name="transaction_card_stroke">#DDE1E7</color>
 </resources>
