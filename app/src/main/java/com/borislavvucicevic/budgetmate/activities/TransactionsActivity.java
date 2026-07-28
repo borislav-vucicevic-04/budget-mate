@@ -25,6 +25,7 @@ import com.borislavvucicevic.budgetmate.models.classes.TransactionPage;
 import com.borislavvucicevic.budgetmate.services.AuthService;
 import com.borislavvucicevic.budgetmate.services.CacheService;
 import com.borislavvucicevic.budgetmate.services.DatabaseService;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.DocumentSnapshot;
 
@@ -67,7 +68,7 @@ public class TransactionsActivity extends AppCompatActivity {
     floatingActionButton.setOnClickListener(v -> this.openTransactionsAddNewActivity());
 
     // initializing adapter
-    adapter = new TransactionCardAdapter(this, transactionList, (id, position) -> this.handleDeleteTransaction(id, position));
+    adapter = new TransactionCardAdapter(this, transactionList, this::showDeleteConfirmationDialog);
 
     // setting up the recycler view
     this.setUpRecyclerView();
@@ -187,6 +188,16 @@ public class TransactionsActivity extends AppCompatActivity {
             exception.getMessage(),
             exception
     );
+  }
+
+  private void showDeleteConfirmationDialog(@NonNull String ID, int position) {
+    new MaterialAlertDialogBuilder(this, R.style.CustomAlertDialogTheme)
+            .setTitle(R.string.delete_transaction_title)
+            .setMessage(R.string.delete_transaction_message)
+            .setPositiveButton(R.string.delete_transaction_yes, (d, which) -> handleDeleteTransaction(ID, position))
+            .setNegativeButton(R.string.delete_transaction_no, (d, which) -> d.dismiss())
+            .setCancelable(true)
+            .show();
   }
 
   private void handleDeleteTransaction(@NonNull String ID, int position) {

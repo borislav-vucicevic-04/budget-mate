@@ -12,4 +12,5 @@
     <color name="green">#16863D</color>
     <color name="transaction_notes_background">#FAFBFD</color>
     <color name="transaction_card_stroke">#DDE1E7</color>
+    <color name="indicator_overlay">#4D878787</color>
 </resources>
