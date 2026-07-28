@@ -62,7 +62,7 @@ public class UserProfileActivity extends AppCompatActivity {
       UserProfile userProfile = databaseService.getUserProfile(uid);
       runOnUiThread(() -> {
         // parsing homeCurrency
-        CurrencyCode currencyCode = CurrencyCode.valueOf(userProfile.getHomeCurrency());
+        CurrencyCode currencyCode = userProfile.getHomeCurrency();
         String homeCurrency = "";
 
         switch (currencyCode) {

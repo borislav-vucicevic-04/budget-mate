@@ -9,10 +9,12 @@ import com.borislavvucicevic.budgetmate.models.classes.Transaction;
 import com.borislavvucicevic.budgetmate.models.classes.UserProfile;
 import com.borislavvucicevic.budgetmate.models.enums.CacheKey;
 import com.borislavvucicevic.budgetmate.models.exceptions.CacheException;
+import com.google.firebase.firestore.DocumentSnapshot;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
@@ -27,6 +29,16 @@ public class CacheService {
    * The cached profile information of the currently authenticated user.
    */
   private static UserProfile userProfile;
+
+  /**
+   * The cached indicator indicating if there are more transactions to be loaded.
+   * */
+  private static boolean hasNextPage = true;
+
+  /**
+   * The cached last document that has been fetched from the database to improve query fetching performance
+   * */
+  private static DocumentSnapshot lastVisibleDocument = null;
 
   /**
    * A map storing user-defined transaction categories, indexed by their unique String ID.
@@ -50,6 +62,26 @@ public class CacheService {
    */
   public static void storeUserProfile(@NonNull UserProfile profile) {
     userProfile = profile;
+  }
+
+  /**
+   * Stores indicator indicating if there are more transactions to be loaded
+   *
+   * @param hasNextPage the boolean value indicating if there are more transactions to be loaded.
+   * */
+  public static void storeHasNextPage(boolean hasNextPage) {
+    CacheService.hasNextPage = hasNextPage;
+  }
+
+
+  /**
+   * Stores last document fetched from the database, that is used to improve query performance
+   * and allow pagination.
+   *
+   * @param documentSnapshot the last document fetched from the database.
+   * */
+  public static void storeLastVisibleDocument(DocumentSnapshot documentSnapshot) {
+    lastVisibleDocument = documentSnapshot;
   }
 
   /**
@@ -109,6 +141,16 @@ public class CacheService {
   }
 
   /**
+   * Retrieves a single record from the categories cache based on its unique ID string.
+   * If no record is found, it returns null.
+   *
+   * @param id the unique String identifier of the category to retrieve
+   * */
+  public static Category getCategory(@NonNull String id) {
+    return categories.getOrDefault(id, null);
+  }
+
+  /**
    * Safely removes a record from the categories cache based on its unique ID string.
    * Fails silently without throwing an exception if the record does not exist in the hashmap.
    *
@@ -138,6 +180,24 @@ public class CacheService {
   }
 
   /**
+   * Retrieves the currently cached indicator indicating if there are more transactions to be loaded
+   *
+   * @return cached boolean indicator.
+   * */
+  public static boolean readHasNextPage() {
+    return hasNextPage;
+  }
+
+  /**
+   * Retrieves the cached last document fetched from the database.
+   *
+   * @return the cached {@link DocumentSnapshot} object, or {@code null} if no documents have been fetched
+   * */
+  public static DocumentSnapshot readLastVisibleDocument() {
+    return lastVisibleDocument;
+  }
+
+  /**
    * Exposes the contents of the categories cache converted into a sequential collection.
    *
    * @return a new {@link List} containing all currently cached {@link Category} objects
@@ -152,7 +212,9 @@ public class CacheService {
    * @return a new {@link List} containing all currently cached {@link Transaction} objects
    */
   public static List<Transaction> readTransactions() {
-    return new ArrayList<>(transactions.values());
+    ArrayList<Transaction> list = new ArrayList<>(transactions.values());
+    list.sort(Comparator.comparing(Transaction::getCreatedOn).reversed());
+    return list;
   }
 
   /**

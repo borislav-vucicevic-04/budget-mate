@@ -123,7 +123,7 @@ public class RegisterActivity extends AppCompatActivity {
         this.validateForm();
         String uid = authService.createUserAccount(email, password);
         authService.sendVerificationEmail();
-        databaseService.createUserProfile(uid, new UserProfile(fullName, email, homeCurrency));
+        databaseService.createUserProfile(uid, new UserProfile(fullName, email, CurrencyCode.valueOf(homeCurrency)));
         // if everything went without throwing an exception and account has been created successfully
         runOnUiThread(this::handleSuccess);
       } catch(ValidationException exception) {
