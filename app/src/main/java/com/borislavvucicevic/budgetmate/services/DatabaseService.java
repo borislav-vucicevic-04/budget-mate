@@ -57,6 +57,7 @@ public class DatabaseService {
       throw new DatabaseException("Database operation was interrupted before completion.", e);
     }
   }
+
   /**
    * Retrieves the user profile for the specified user ID, prioritizing the local memory cache.
    * <p>
@@ -280,6 +281,53 @@ public class DatabaseService {
       throw new DatabaseException(errorMessage, cause);
     } catch (InterruptedException e) {
       Log.e(DATABASE, "The transaction fetch operation was interrupted.", e);
+
+      Thread.currentThread().interrupt();
+
+      throw new DatabaseException("Database operation was interrupted before completion.", e);
+    }
+  }
+
+  /**
+   * Deletes a transaction from Firestore using its unique document ID.
+   *
+   * This method blocks while waiting for Firestore, so it must be called
+   * from a background thread.
+   *
+   * @param transactionID the unique Firestore document ID
+   * @throws DatabaseException if the deletion fails or is interrupted
+   */
+  public void deleteTransaction(String transactionID) throws DatabaseException {
+    if (transactionID == null || transactionID.trim().isEmpty()) {
+      throw new DatabaseException("Transaction ID cannot be null or empty.", null);
+    }
+
+    try {
+      DocumentReference transactionReference = firestore
+              .collection("transactions")
+              .document(transactionID);
+
+      // Wait until Firestore confirms that the document was deleted.
+      Tasks.await(transactionReference.delete());
+
+      // Update the local cache only after the database operation succeeds.
+      CacheService.removeTransaction(transactionID);
+
+      Log.d(DATABASE, "Transaction successfully deleted with ID: " + transactionID);
+      Log.d(DATABASE, "deleteTransaction completed successfully.");
+    } catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+
+      String errorMessage =
+              cause != null && cause.getMessage() != null
+                      ? cause.getMessage()
+                      : "Unknown Firestore deletion error occurred.";
+
+      Log.e(DATABASE, "Transaction deletion failed: " + errorMessage, cause);
+
+      throw new DatabaseException(errorMessage, cause);
+    } catch (InterruptedException e) {
+      Log.e(DATABASE, "The transaction deletion operation thread was interrupted.", e);
 
       Thread.currentThread().interrupt();
 
