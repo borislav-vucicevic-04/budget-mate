@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -39,9 +40,11 @@ public class TransactionsActivity extends AppCompatActivity {
   private final ArrayList<Transaction> transactionList = new ArrayList<>(CacheService.readTransactions());
   private DocumentSnapshot lastVisibleDocument = CacheService.readLastVisibleDocument();
   private boolean hasNextPage = CacheService.readHasNextPage();
+  private boolean isLoadingTransactions = false;
   private TransactionCardAdapter adapter;
   private RecyclerView recyclerView;
-  private boolean isLoadingTransactions = false;
+  private LinearLayout processIndicator;
+  private TextView tvProcessMessage;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -56,13 +59,15 @@ public class TransactionsActivity extends AppCompatActivity {
 
     // grabbing widgets
     recyclerView = findViewById(R.id.recyclerView);
+    processIndicator = findViewById(R.id.processIndicator);
+    tvProcessMessage = findViewById(R.id.tvProcessMessage);
     FloatingActionButton floatingActionButton = findViewById(R.id.floatingActionButton);
 
     // setting listeners
     floatingActionButton.setOnClickListener(v -> this.openTransactionsAddNewActivity());
 
     // initializing adapter
-    adapter = new TransactionCardAdapter(this, transactionList);
+    adapter = new TransactionCardAdapter(this, transactionList, (id, position) -> this.handleDeleteTransaction(id, position));
 
     // setting up the recycler view
     this.setUpRecyclerView();
@@ -113,6 +118,17 @@ public class TransactionsActivity extends AppCompatActivity {
     startActivity(new Intent(TransactionsActivity.this, TransactionsAddNewActivity.class));
   }
 
+  private void toggleProcessIndicator(Integer resourceStringID) {
+    processIndicator.setVisibility(
+            processIndicator.getVisibility() == View.GONE ?
+                    View.VISIBLE :
+                    View.GONE
+    );
+
+    if(resourceStringID != null) {
+      tvProcessMessage.setText(getString(resourceStringID));
+    }
+  }
   private void loadTransactions() {
     // Exit immediately if loading is in process, or there are no more transactions to load
     if(this.isLoadingTransactions || !this.hasNextPage) {
@@ -144,7 +160,7 @@ public class TransactionsActivity extends AppCompatActivity {
         CacheService.storeTransactions(loadedTransactions);
         runOnUiThread(() -> this.loadSuccess(transactionList.size() - loadedTransactions.size(), loadedTransactions.size()));
       } catch (Exception exception) {
-        runOnUiThread(() -> this.loadFail(exception));
+        runOnUiThread(() -> this.handleException(exception));
       } finally {
         // opening the loading gate
         this.isLoadingTransactions = false;
@@ -160,7 +176,7 @@ public class TransactionsActivity extends AppCompatActivity {
     // refreshing data
     adapter.notifyItemRangeInserted(positionStart, itemCount);
   }
-  private void loadFail(Exception exception) {
+  private void handleException(Exception exception) {
     Toast.makeText(
             TransactionsActivity.this,
             getString(R.string.error_general),
@@ -171,5 +187,32 @@ public class TransactionsActivity extends AppCompatActivity {
             exception.getMessage(),
             exception
     );
+  }
+
+  private void handleDeleteTransaction(@NonNull String ID, int position) {
+    this.toggleProcessIndicator(R.string.deleting_transaction);
+    Executors.newSingleThreadExecutor().execute(() -> {
+      try {
+        databaseService.deleteTransaction(ID);
+        transactionList.remove(position);
+        // fake pause of 2 seconds to make process indicator visible for at least 2 seconds
+        Thread.sleep(2000);
+        runOnUiThread(() -> {
+          toggleProcessIndicator(null);
+          adapter.notifyItemRemoved(position);
+          Toast.makeText(
+                  TransactionsActivity.this,
+                  getString(R.string.transaction_deleted),
+                  Toast.LENGTH_SHORT
+          ).show();
+        });
+      } catch(Exception exception) {
+        runOnUiThread(() -> {
+          toggleProcessIndicator(null);
+          handleException(exception);
+        });
+      }
+
+    });
   }
 }

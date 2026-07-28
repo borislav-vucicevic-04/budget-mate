@@ -5,6 +5,7 @@ import android.icu.text.SimpleDateFormat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -36,14 +37,19 @@ import java.util.ArrayList;
  * and red for expense transactions. The user's home currency is obtained
  * from the cached {@link UserProfile}.</p>
  */
-public class TransactionCardAdapter
-        extends RecyclerView.Adapter<TransactionCardAdapter.ViewHolder> {
+public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCardAdapter.ViewHolder> {
+  @FunctionalInterface
+  public interface DeleteTransactionHandler {
+    void onDelete(@NonNull String id, int position);
+  }
 
   /** Context used to inflate layouts and access application resources. */
   private final Context context;
 
   /** Transactions displayed by this adapter. */
   private final ArrayList<Transaction> transactions;
+
+  private final DeleteTransactionHandler deleteTransactionHandler;
 
   /**
    * Creates a new transaction card adapter.
@@ -53,10 +59,12 @@ public class TransactionCardAdapter
    */
   public TransactionCardAdapter(
           Context context,
-          ArrayList<Transaction> transactions
+          ArrayList<Transaction> transactions,
+          DeleteTransactionHandler deleteTransactionHandler
   ) {
     this.context = context;
     this.transactions = transactions;
+    this.deleteTransactionHandler = deleteTransactionHandler;
   }
 
   /**
@@ -92,6 +100,7 @@ public class TransactionCardAdapter
   ) {
     Transaction transaction = transactions.get(position);
     holder.setDetails(transaction, position);
+    holder.bindDeleteTransactionMethod(deleteTransactionHandler, transaction.getID(), position);
   }
 
   /**
@@ -112,12 +121,9 @@ public class TransactionCardAdapter
    * corresponding data is available.</p>
    */
   static class ViewHolder extends RecyclerView.ViewHolder {
-
     /** Context used to access strings, colours, and other resources. */
     private final Context context;
 
-    /** Current position of this item in the RecyclerView. */
-    private int positionInRecyclerView;
 
     /** Displays the transaction's position and unique ID. */
     private final TextView tvTransactionId;
@@ -136,6 +142,8 @@ public class TransactionCardAdapter
 
     /** Displays the date on which the transaction was last modified. */
     private final TextView tvTransactionModifiedOn;
+
+    private final Button btnDeleteTransaction;
 
     /** Container used to display the transaction notes section. */
     private final MaterialCardView cardTransactionNotes;
@@ -167,6 +175,8 @@ public class TransactionCardAdapter
               itemView.findViewById(R.id.tvTransactionCreatedOn);
       tvTransactionModifiedOn =
               itemView.findViewById(R.id.tvTransactionModifiedOn);
+      btnDeleteTransaction =
+              itemView.findViewById(R.id.btnDeleteTransaction);
       cardTransactionNotes =
               itemView.findViewById(R.id.cardTransactionNotes);
       layoutModifiedOn =
@@ -188,8 +198,6 @@ public class TransactionCardAdapter
      * @param position the transaction's position in the RecyclerView
      */
     private void setDetails(Transaction transaction, int position) {
-      this.positionInRecyclerView = position;
-
       // Getting the user profile from the cache.
       UserProfile userProfile = CacheService.readUserProfile();
 
@@ -198,8 +206,7 @@ public class TransactionCardAdapter
               new SimpleDateFormat("dd.MM.yyyy");
 
       // Parsing values.
-      String positionAndId =
-              (position + 1) + "#" + transaction.getID();
+      String id = transaction.getID();
 
       String type =
               transaction.getType() == TransactionType.EXPENSE
@@ -222,7 +229,7 @@ public class TransactionCardAdapter
                       : context.getColor(R.color.green);
 
       // Displaying values.
-      tvTransactionId.setText(positionAndId);
+      tvTransactionId.setText(id);
       tvTransactionCategoryAndType.setText(categoryAndType);
       tvTransactionAmount.setText(amount);
       tvTransactionCreatedOn.setText(
@@ -249,6 +256,9 @@ public class TransactionCardAdapter
         tvTransactionNotes.setText(transaction.getNotes());
         cardTransactionNotes.setVisibility(View.VISIBLE);
       }
+    }
+    private void bindDeleteTransactionMethod(DeleteTransactionHandler deleteTransactionHandler, String ID, int position) {
+      btnDeleteTransaction.setOnClickListener((v) -> deleteTransactionHandler.onDelete(ID, position));
     }
   }
 }
