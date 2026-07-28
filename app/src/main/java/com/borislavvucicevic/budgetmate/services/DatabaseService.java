@@ -11,8 +11,10 @@ import com.borislavvucicevic.budgetmate.models.classes.UserProfile;
 import com.borislavvucicevic.budgetmate.models.enums.CacheKey;
 import com.borislavvucicevic.budgetmate.models.exceptions.DatabaseException;
 import com.google.android.gms.tasks.Tasks;
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QuerySnapshot;
@@ -332,6 +334,141 @@ public class DatabaseService {
       Thread.currentThread().interrupt();
 
       throw new DatabaseException("Database operation was interrupted before completion.", e);
+    }
+  }
+  /**
+   * Updates an existing transaction in Firestore.
+   *
+   * If the transaction contains a new category without an ID, the category
+   * and transaction update are committed together in one batch.
+   *
+   * This method blocks while waiting for Firestore and must therefore be
+   * called from a background thread.
+   *
+   * @param transaction the transaction containing the updated values
+   * @throws DatabaseException if the update fails or is interrupted
+   */
+  public void updateTransaction(Transaction transaction) throws DatabaseException {
+    if (transaction == null) {
+      throw new DatabaseException("Transaction cannot be null.", null);
+    }
+
+    if (transaction.getID() == null || transaction.getID().trim().isEmpty()) {
+      throw new DatabaseException("Transaction ID cannot be null or empty.", null);
+    }
+
+    if (transaction.getUserID() == null || transaction.getUserID().trim().isEmpty()) {
+      throw new DatabaseException("Transaction user ID cannot be null or empty.", null);
+    }
+
+    try {
+      WriteBatch batch = firestore.batch();
+
+      // get current category
+      Category category = transaction.getCategory();
+
+      // a holder for a new category if one needs to be created
+      Category newlyCreatedCategory = null;
+
+      // id of already existent or newly created category
+      String resolvedCategoryID = transaction.getCategoryID();
+
+      /*
+       * Resolve the transaction category.
+       *
+       * When the category has no ID, it is a new category and must
+       * be inserted before it can be referenced by the transaction.
+       */
+      if (category != null) {
+        if (category.getID() == null || category.getID().trim().isEmpty()) {
+
+          // creating new category document reference
+          DocumentReference newCategoryReference = firestore
+                  .collection("categories")
+                  .document();
+
+          // retrieving id of the newly created category
+          resolvedCategoryID = newCategoryReference.getId();
+
+          category.setID(resolvedCategoryID);
+
+          // preparing new category
+          Map<String, Object> categoryMap = new HashMap<>();
+          categoryMap.put("userID", transaction.getUserID());
+          categoryMap.put("name", category.getName());
+
+          // adding the category map to the batch for execution
+          batch.set(newCategoryReference, categoryMap);
+
+          newlyCreatedCategory = category;
+        } else {
+          resolvedCategoryID = category.getID();
+        }
+      }
+
+      if (resolvedCategoryID == null || resolvedCategoryID.trim().isEmpty()) {
+        throw new DatabaseException("The transaction must have a valid category ID.", null);
+      }
+
+      // getting current date and time of the modification
+      Timestamp modifiedOn = Timestamp.now();
+
+      // updating the object in memory
+      transaction.setCategoryID(resolvedCategoryID);
+      transaction.setModifiedOn(modifiedOn);
+
+      // getting transaction's document reference
+      DocumentReference transactionReference = firestore
+              .collection("transactions")
+              .document(transaction.getID());
+
+      // preparing the transaction map for updates
+      Map<String, Object> transactionUpdates = new HashMap<>();
+      transactionUpdates.put("amount", transaction.getAmount());
+      transactionUpdates.put("categoryID", resolvedCategoryID);
+      transactionUpdates.put("type", transaction.getType());
+      transactionUpdates.put("modifiedOn", modifiedOn);
+      transactionUpdates.put("notes", transaction.getNotes() != null ? transaction.getNotes() : FieldValue.delete());
+
+      /*
+       * update() fails if the transaction document does not exist,
+       * which is preferable to silently creating another document.
+       */
+      batch.update(
+              transactionReference,
+              transactionUpdates
+      );
+
+      Tasks.await(batch.commit());
+
+      /*
+       * Update the cache only after Firestore confirms that the
+       * entire batch was committed successfully.
+       */
+      if (newlyCreatedCategory != null) {
+        CacheService.putCategory(newlyCreatedCategory);
+      }
+
+      CacheService.putTransaction(transaction);
+
+      Log.d(DATABASE, "Transaction successfully updated with ID: " + transaction.getID());
+      Log.d(DATABASE, "updateTransaction completed successfully.");
+
+    } catch (ExecutionException exception) {
+      Throwable cause = exception.getCause();
+
+      String errorMessage = cause != null && cause.getMessage() != null
+                      ? cause.getMessage()
+                      : "Unknown Firestore update error occurred.";
+
+      Log.e(DATABASE, "Transaction update failed: " + errorMessage, cause);
+
+      throw new DatabaseException(errorMessage, cause);
+
+    } catch (InterruptedException exception) {
+      Log.e(DATABASE, "The transaction update operation thread was interrupted.", exception);
+      Thread.currentThread().interrupt();
+      throw new DatabaseException("Database operation was interrupted before completion.", exception);
     }
   }
 }
