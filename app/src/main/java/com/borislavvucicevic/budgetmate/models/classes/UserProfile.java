@@ -1,5 +1,7 @@
 package com.borislavvucicevic.budgetmate.models.classes;
 
+import com.borislavvucicevic.budgetmate.models.enums.CurrencyCode;
+
 /**
  * Represents the data model for an application user within the BudgetMate application.
  * This class is structured as a Plain Old Java Object (POJO) to enable seamless
@@ -21,7 +23,7 @@ public class UserProfile {
   /**
    * The base currency code (e.g., "USD", "EUR") selected by the user for financial tracking.
    */
-  private String homeCurrency;
+  private CurrencyCode homeCurrency;
 
   /**
    * Default no-argument constructor.
@@ -40,7 +42,7 @@ public class UserProfile {
    * @param email        the email address of the user
    * @param homeCurrency the primary currency code used for budget calculations
    */
-  public UserProfile(String fullName, String email, String homeCurrency) {
+  public UserProfile(String fullName, String email, CurrencyCode homeCurrency) {
     this.fullName = fullName;
     this.email = email;
     this.homeCurrency = homeCurrency;
@@ -87,7 +89,7 @@ public class UserProfile {
    *
    * @return the three-letter currency code string
    */
-  public String getHomeCurrency() {
+  public CurrencyCode getHomeCurrency() {
     return homeCurrency;
   }
 
@@ -96,7 +98,7 @@ public class UserProfile {
    *
    * @param homeCurrency the three-letter currency code string to set
    */
-  public void setHomeCurrency(String homeCurrency) {
+  public void setHomeCurrency(CurrencyCode homeCurrency) {
     this.homeCurrency = homeCurrency;
   }
 }

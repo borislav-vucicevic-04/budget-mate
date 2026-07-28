@@ -23,5 +23,17 @@ public enum CurrencyCode {
   /**
    * United States Dollar.
    */
-  USD
+  USD;
+
+  public static String parse(CurrencyCode code) {
+    if(code == null) return "";
+
+    switch (code) {
+      case BAM: return "KM";
+      case EUR: return "€";
+      case USD: return "$";
+      case RSD: return "DIN";
+      default: return "";
+    }
+  }
 }
