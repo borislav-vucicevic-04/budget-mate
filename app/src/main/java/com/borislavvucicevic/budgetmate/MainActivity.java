@@ -3,7 +3,6 @@ package com.borislavvucicevic.budgetmate;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Toast;
 
@@ -15,17 +14,16 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.borislavvucicevic.budgetmate.activities.LoginActivity;
 import com.borislavvucicevic.budgetmate.activities.TransactionsActivity;
-import com.borislavvucicevic.budgetmate.activities.TransactionsAddNewActivity;
 import com.borislavvucicevic.budgetmate.activities.UserProfileActivity;
 import com.borislavvucicevic.budgetmate.models.classes.Category;
 import com.borislavvucicevic.budgetmate.models.classes.UserProfile;
+import com.borislavvucicevic.budgetmate.models.enums.CacheKey;
 import com.borislavvucicevic.budgetmate.services.AuthService;
 import com.borislavvucicevic.budgetmate.services.CacheService;
 import com.borislavvucicevic.budgetmate.services.DatabaseService;
 
 import java.util.List;
 import java.util.concurrent.Executors;
-import java.util.stream.Collectors;
 
 public class MainActivity extends AppCompatActivity {
   public static final String MAIN_ACTIVITY = "MAIN_ACTIVITY";
@@ -66,8 +64,8 @@ public class MainActivity extends AppCompatActivity {
         List<Category> categories = databaseService.getCategories(uid);
         UserProfile userProfile = databaseService.getUserProfile(uid);
         // storing retrieved data in cache
-        CacheService.storeCategories(categories);
-        CacheService.storeUserProfile(userProfile);
+        CacheService.store(CacheKey.CATEGORIES, categories);
+        CacheService.store(CacheKey.USER_PROFILE, userProfile);
         runOnUiThread(() -> {
           // displaying toast about the action succeeding
           Toast.makeText(

@@ -1,5 +1,6 @@
 package com.borislavvucicevic.budgetmate.activities;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -9,6 +10,8 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
@@ -22,6 +25,7 @@ import com.borislavvucicevic.budgetmate.models.classes.Category;
 import com.borislavvucicevic.budgetmate.models.classes.Transaction;
 import com.borislavvucicevic.budgetmate.models.classes.TransactionCardAdapter;
 import com.borislavvucicevic.budgetmate.models.classes.TransactionPage;
+import com.borislavvucicevic.budgetmate.models.enums.CacheKey;
 import com.borislavvucicevic.budgetmate.services.AuthService;
 import com.borislavvucicevic.budgetmate.services.CacheService;
 import com.borislavvucicevic.budgetmate.services.DatabaseService;
@@ -38,9 +42,9 @@ public class TransactionsActivity extends AppCompatActivity {
   private final int PAGE_SIZE = 20;
   private final AuthService authService = new AuthService();
   private final DatabaseService databaseService = new DatabaseService();
-  private final ArrayList<Transaction> transactionList = new ArrayList<>(CacheService.readTransactions());
-  private DocumentSnapshot lastVisibleDocument = CacheService.readLastVisibleDocument();
-  private boolean hasNextPage = CacheService.readHasNextPage();
+  private final ArrayList<Transaction> transactionList = new ArrayList<>(CacheService.readList(CacheKey.TRANSACTIONS));
+  private DocumentSnapshot lastVisibleDocument = CacheService.read(CacheKey.LAST_VISIBLE_DOCUMENT, DocumentSnapshot.class);
+  private boolean hasNextPage = Boolean.TRUE.equals(CacheService.read(CacheKey.HAS_NEXT_PAGE, Boolean.class));
   private boolean isLoadingTransactions = false;
   private TransactionCardAdapter adapter;
   private RecyclerView recyclerView;
@@ -65,7 +69,7 @@ public class TransactionsActivity extends AppCompatActivity {
     FloatingActionButton floatingActionButton = findViewById(R.id.floatingActionButton);
 
     // setting listeners
-    floatingActionButton.setOnClickListener(v -> this.openTransactionsAddNewActivity());
+    floatingActionButton.setOnClickListener(v -> this.openTransactionsUpsertActivity());
 
     // initializing adapter
     adapter = new TransactionCardAdapter(this, transactionList, this::showDeleteConfirmationDialog);
@@ -82,8 +86,8 @@ public class TransactionsActivity extends AppCompatActivity {
   @Override
   public void onDetachedFromWindow() {
     super.onDetachedFromWindow();
-    CacheService.storeHasNextPage(this.hasNextPage);
-    CacheService.storeLastVisibleDocument(this.lastVisibleDocument);
+    CacheService.store(CacheKey.HAS_NEXT_PAGE, this.hasNextPage);
+    CacheService.store(CacheKey.LAST_VISIBLE_DOCUMENT, this.lastVisibleDocument);
   }
 
   private void setUpRecyclerView() {
@@ -115,8 +119,15 @@ public class TransactionsActivity extends AppCompatActivity {
       }
     });
   }
-  private void openTransactionsAddNewActivity() {
-    startActivity(new Intent(TransactionsActivity.this, TransactionsAddNewActivity.class));
+  private void openTransactionsUpsertActivity() {
+    ActivityResultLauncher<Intent> transactionUpsertLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+              if(result.getResultCode() == Activity.RESULT_OK) {
+                Transaction transactionUpsertObject = CacheService.read(CacheKey.TRANSACTION_UPSERT_OBJECT, Transaction.class);
+              }
+            }
+    );
   }
 
   private void toggleProcessIndicator(Integer resourceStringID) {
@@ -153,12 +164,12 @@ public class TransactionsActivity extends AppCompatActivity {
 
         // fetching transaction categories
         for(Transaction transaction : loadedTransactions) {
-          Category category = CacheService.getCategory(transaction.getCategoryID());
+          Category category = CacheService.get(CacheKey.CATEGORIES, transaction.getCategoryID(), Category.class);
           transaction.setCategory(category != null ? category : new Category(transaction.getUserID(), null, "No category"));
         }
 
         this.transactionList.addAll(loadedTransactions);
-        CacheService.storeTransactions(loadedTransactions);
+        CacheService.store(CacheKey.TRANSACTIONS, loadedTransactions);
         runOnUiThread(() -> this.loadSuccess(transactionList.size() - loadedTransactions.size(), loadedTransactions.size()));
       } catch (Exception exception) {
         runOnUiThread(() -> this.handleException(exception));

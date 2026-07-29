@@ -2,8 +2,6 @@ package com.borislavvucicevic.budgetmate.services;
 
 import android.util.Log;
 
-import androidx.annotation.NonNull;
-
 import com.borislavvucicevic.budgetmate.models.classes.Category;
 import com.borislavvucicevic.budgetmate.models.classes.Transaction;
 import com.borislavvucicevic.budgetmate.models.classes.TransactionPage;
@@ -46,7 +44,7 @@ public class DatabaseService {
       user.put("homeCurrency", userProfile.getHomeCurrency());
 
       Tasks.await(documentReference.set(user));
-      CacheService.storeUserProfile(userProfile);
+      CacheService.store(CacheKey.USER_PROFILE, userProfile);
       Log.d(DATABASE, "Profile creation successfully executed.");
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
@@ -76,7 +74,7 @@ public class DatabaseService {
    *                           fails, or if the thread is interrupted while waiting
    */
   public UserProfile getUserProfile(String uid) throws DatabaseException {
-    UserProfile cachedProfile = CacheService.readUserProfile();
+    UserProfile cachedProfile = CacheService.read(CacheKey.USER_PROFILE, UserProfile.class);
     // 1. Return immediately if we already have it in memory
     if (cachedProfile != null) return cachedProfile;
 
@@ -89,7 +87,7 @@ public class DatabaseService {
       if (snapshot.exists()) {
         // Save to memory cache so the next activity gets it for $0 billing reads
         cachedProfile = snapshot.toObject(UserProfile.class);
-        CacheService.storeUserProfile(cachedProfile);
+        CacheService.store(CacheKey.USER_PROFILE, cachedProfile);
         return cachedProfile;
       } else {
         throw new DatabaseException("User profile document does not exist on the server.", null);
@@ -118,7 +116,7 @@ public class DatabaseService {
    */
   public List<Category> getCategories(String uid) throws DatabaseException {
     // Return immediately if we already have them in memory
-    List<Category> cachedCategories = CacheService.readCategories();
+    List<Category> cachedCategories = CacheService.readList(CacheKey.CATEGORIES);
     if (!cachedCategories.isEmpty()) {
       return cachedCategories;
     }
@@ -136,7 +134,7 @@ public class DatabaseService {
       List<Category> categoriesList = snapshot.toObjects(Category.class);
 
       // Save to your cache system so subsequent lookups read from local memory
-      CacheService.storeCategories(categoriesList);
+      CacheService.store(CacheKey.CATEGORIES, categoriesList);
 
       return categoriesList;
 
@@ -169,7 +167,7 @@ public class DatabaseService {
         categoryMap.put("name", category.getName());
 
         Tasks.await(newCategoryRef.set(categoryMap));
-        CacheService.putCategory(category);
+        CacheService.put(CacheKey.CATEGORIES, category);
         Log.d(DATABASE, "Category successfully inserted with generated ID: " + resolvedCategoryID);
       } else {
         resolvedCategoryID = category.getID();
@@ -193,7 +191,7 @@ public class DatabaseService {
       }
 
       Tasks.await(newTransactionRef.set(transactionMap));
-      CacheService.putTransaction(transaction);
+      CacheService.put(CacheKey.TRANSACTIONS, transaction);
       Log.d(DATABASE, "Transaction successfully inserted with ID: " + transaction.getID());
       Log.d(DATABASE, "insertTransaction completed successfully.");
 
@@ -292,7 +290,6 @@ public class DatabaseService {
 
   /**
    * Deletes a transaction from Firestore using its unique document ID.
-   *
    * This method blocks while waiting for Firestore, so it must be called
    * from a background thread.
    *
@@ -313,7 +310,7 @@ public class DatabaseService {
       Tasks.await(transactionReference.delete());
 
       // Update the local cache only after the database operation succeeds.
-      CacheService.removeTransaction(transactionID);
+      CacheService.remove(CacheKey.TRANSACTIONS, transactionID);
 
       Log.d(DATABASE, "Transaction successfully deleted with ID: " + transactionID);
       Log.d(DATABASE, "deleteTransaction completed successfully.");
@@ -338,10 +335,8 @@ public class DatabaseService {
   }
   /**
    * Updates an existing transaction in Firestore.
-   *
    * If the transaction contains a new category without an ID, the category
    * and transaction update are committed together in one batch.
-   *
    * This method blocks while waiting for Firestore and must therefore be
    * called from a background thread.
    *
@@ -446,10 +441,10 @@ public class DatabaseService {
        * entire batch was committed successfully.
        */
       if (newlyCreatedCategory != null) {
-        CacheService.putCategory(newlyCreatedCategory);
+        CacheService.put(CacheKey.CATEGORIES, newlyCreatedCategory);
       }
 
-      CacheService.putTransaction(transaction);
+      CacheService.put(CacheKey.TRANSACTIONS, transaction);
 
       Log.d(DATABASE, "Transaction successfully updated with ID: " + transaction.getID());
       Log.d(DATABASE, "updateTransaction completed successfully.");
