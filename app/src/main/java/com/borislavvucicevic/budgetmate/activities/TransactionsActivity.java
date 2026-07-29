@@ -10,6 +10,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -34,15 +35,20 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.DocumentSnapshot;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Executors;
 
 public class TransactionsActivity extends AppCompatActivity {
   private final String TRANSACTION_ACTIVITY = "TRANSACTION_ACTIVITY";
+  private final ActivityResultLauncher<Intent> transactionUpsertLauncher = registerForActivityResult(
+          new ActivityResultContracts.StartActivityForResult(),
+          this::handleUpsertResult
+  );
   private final int PAGE_SIZE = 20;
   private final AuthService authService = new AuthService();
   private final DatabaseService databaseService = new DatabaseService();
-  private final ArrayList<Transaction> transactionList = new ArrayList<>(CacheService.readList(CacheKey.TRANSACTIONS));
+  private final ArrayList<Transaction> transactionList = new ArrayList<Transaction>(CacheService.readList(CacheKey.TRANSACTIONS));
   private DocumentSnapshot lastVisibleDocument = CacheService.read(CacheKey.LAST_VISIBLE_DOCUMENT, DocumentSnapshot.class);
   private boolean hasNextPage = Boolean.TRUE.equals(CacheService.read(CacheKey.HAS_NEXT_PAGE, Boolean.class));
   private boolean isLoadingTransactions = false;
@@ -62,6 +68,9 @@ public class TransactionsActivity extends AppCompatActivity {
       return insets;
     });
 
+    // sorting list
+    transactionList.sort(Comparator.comparing(Transaction::getCreatedOn).reversed());
+
     // grabbing widgets
     recyclerView = findViewById(R.id.recyclerView);
     processIndicator = findViewById(R.id.processIndicator);
@@ -72,7 +81,7 @@ public class TransactionsActivity extends AppCompatActivity {
     floatingActionButton.setOnClickListener(v -> this.openTransactionsUpsertActivity());
 
     // initializing adapter
-    adapter = new TransactionCardAdapter(this, transactionList, this::showDeleteConfirmationDialog);
+    adapter = new TransactionCardAdapter(this, transactionList, this::showDeleteConfirmationDialog, this::openTransactionsUpsertActivity);
 
     // setting up the recycler view
     this.setUpRecyclerView();
@@ -120,14 +129,36 @@ public class TransactionsActivity extends AppCompatActivity {
     });
   }
   private void openTransactionsUpsertActivity() {
-    ActivityResultLauncher<Intent> transactionUpsertLauncher = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            result -> {
-              if(result.getResultCode() == Activity.RESULT_OK) {
-                Transaction transactionUpsertObject = CacheService.read(CacheKey.TRANSACTION_UPSERT_OBJECT, Transaction.class);
-              }
-            }
-    );
+    Intent intent = new Intent(TransactionsActivity.this, TransactionsUpsert.class);
+    transactionUpsertLauncher.launch(intent);
+  }
+
+  private void handleUpsertResult(ActivityResult result) {
+    if(result.getResultCode() == Activity.RESULT_OK) {
+      Transaction transactionUpsertObject = CacheService.read(CacheKey.TRANSACTION_UPSERT_OBJECT, Transaction.class);
+      int positionInView = -1;
+
+      if(transactionUpsertObject != null) {
+        for(int i = 0; i < transactionList.size(); i++) {
+          Transaction transaction = transactionList.get(i);
+          if(transactionUpsertObject.getID().equals(transaction.getID())) {
+            positionInView = i;
+            break;
+          }
+        }
+
+        if(positionInView == -1) {
+          transactionList.add(0, transactionUpsertObject);
+          adapter.notifyItemInserted(0);
+        } else {
+          transactionList.set(positionInView, transactionUpsertObject);
+          adapter.notifyItemChanged(positionInView);
+        }
+      }
+    }
+
+    CacheService.clear(CacheKey.TRANSACTION_UPSERT_OBJECT);
+    CacheService.clear(CacheKey.POSITION_IN_VIEW);
   }
 
   private void toggleProcessIndicator(Integer resourceStringID) {
@@ -201,27 +232,38 @@ public class TransactionsActivity extends AppCompatActivity {
     );
   }
 
-  private void showDeleteConfirmationDialog(@NonNull String ID, int position) {
+  private void showDeleteConfirmationDialog(@NonNull String ID) {
     new MaterialAlertDialogBuilder(this, R.style.CustomAlertDialogTheme)
             .setTitle(R.string.delete_transaction_title)
             .setMessage(R.string.delete_transaction_message)
-            .setPositiveButton(R.string.delete_transaction_yes, (d, which) -> handleDeleteTransaction(ID, position))
+            .setPositiveButton(R.string.delete_transaction_yes, (d, which) -> handleDeleteTransaction(ID))
             .setNegativeButton(R.string.delete_transaction_no, (d, which) -> d.dismiss())
             .setCancelable(true)
             .show();
   }
 
-  private void handleDeleteTransaction(@NonNull String ID, int position) {
+  private void handleDeleteTransaction(@NonNull String ID) {
+    int position = -1;
+
+    for(int i = 0; i < transactionList.size(); i++) {
+      Transaction transaction = transactionList.get(i);
+      if(transaction.getID().equals(ID)) {
+        position = i;
+        break;
+      }
+    }
+
     this.toggleProcessIndicator(R.string.deleting_transaction);
+    int finalPosition = position;
     Executors.newSingleThreadExecutor().execute(() -> {
       try {
         databaseService.deleteTransaction(ID);
-        transactionList.remove(position);
+        transactionList.remove(finalPosition);
         // fake pause of 2 seconds to make process indicator visible for at least 2 seconds
         Thread.sleep(2000);
         runOnUiThread(() -> {
           toggleProcessIndicator(null);
-          adapter.notifyItemRemoved(position);
+          adapter.notifyItemRemoved(finalPosition);
           Toast.makeText(
                   TransactionsActivity.this,
                   getString(R.string.transaction_deleted),

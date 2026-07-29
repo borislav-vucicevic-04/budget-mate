@@ -150,7 +150,7 @@ public class DatabaseService {
     }
   }
 
-  public void insertTransaction(Transaction transaction) throws DatabaseException {
+  public Transaction insertTransaction(Transaction transaction) throws DatabaseException {
     try {
       Category category = transaction.getCategory();
       String resolvedCategoryID;
@@ -195,6 +195,7 @@ public class DatabaseService {
       Log.d(DATABASE, "Transaction successfully inserted with ID: " + transaction.getID());
       Log.d(DATABASE, "insertTransaction completed successfully.");
 
+      return transaction;
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
       String errorMessage = (cause != null) ? cause.getMessage() : "Unknown Firestore error occurred";
@@ -343,7 +344,7 @@ public class DatabaseService {
    * @param transaction the transaction containing the updated values
    * @throws DatabaseException if the update fails or is interrupted
    */
-  public void updateTransaction(Transaction transaction) throws DatabaseException {
+  public Transaction updateTransaction(Transaction transaction) throws DatabaseException {
     if (transaction == null) {
       throw new DatabaseException("Transaction cannot be null.", null);
     }
@@ -449,6 +450,7 @@ public class DatabaseService {
       Log.d(DATABASE, "Transaction successfully updated with ID: " + transaction.getID());
       Log.d(DATABASE, "updateTransaction completed successfully.");
 
+      return transaction;
     } catch (ExecutionException exception) {
       Throwable cause = exception.getCause();
 

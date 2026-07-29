@@ -1,5 +1,6 @@
 package com.borislavvucicevic.budgetmate.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -14,17 +15,15 @@ import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.borislavvucicevic.budgetmate.R;
 import com.borislavvucicevic.budgetmate.models.classes.Category;
-import com.borislavvucicevic.budgetmate.models.classes.CurrencyOption;
 import com.borislavvucicevic.budgetmate.models.classes.Transaction;
 import com.borislavvucicevic.budgetmate.models.classes.TransactionTypeOption;
+import com.borislavvucicevic.budgetmate.models.enums.CacheKey;
 import com.borislavvucicevic.budgetmate.models.enums.TransactionType;
 import com.borislavvucicevic.budgetmate.models.exceptions.ValidationException;
 import com.borislavvucicevic.budgetmate.services.AuthService;
@@ -38,7 +37,7 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
-public class TransactionsAddNewActivity extends AppCompatActivity {
+public class TransactionsUpsert extends AppCompatActivity {
   public static final String TRANSACTION_ADD_NEW_ACTIVITY = "TRANSACTION_ADD_NEW_ACTIVITY";
   private AuthService authService;
   private DatabaseService databaseService;
@@ -48,11 +47,13 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
   private EditText etNotes;
   private Spinner spTransactionType;
   private ProgressBar progressBar;
+  private Button btnUpsertTransaction;
+  private Transaction transactionUpsertObject = CacheService.read(CacheKey.TRANSACTION_UPSERT_OBJECT, Transaction.class);
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     EdgeToEdge.enable(this);
-    setContentView(R.layout.activity_transactions_add_new);
+    setContentView(R.layout.activity_transactions_upsert);
     ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
       int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
       v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), imeBottom);
@@ -64,7 +65,7 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
     databaseService = new DatabaseService();
 
     // grabbing widgets
-    Button btnCreateTransaction = findViewById(R.id.btnCreateTransaction);
+    btnUpsertTransaction = findViewById(R.id.btnUpsertTransaction);
     etCategory = findViewById(R.id.etCategory);
     tvErrorWrapper = findViewById(R.id.tvErrorWrapper);
     etAmount = findViewById(R.id.etAmount);
@@ -72,7 +73,7 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
     spTransactionType = findViewById(R.id.spTransactionType);
     progressBar = findViewById(R.id.progressBar);
     // setting listeners
-    btnCreateTransaction.setOnClickListener(v -> this.handleCreateTransaction());
+    btnUpsertTransaction.setOnClickListener(v -> this.handleUpsertTransaction());
     etCategory.setOnFocusChangeListener((v, hasFocus) -> {
       if (hasFocus) {
         etCategory.showDropDown();
@@ -85,6 +86,11 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
 
     // setting the spinner
     this.setSpTransactionType();
+
+    // setting form values
+    if(transactionUpsertObject != null) {
+      this.setFormValues();
+    }
 
     // setting up the back press interceptor
     getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
@@ -124,7 +130,7 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
           );
           etCategory.setAdapter(adapter);
           Toast.makeText(
-                  TransactionsAddNewActivity.this,
+                  TransactionsUpsert.this,
                   getString(R.string.transactions_categories_loaded),
                   Toast.LENGTH_SHORT
           ).show();
@@ -153,6 +159,25 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
     spinner.setAdapter(adapter);
   }
 
+  private void setFormValues() {
+    Category category = transactionUpsertObject.getCategory() != null ?
+            transactionUpsertObject.getCategory() :
+            CacheService.get(CacheKey.CATEGORIES, transactionUpsertObject.getCategoryID(), Category.class);
+    String categoryName = category != null ? category.getName() : "";
+    int selected = transactionUpsertObject.getType() == TransactionType.INCOME ? 1 : 2;
+
+    etAmount.setText(transactionUpsertObject.getAmount().toString());
+    spTransactionType.setSelection(selected);
+    etCategory.setText(categoryName);
+    etNotes.setText(transactionUpsertObject.getNotes());
+    btnUpsertTransaction.setText(getString(R.string.transactions_update));
+  }
+
+  private void handleUpsertTransaction() {
+    if(transactionUpsertObject == null) this.handleInsertTransaction();
+    else this.handleUpdateTransaction();
+  }
+
   /**
    * Handles the asynchronous creation and insertion of a new financial transaction.
    * <p>
@@ -166,7 +191,7 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
    * @see Transaction
    * @see Category
    */
-  private void handleCreateTransaction() {
+  private void handleInsertTransaction() {
     String amount = etAmount.getText().toString().trim();
     String notes = etNotes.getText().toString().trim();
     String categoryName = etCategory.getText().toString().trim();
@@ -176,7 +201,7 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
       try {
         this.handleValidation();
         // targeting category
-        List<Category> categories = CacheService.readCategories();
+        List<Category> categories = CacheService.readList(CacheKey.CATEGORIES);
         Category category = categories
                 .stream().
                 filter(item -> categoryName.equals(item.getName()))
@@ -192,8 +217,42 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
                 Timestamp.now(),
                 !notes.isEmpty() ? notes : null
         );
-        databaseService.insertTransaction(transaction);
-        runOnUiThread(this::handleSuccess);
+        transactionUpsertObject =  databaseService.insertTransaction(transaction);
+        runOnUiThread(() -> this.handleSuccess(getString(R.string.transaction_insert_success)));
+      } catch (ValidationException exception) {
+        runOnUiThread(() -> this.handleException(exception));
+      } catch (Exception exception) {
+        runOnUiThread(() -> this.handleException(exception));
+      }
+    });
+  }
+
+  private void handleUpdateTransaction() {
+    String amount = etAmount.getText().toString().trim();
+    String notes = etNotes.getText().toString().trim();
+    String categoryName = etCategory.getText().toString().trim();
+    TransactionType transactionType = ((TransactionTypeOption) spTransactionType.getSelectedItem()).getType();
+    progressBar.setVisibility(View.VISIBLE);
+    Executors.newSingleThreadExecutor().execute(() -> {
+      try {
+        this.handleValidation();
+        // targeting category
+        List<Category> categories = CacheService.readList(CacheKey.CATEGORIES);
+        Category category = categories
+                .stream().
+                filter(item -> categoryName.equals(item.getName()))
+                .findFirst()
+                .orElse(new Category(null, categoryName, authService.getUserID()));
+
+        // updating transaction values
+        transactionUpsertObject.setAmount(Float.parseFloat(amount));
+        transactionUpsertObject.setCategory(category);
+        transactionUpsertObject.setType(transactionType);
+        transactionUpsertObject.setNotes(!notes.isEmpty() ? notes : null);
+
+        // saving changes to the database and immediately retrieving said object to save it to memory
+        transactionUpsertObject =  databaseService.updateTransaction(transactionUpsertObject);
+        runOnUiThread(() -> this.handleSuccess(getString(R.string.transaction_update_success)));
       } catch (ValidationException exception) {
         runOnUiThread(() -> this.handleException(exception));
       } catch (Exception exception) {
@@ -213,20 +272,29 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
    * <ul>
    *   <li>Displays a short-duration {@link Toast} message notifying the user that the transaction was successfully saved.</li>
    *   <li>Hides the active {@code progressBar} by setting its visibility to {@link android.view.View#GONE}.</li>
-   *   <li>Invokes {@link #finish()} to close the current {@code TransactionsAddNewActivity}.</li>
+   *   <li>Invokes {@link #finish()} to close the current {@code TransactionsUpsert}.</li>
    * </ul>
    *
    * @see android.widget.Toast
    * @see android.view.View#GONE
    * @see #finish()
    */
-  private void handleSuccess() {
+  private void handleSuccess(String toastMessage) {
     Toast.makeText(
-            TransactionsAddNewActivity.this,
-            getString(R.string.transaction_success),
+            TransactionsUpsert.this,
+            toastMessage,
             Toast.LENGTH_SHORT
     ).show();
     progressBar.setVisibility(View.GONE);
+    this.destroyActivity(AppCompatActivity.RESULT_OK);
+  }
+
+  private void destroyActivity(int activityResult) {
+    if (transactionUpsertObject != null) {
+      CacheService.store(CacheKey.TRANSACTION_UPSERT_OBJECT, transactionUpsertObject);
+    }
+    Intent result = new Intent();
+    setResult(activityResult, result);
     finish();
   }
 
@@ -283,7 +351,7 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
     tvErrorWrapper.setVisibility(TextView.VISIBLE);
     tvErrorWrapper.setText(exception.getMessage());
     Toast.makeText(
-            TransactionsAddNewActivity.this,
+            TransactionsUpsert.this,
             exception.getMessage(),
             Toast.LENGTH_SHORT
     ).show();
@@ -308,7 +376,7 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
    */
   private void handleException(Exception exception) {
     Toast.makeText(
-            TransactionsAddNewActivity.this,
+            TransactionsUpsert.this,
             getString(R.string.error_general),
             Toast.LENGTH_SHORT
     ).show();
@@ -320,7 +388,7 @@ public class TransactionsAddNewActivity extends AppCompatActivity {
     new MaterialAlertDialogBuilder(this, R.style.CustomAlertDialogTheme)
             .setTitle(R.string.discard_changes_title)
             .setMessage(R.string.discard_changes_message)
-            .setPositiveButton(R.string.discard_changes_yes, (d, which) -> finish())
+            .setPositiveButton(R.string.discard_changes_yes, (d, which) -> destroyActivity(AppCompatActivity.RESULT_CANCELED))
             .setNegativeButton(R.string.discard_changes_no, (d, which) -> d.dismiss())
             .setCancelable(true)
             .show();

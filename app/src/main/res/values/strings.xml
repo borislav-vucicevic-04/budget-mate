@@ -50,7 +50,7 @@
     <string name="user_profile_title">Your profile</string>
     <!-- Strings used for fragments for navigation -->
     <string name="transactions_title">Your transactions</string>
-    <string name="transactions_create_new">Create new transaction</string>
+    <string name="transactions_insert">Create new transaction</string>
     <string name="amount">Amount</string>
     <string name="category">Category</string>
 
@@ -60,7 +60,7 @@
     <string name="amount_not_zero">The amount must not be equal to zero</string>
     <string name="category_required">Category field is required</string>
     <string name="notes_too_long">The notes cannot be longer than 256 characters</string>
-    <string name="transaction_success">Transaction has been created sucsessfully</string>
+    <string name="transaction_insert_success">Transaction has been created sucsessfully</string>
     <string name="discard_changes_title">Are you sure?</string>
     <string name="discard_changes_message">If you go back now, all your unsaved changes will be deleted permanently.</string>
     <string name="discard_changes_yes">Leave</string>
@@ -83,4 +83,6 @@
     <string name="delete_transaction_message">Are you sure you want to delete this transaction. Please keep in my that this action can\'t be undone.</string>
     <string name="delete_transaction_yes">Delete</string>
     <string name="delete_transaction_no">Cancel</string>
+    <string name="transaction_update_success">Transaction has been updated successsfully.</string>
+    <string name="transactions_update">Save changes</string>
 </resources>

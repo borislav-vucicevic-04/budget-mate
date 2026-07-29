@@ -2,6 +2,7 @@ package com.borislavvucicevic.budgetmate.models.classes;
 
 import android.content.Context;
 import android.icu.text.SimpleDateFormat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,6 +14,7 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.borislavvucicevic.budgetmate.R;
+import com.borislavvucicevic.budgetmate.models.enums.CacheKey;
 import com.borislavvucicevic.budgetmate.models.enums.CurrencyCode;
 import com.borislavvucicevic.budgetmate.models.enums.TransactionType;
 import com.borislavvucicevic.budgetmate.services.CacheService;
@@ -40,7 +42,7 @@ import java.util.ArrayList;
 public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCardAdapter.ViewHolder> {
   @FunctionalInterface
   public interface DeleteTransactionHandler {
-    void onDelete(@NonNull String id, int position);
+    void onDelete(@NonNull String id);
   }
 
   /** Context used to inflate layouts and access application resources. */
@@ -51,6 +53,8 @@ public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCard
 
   private final DeleteTransactionHandler deleteTransactionHandler;
 
+  private final Runnable openTransactionsUpsertActivity;
+
   /**
    * Creates a new transaction card adapter.
    *
@@ -60,11 +64,13 @@ public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCard
   public TransactionCardAdapter(
           Context context,
           ArrayList<Transaction> transactions,
-          DeleteTransactionHandler deleteTransactionHandler
+          DeleteTransactionHandler deleteTransactionHandler,
+          Runnable openTransactionsUpsertActivity
   ) {
     this.context = context;
     this.transactions = transactions;
     this.deleteTransactionHandler = deleteTransactionHandler;
+    this.openTransactionsUpsertActivity = openTransactionsUpsertActivity;
   }
 
   /**
@@ -100,7 +106,8 @@ public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCard
   ) {
     Transaction transaction = transactions.get(position);
     holder.setDetails(transaction, position);
-    holder.bindDeleteTransactionMethod(deleteTransactionHandler, transaction.getID(), position);
+    holder.bindDeleteTransactionMethod(deleteTransactionHandler, transaction.getID());
+    holder.bindOpenTransactionUpsertActivityMethod(openTransactionsUpsertActivity, transaction);
   }
 
   /**
@@ -145,6 +152,8 @@ public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCard
 
     private final Button btnDeleteTransaction;
 
+    private final Button btnEditTransaction;
+
     /** Container used to display the transaction notes section. */
     private final MaterialCardView cardTransactionNotes;
 
@@ -177,6 +186,8 @@ public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCard
               itemView.findViewById(R.id.tvTransactionModifiedOn);
       btnDeleteTransaction =
               itemView.findViewById(R.id.btnDeleteTransaction);
+      btnEditTransaction =
+              itemView.findViewById(R.id.btnEditTransaction);
       cardTransactionNotes =
               itemView.findViewById(R.id.cardTransactionNotes);
       layoutModifiedOn =
@@ -199,11 +210,16 @@ public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCard
      */
     private void setDetails(Transaction transaction, int position) {
       // Getting the user profile from the cache.
-      UserProfile userProfile = CacheService.readUserProfile();
+      UserProfile userProfile = CacheService.read(CacheKey.USER_PROFILE, UserProfile.class);
+
+      if (userProfile == null) {
+        Log.d("TRANSACTION_CARD_ADAPTER", "Somehow user profile is null!!!!!!");
+        return;
+      }
 
       // Formatter used for creation and modification dates.
       SimpleDateFormat dateTimeFormatter =
-              new SimpleDateFormat("dd.MM.yyyy");
+              new SimpleDateFormat("dd.MM.yyyy hh:mm:ss");
 
       // Parsing values.
       String id = transaction.getID();
@@ -235,7 +251,7 @@ public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCard
       tvTransactionCreatedOn.setText(
               dateTimeFormatter.format(
                       transaction.getCreatedOn().toDate()
-              )
+              ).replace(" ", "\n")
       );
 
       tvTransactionAmount.setTextColor(amountTextColor);
@@ -245,7 +261,7 @@ public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCard
         tvTransactionModifiedOn.setText(
                 dateTimeFormatter.format(
                         transaction.getModifiedOn().toDate()
-                )
+                ).replace(" ", "\n")
         );
 
         layoutModifiedOn.setVisibility(View.VISIBLE);
@@ -255,10 +271,18 @@ public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCard
       if (transaction.getNotes() != null) {
         tvTransactionNotes.setText(transaction.getNotes());
         cardTransactionNotes.setVisibility(View.VISIBLE);
+      } else {
+        cardTransactionNotes.setVisibility(View.GONE);
       }
     }
-    private void bindDeleteTransactionMethod(DeleteTransactionHandler deleteTransactionHandler, String ID, int position) {
-      btnDeleteTransaction.setOnClickListener((v) -> deleteTransactionHandler.onDelete(ID, position));
+    private void bindDeleteTransactionMethod(DeleteTransactionHandler deleteTransactionHandler, String ID) {
+      btnDeleteTransaction.setOnClickListener((v) -> deleteTransactionHandler.onDelete(ID));
+    }
+    private void bindOpenTransactionUpsertActivityMethod(Runnable openTransactionsUpsertActivity, Transaction transaction) {
+      btnEditTransaction.setOnClickListener((v) -> {
+        CacheService.store(CacheKey.TRANSACTION_UPSERT_OBJECT, transaction);
+        openTransactionsUpsertActivity.run();
+      });
     }
   }
 }

@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:background="@drawable/activity_background"
     android:backgroundTint="@null"
-    tools:context=".activities.TransactionsAddNewActivity">
+    tools:context=".activities.TransactionsUpsert">
 
     <!-- Application title -->
     <TextView
@@ -29,7 +29,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="@string/transactions_create_new"
+        android:text="@string/transactions_insert"
         android:textColor="@color/title_color"
         android:textSize="24sp"
         android:textStyle="bold"
@@ -118,14 +118,14 @@
 
             <!-- Create new transaction button -->
             <Button
-                android:id="@+id/btnCreateTransaction"
+                android:id="@+id/btnUpsertTransaction"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:layout_margin="8dp"
                 android:background="@drawable/bg_button"
                 android:backgroundTint="@null"
                 app:backgroundTint="@null"
-                android:text="@string/transactions_create_new"
+                android:text="@string/transactions_insert"
                 android:textAllCaps="false"
                 android:textColor="@color/white"
                 android:textSize="14sp"
