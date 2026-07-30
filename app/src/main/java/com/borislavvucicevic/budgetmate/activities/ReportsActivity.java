@@ -16,6 +16,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.borislavvucicevic.budgetmate.R;
+import com.borislavvucicevic.budgetmate.exceptions.ValidationException;
 import com.borislavvucicevic.budgetmate.options.MonthOption;
 import com.borislavvucicevic.budgetmate.options.QuarterOption;
 import com.borislavvucicevic.budgetmate.options.ReportTypeOption;
@@ -36,6 +37,7 @@ public class ReportsActivity extends AppCompatActivity {
   private EditText etYear;
   private AppCompatTextView dpDate, dpCustomRangeFrom, dpCustomRangeTo;
   private Timestamp dpDateValue, dpCustomRangeFromValue, dpCustomRangeToValue;
+  private ReportType reportType;
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -91,7 +93,8 @@ public class ReportsActivity extends AppCompatActivity {
       public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
         // Cast the item directly to your custom object type
         ReportTypeOption reportTypeOption = (ReportTypeOption) parent.getItemAtPosition(position);
-        displayFields(reportTypeOption.getType());
+        reportType = reportTypeOption.getType();
+        displayFields();
       }
 
       @Override
@@ -207,10 +210,8 @@ public class ReportsActivity extends AppCompatActivity {
    *   <li>{@link ReportType#YEARLY}: displays the year field.</li>
    *   <li>{@link ReportType#CUSTOM}: displays the start-date and end-date fields.</li>
    * </ul>
-   *
-   * @param reportType the report type whose required input fields should be displayed
    */
-  private void displayFields(ReportType reportType) {
+  private void displayFields() {
     this.hideFields();
     Log.d(REPORTS_ACTIVITY, "Displaying fields for report type: " + reportType);
 
@@ -364,5 +365,29 @@ public class ReportsActivity extends AppCompatActivity {
     );
 
     dpCustomRangeToValue = selection;
+  }
+
+  /**
+   * Validates the input fields required for the selected report type.
+   *
+   * <p>For a {@link ReportType#CUSTOM} report, both the start and end dates
+   * must be selected, and the start date must not be later than the end date.
+   * For a {@link ReportType#DAILY} report, a report date must be selected.
+   * For other report types, the year field must not be empty.</p>
+   *
+   * @throws ValidationException if a required value is missing or the custom
+   *                             date range is invalid
+   */
+  private void handleValidation() {
+    if(reportType == ReportType.CUSTOM) {
+      if(dpCustomRangeFromValue == null) throw new ValidationException(getString(R.string.report_from_required), null);
+      if(dpCustomRangeToValue == null) throw new ValidationException(getString(R.string.report_to_required), null);
+      if(dpCustomRangeFromValue.toDate().after(dpCustomRangeToValue.toDate())) throw new ValidationException(getString(R.string.report_from_bigger_than_to), null);
+    } else if(reportType == ReportType.DAILY && dpDateValue == null) {
+      throw new ValidationException(getString(R.string.report_date_required), null);
+    } else {
+      String year = etYear.getText().toString().trim();
+      if(year.isEmpty()) throw new ValidationException(getString(R.string.report_year_required), null);
+    }
   }
 }

@@ -290,6 +290,111 @@ public class DatabaseService {
   }
 
   /**
+   * Returns the user's transactions created between two timestamps,
+   * ordered from newest to oldest.
+   *
+   * Both date boundaries are inclusive:
+   *
+   * createdOn >= from
+   * createdOn <= to
+   *
+   * This method blocks while waiting for Firestore, so it must be
+   * called from a background thread.
+   *
+   * @param uid  the ID of the user who owns the transactions
+   * @param from the earliest allowed transaction timestamp
+   * @param to   the latest allowed transaction timestamp
+   * @return transactions between the supplied timestamps
+   * @throws DatabaseException if the query fails or is interrupted
+   */
+  public List<Transaction> getTransactions(@NotNull String uid, @NotNull Timestamp from, @NotNull Timestamp to) throws DatabaseException {
+
+    if (uid.trim().isEmpty()) {
+      throw new IllegalArgumentException("User ID cannot be empty.");
+    }
+
+    if (from.compareTo(to) > 0) {
+      throw new IllegalArgumentException("'from' timestamp cannot be later than the 'to' timestamp.");
+    }
+
+    try {
+      Log.d(
+              DATABASE,
+              "Loading user's transactions between "
+                      + from
+                      + " and "
+                      + to
+      );
+
+      // creating a query
+      Query query = firestore
+              .collection("transactions")
+              .whereEqualTo("userID", uid)
+              .whereGreaterThanOrEqualTo("createdOn", from)
+              .whereLessThanOrEqualTo("createdOn", to)
+              .orderBy("createdOn", Query.Direction.DESCENDING);
+
+      // executing the query
+      QuerySnapshot snapshot = Tasks.await(query.get());
+
+      // retrieving documents from the query result
+      List<DocumentSnapshot> documents = snapshot.getDocuments();
+
+      // creating a list for transaction objects
+      List<Transaction> transactionList = new ArrayList<>(documents.size());
+
+      // converting documents to transaction objects
+      for (DocumentSnapshot document : documents) {
+        Transaction transaction = document.toObject(Transaction.class);
+
+        if (transaction != null) {
+          transactionList.add(transaction);
+        } else {
+          Log.w(DATABASE, "Could not convert transaction document. ID: " + document.getId());
+        }
+      }
+
+      Log.d(DATABASE, "Loaded " + transactionList.size() + " transactions between the supplied dates.");
+
+      return transactionList;
+
+    } catch (ExecutionException exception) {
+      Throwable cause = exception.getCause();
+
+      String errorMessage =
+              cause != null && cause.getMessage() != null
+                      ? cause.getMessage()
+                      : "Unknown Firestore transaction query error occurred.";
+
+      Log.e(
+              DATABASE,
+              "Transaction date-range query failed: "
+                      + errorMessage,
+              cause
+      );
+
+      throw new DatabaseException(
+              errorMessage,
+              cause
+      );
+
+    } catch (InterruptedException exception) {
+      Log.e(
+              DATABASE,
+              "The transaction date-range query was interrupted.",
+              exception
+      );
+
+      Thread.currentThread().interrupt();
+
+      throw new DatabaseException(
+              "Database operation was interrupted before completion.",
+              exception
+      );
+    }
+  }
+
+  /**
    * Deletes a transaction from Firestore using its unique document ID.
    * This method blocks while waiting for Firestore, so it must be called
    * from a background thread.
@@ -334,6 +439,7 @@ public class DatabaseService {
       throw new DatabaseException("Database operation was interrupted before completion.", e);
     }
   }
+
   /**
    * Updates an existing transaction in Firestore.
    * If the transaction contains a new category without an ID, the category
