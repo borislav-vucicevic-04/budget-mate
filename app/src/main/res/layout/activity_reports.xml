@@ -1,36 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/activity_register"
+    android:id="@+id/reportsMain"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".activities.RegisterActivity">
-
-    <!-- Background image -->
-    <ImageView
-        android:id="@+id/backgroundImage"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:contentDescription="@null"
-        android:scaleType="centerCrop"
-        android:src="@drawable/activity_background_image"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <!-- Overlay -->
-    <View
-        android:id="@+id/backgroundOverlay"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@color/overlay_color"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+    android:background="@drawable/activity_background"
+    tools:context=".activities.ReportsActivity">
 
     <!-- Application title -->
     <TextView
@@ -52,7 +28,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:text="@string/register_title"
+        android:text="@string/generate_report_title"
         android:textColor="@color/title_color"
         android:textSize="24sp"
         android:textStyle="bold"
@@ -83,38 +59,6 @@
             android:gravity="center_vertical"
             android:orientation="vertical">
 
-            <!-- Email input -->
-            <EditText
-                android:id="@+id/etFullName"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_margin="8dp"
-                android:background="@drawable/bg_input_field"
-                android:hint="@string/full_name"
-                android:inputType="text"
-                android:maxLines="1"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:textColor="@color/black"
-                android:textColorHint="@color/input_hint_color"
-                android:textSize="14sp" />
-
-            <!-- Email input -->
-            <EditText
-                android:id="@+id/etEmail"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_margin="8dp"
-                android:background="@drawable/bg_input_field"
-                android:hint="@string/email"
-                android:inputType="textEmailAddress"
-                android:maxLines="1"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:textColor="@color/black"
-                android:textColorHint="@color/input_hint_color"
-                android:textSize="14sp" />
-
             <!-- Currency selector -->
             <Spinner
                 android:id="@+id/spReportType"
@@ -127,52 +71,101 @@
                 android:paddingEnd="12dp"
                 android:spinnerMode="dialog" />
 
-            <!-- Password input -->
-            <EditText
-                android:id="@+id/etPassword"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_margin="8dp"
-                android:background="@drawable/bg_input_field"
-                android:hint="@string/password"
-                android:inputType="textPassword"
-                android:maxLines="1"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:textColor="@color/black"
-                android:textColorHint="@color/input_hint_color"
-                android:textSize="14sp" />
-
-            <!-- Password input -->
-            <EditText
-                android:id="@+id/etRepeatPassword"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_margin="8dp"
-                android:background="@drawable/bg_input_field"
-                android:hint="@string/repeat_password"
-                android:inputType="textPassword"
-                android:maxLines="1"
-                android:paddingStart="12dp"
-                android:paddingEnd="12dp"
-                android:textColor="@color/black"
-                android:textColorHint="@color/input_hint_color"
-                android:textSize="14sp" />
-
             <!-- Login button -->
+
+            <EditText
+                android:id="@+id/etDate"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_margin="8dp"
+                android:background="@drawable/bg_input_field"
+                android:foregroundTint="@color/black"
+                android:textColorHint="@color/input_hint_color"
+                android:hint="@string/reports_date"
+                android:inputType="date"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:visibility="gone" />
+
+            <Spinner
+                android:id="@+id/spMonth"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_margin="8dp"
+                android:background="@drawable/bg_input_field"
+                android:foregroundTint="@color/black"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:spinnerMode="dialog"
+                android:visibility="gone" />
+
+            <Spinner
+                android:id="@+id/spQuarter"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_margin="8dp"
+                android:background="@drawable/bg_input_field"
+                android:foregroundTint="@color/black"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:spinnerMode="dialog"
+                android:visibility="gone" />
+
+            <EditText
+                android:id="@+id/etYear"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_margin="8dp"
+                android:background="@drawable/bg_input_field"
+                android:foregroundTint="@color/black"
+                android:textColorHint="@color/input_hint_color"
+                android:hint="@string/report_year"
+                android:inputType="number"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:visibility="gone" />
+
+            <EditText
+                android:id="@+id/etCustomRangeFrom"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_margin="8dp"
+                android:background="@drawable/bg_input_field"
+                android:foregroundTint="@color/black"
+                android:textColorHint="@color/input_hint_color"
+                android:hint="@string/report_custom_from"
+                android:inputType="date"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:visibility="gone" />
+
+            <EditText
+                android:id="@+id/etCustomRangeTo"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_margin="8dp"
+                android:background="@drawable/bg_input_field"
+                android:foregroundTint="@color/black"
+                android:textColorHint="@color/input_hint_color"
+                android:hint="@string/report_custom_to"
+                android:inputType="date"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:visibility="gone" />
+
             <Button
-                android:id="@+id/btnRegister"
+                android:id="@+id/btnGenerate"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:layout_margin="8dp"
                 android:background="@drawable/bg_button"
                 android:backgroundTint="@null"
-                app:backgroundTint="@null"
-                android:text="@string/register_button"
+                android:text="@string/generate_report_btn"
                 android:textAllCaps="false"
                 android:textColor="@color/white"
                 android:textSize="14sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                app:backgroundTint="@null" />
 
             <!-- Error message -->
             <TextView
@@ -185,18 +178,6 @@
                 android:textSize="14sp"
                 android:visibility="gone" />
 
-            <!-- Register link -->
-
-            <TextView
-                android:id="@+id/tvLoginLink"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="8dp"
-                android:gravity="center"
-                android:text="@string/login_link"
-                android:textColor="@color/link_color"
-                android:textSize="14sp" />
-
             <ProgressBar
                 android:id="@+id/progressBar"
                 style="?android:attr/progressBarStyle"
@@ -208,4 +189,5 @@
         </LinearLayout>
 
     </ScrollView>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

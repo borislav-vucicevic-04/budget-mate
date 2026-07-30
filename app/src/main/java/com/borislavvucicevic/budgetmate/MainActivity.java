@@ -13,6 +13,7 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.borislavvucicevic.budgetmate.activities.LoginActivity;
+import com.borislavvucicevic.budgetmate.activities.ReportsActivity;
 import com.borislavvucicevic.budgetmate.activities.TransactionsActivity;
 import com.borislavvucicevic.budgetmate.activities.UserProfileActivity;
 import com.borislavvucicevic.budgetmate.models.classes.Category;
@@ -95,14 +96,19 @@ public class MainActivity extends AppCompatActivity {
   private void setListeners() {
     // grabbing widgets
     Button btnUserProfile = findViewById(R.id.btnUserProfile);
+    Button btnGenerateReports = findViewById(R.id.btnGenerateReports);
     Button btnViewTransactions = findViewById(R.id.btnViewTransactions);
     btnUserProfile.setOnClickListener(v -> this.openUserProfileActivity());
     btnViewTransactions.setOnClickListener(v -> this.openTransactionsActivity());
+    btnGenerateReports.setOnClickListener(v -> this.openReportsActivity());
   }
   private void openUserProfileActivity() {
     startActivity(new Intent(MainActivity.this, UserProfileActivity.class));
   }
   private void openTransactionsActivity() {
     startActivity(new Intent(MainActivity.this, TransactionsActivity.class));
+  }
+  private void openReportsActivity() {
+    startActivity(new Intent(MainActivity.this, ReportsActivity.class));
   }
 }

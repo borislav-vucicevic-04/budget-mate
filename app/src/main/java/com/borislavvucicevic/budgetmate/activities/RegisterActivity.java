@@ -23,7 +23,6 @@ import com.borislavvucicevic.budgetmate.models.exceptions.AuthException;
 import com.borislavvucicevic.budgetmate.models.enums.CurrencyCode;
 import com.borislavvucicevic.budgetmate.models.classes.CurrencyOption;
 import com.borislavvucicevic.budgetmate.models.enums.FirebaseAuthErrorCodes;
-import com.borislavvucicevic.budgetmate.models.exceptions.DatabaseException;
 import com.borislavvucicevic.budgetmate.models.exceptions.ValidationException;
 import com.borislavvucicevic.budgetmate.services.AuthService;
 import com.borislavvucicevic.budgetmate.services.DatabaseService;
@@ -61,7 +60,7 @@ public class RegisterActivity extends AppCompatActivity {
     etEmail = findViewById(R.id.etEmail);
     etPassword = findViewById(R.id.etPassword);
     etRepeatPassword = findViewById(R.id.etRepeatPassword);
-    spHomeCurrency = findViewById(R.id.spHomeCurrency);
+    spHomeCurrency = findViewById(R.id.spReportType);
     tvErrorWrapper = findViewById(R.id.tvErrorWrapper);
     progressBar = findViewById(R.id.progressBar);
     Button btnRegister = findViewById(R.id.btnRegister);
@@ -95,7 +94,7 @@ public class RegisterActivity extends AppCompatActivity {
             R.layout.spinner_layout
     );
 
-    Spinner spinner = findViewById(R.id.spHomeCurrency);
+    Spinner spinner = findViewById(R.id.spReportType);
     spinner.setAdapter(adapter);
   }
 
