@@ -1,8 +1,8 @@
-package com.borislavvucicevic.budgetmate.models.classes;
+package com.borislavvucicevic.budgetmate.options;
 
 import androidx.annotation.NonNull;
 
-import com.borislavvucicevic.budgetmate.models.enums.ReportType;
+import com.borislavvucicevic.budgetmate.enums.ReportType;
 
 public class ReportTypeOption {
   private final String displayName;

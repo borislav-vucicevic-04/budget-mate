@@ -2,11 +2,11 @@ package com.borislavvucicevic.budgetmate.services;
 
 import androidx.annotation.NonNull;
 
-import com.borislavvucicevic.budgetmate.models.classes.Category;
-import com.borislavvucicevic.budgetmate.models.classes.Transaction;
-import com.borislavvucicevic.budgetmate.models.classes.UserProfile;
-import com.borislavvucicevic.budgetmate.models.enums.CacheKey;
-import com.borislavvucicevic.budgetmate.models.exceptions.CacheException;
+import com.borislavvucicevic.budgetmate.models.Category;
+import com.borislavvucicevic.budgetmate.models.Transaction;
+import com.borislavvucicevic.budgetmate.models.UserProfile;
+import com.borislavvucicevic.budgetmate.enums.CacheKey;
+import com.borislavvucicevic.budgetmate.exceptions.CacheException;
 import com.google.firebase.firestore.DocumentSnapshot;
 import java.util.ArrayList;
 import java.util.Collection;

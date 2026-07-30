@@ -1,10 +1,8 @@
-package com.borislavvucicevic.budgetmate.models.classes;
+package com.borislavvucicevic.budgetmate.options;
 
 import androidx.annotation.NonNull;
 
-import com.borislavvucicevic.budgetmate.models.enums.Quarter;
-
-import org.jetbrains.annotations.NotNull;
+import com.borislavvucicevic.budgetmate.enums.Quarter;
 
 public class QuarterOption {
   private final String displayName;

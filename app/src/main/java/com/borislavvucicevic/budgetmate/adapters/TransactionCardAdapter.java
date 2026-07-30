@@ -1,4 +1,4 @@
-package com.borislavvucicevic.budgetmate.models.classes;
+package com.borislavvucicevic.budgetmate.adapters;
 
 import android.content.Context;
 import android.icu.text.SimpleDateFormat;
@@ -14,9 +14,11 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.borislavvucicevic.budgetmate.R;
-import com.borislavvucicevic.budgetmate.models.enums.CacheKey;
-import com.borislavvucicevic.budgetmate.models.enums.CurrencyCode;
-import com.borislavvucicevic.budgetmate.models.enums.TransactionType;
+import com.borislavvucicevic.budgetmate.enums.CacheKey;
+import com.borislavvucicevic.budgetmate.enums.CurrencyCode;
+import com.borislavvucicevic.budgetmate.enums.TransactionType;
+import com.borislavvucicevic.budgetmate.models.Transaction;
+import com.borislavvucicevic.budgetmate.models.UserProfile;
 import com.borislavvucicevic.budgetmate.services.CacheService;
 import com.google.android.material.card.MaterialCardView;
 

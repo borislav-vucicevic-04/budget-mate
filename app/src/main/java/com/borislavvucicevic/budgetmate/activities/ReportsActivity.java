@@ -14,12 +14,12 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.borislavvucicevic.budgetmate.R;
-import com.borislavvucicevic.budgetmate.models.classes.MonthOption;
-import com.borislavvucicevic.budgetmate.models.classes.QuarterOption;
-import com.borislavvucicevic.budgetmate.models.classes.ReportTypeOption;
-import com.borislavvucicevic.budgetmate.models.enums.Month;
-import com.borislavvucicevic.budgetmate.models.enums.Quarter;
-import com.borislavvucicevic.budgetmate.models.enums.ReportType;
+import com.borislavvucicevic.budgetmate.options.MonthOption;
+import com.borislavvucicevic.budgetmate.options.QuarterOption;
+import com.borislavvucicevic.budgetmate.options.ReportTypeOption;
+import com.borislavvucicevic.budgetmate.enums.Month;
+import com.borislavvucicevic.budgetmate.enums.Quarter;
+import com.borislavvucicevic.budgetmate.enums.ReportType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -92,7 +92,7 @@ public class ReportsActivity extends AppCompatActivity {
       }
     });
   }
-  
+
   /**
    * Initializes the report-type spinner with all available report type options.
    *

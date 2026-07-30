@@ -1,4 +1,4 @@
-package com.borislavvucicevic.budgetmate.models.exceptions;
+package com.borislavvucicevic.budgetmate.exceptions;
 
 /**
  * Custom runtime exception thrown during form or input validation failures.

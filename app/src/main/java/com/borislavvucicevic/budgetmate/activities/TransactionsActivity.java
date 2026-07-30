@@ -22,11 +22,11 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.borislavvucicevic.budgetmate.R;
-import com.borislavvucicevic.budgetmate.models.classes.Category;
-import com.borislavvucicevic.budgetmate.models.classes.Transaction;
-import com.borislavvucicevic.budgetmate.models.classes.TransactionCardAdapter;
-import com.borislavvucicevic.budgetmate.models.classes.TransactionPage;
-import com.borislavvucicevic.budgetmate.models.enums.CacheKey;
+import com.borislavvucicevic.budgetmate.models.Category;
+import com.borislavvucicevic.budgetmate.models.Transaction;
+import com.borislavvucicevic.budgetmate.adapters.TransactionCardAdapter;
+import com.borislavvucicevic.budgetmate.models.TransactionPage;
+import com.borislavvucicevic.budgetmate.enums.CacheKey;
 import com.borislavvucicevic.budgetmate.services.AuthService;
 import com.borislavvucicevic.budgetmate.services.CacheService;
 import com.borislavvucicevic.budgetmate.services.DatabaseService;

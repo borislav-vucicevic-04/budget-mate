@@ -2,12 +2,12 @@ package com.borislavvucicevic.budgetmate.services;
 
 import android.util.Log;
 
-import com.borislavvucicevic.budgetmate.models.classes.Category;
-import com.borislavvucicevic.budgetmate.models.classes.Transaction;
-import com.borislavvucicevic.budgetmate.models.classes.TransactionPage;
-import com.borislavvucicevic.budgetmate.models.classes.UserProfile;
-import com.borislavvucicevic.budgetmate.models.enums.CacheKey;
-import com.borislavvucicevic.budgetmate.models.exceptions.DatabaseException;
+import com.borislavvucicevic.budgetmate.models.Category;
+import com.borislavvucicevic.budgetmate.models.Transaction;
+import com.borislavvucicevic.budgetmate.models.TransactionPage;
+import com.borislavvucicevic.budgetmate.models.UserProfile;
+import com.borislavvucicevic.budgetmate.enums.CacheKey;
+import com.borislavvucicevic.budgetmate.exceptions.DatabaseException;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentReference;

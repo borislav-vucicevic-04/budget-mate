@@ -18,12 +18,12 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.borislavvucicevic.budgetmate.R;
-import com.borislavvucicevic.budgetmate.models.classes.UserProfile;
-import com.borislavvucicevic.budgetmate.models.exceptions.AuthException;
-import com.borislavvucicevic.budgetmate.models.enums.CurrencyCode;
-import com.borislavvucicevic.budgetmate.models.classes.CurrencyOption;
-import com.borislavvucicevic.budgetmate.models.enums.FirebaseAuthErrorCodes;
-import com.borislavvucicevic.budgetmate.models.exceptions.ValidationException;
+import com.borislavvucicevic.budgetmate.models.UserProfile;
+import com.borislavvucicevic.budgetmate.exceptions.AuthException;
+import com.borislavvucicevic.budgetmate.enums.CurrencyCode;
+import com.borislavvucicevic.budgetmate.options.CurrencyOption;
+import com.borislavvucicevic.budgetmate.enums.FirebaseAuthErrorCodes;
+import com.borislavvucicevic.budgetmate.exceptions.ValidationException;
 import com.borislavvucicevic.budgetmate.services.AuthService;
 import com.borislavvucicevic.budgetmate.services.DatabaseService;
 

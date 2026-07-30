@@ -20,12 +20,12 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.borislavvucicevic.budgetmate.R;
-import com.borislavvucicevic.budgetmate.models.classes.Category;
-import com.borislavvucicevic.budgetmate.models.classes.Transaction;
-import com.borislavvucicevic.budgetmate.models.classes.TransactionTypeOption;
-import com.borislavvucicevic.budgetmate.models.enums.CacheKey;
-import com.borislavvucicevic.budgetmate.models.enums.TransactionType;
-import com.borislavvucicevic.budgetmate.models.exceptions.ValidationException;
+import com.borislavvucicevic.budgetmate.models.Category;
+import com.borislavvucicevic.budgetmate.models.Transaction;
+import com.borislavvucicevic.budgetmate.options.TransactionTypeOption;
+import com.borislavvucicevic.budgetmate.enums.CacheKey;
+import com.borislavvucicevic.budgetmate.enums.TransactionType;
+import com.borislavvucicevic.budgetmate.exceptions.ValidationException;
 import com.borislavvucicevic.budgetmate.services.AuthService;
 import com.borislavvucicevic.budgetmate.services.CacheService;
 import com.borislavvucicevic.budgetmate.services.DatabaseService;

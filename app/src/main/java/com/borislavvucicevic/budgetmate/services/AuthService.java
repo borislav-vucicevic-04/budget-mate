@@ -2,7 +2,7 @@ package com.borislavvucicevic.budgetmate.services;
 
 import android.util.Log;
 
-import com.borislavvucicevic.budgetmate.models.exceptions.AuthException;
+import com.borislavvucicevic.budgetmate.exceptions.AuthException;
 import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;

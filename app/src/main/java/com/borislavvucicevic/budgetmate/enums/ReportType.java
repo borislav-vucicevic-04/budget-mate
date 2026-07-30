@@ -1,4 +1,4 @@
-package com.borislavvucicevic.budgetmate.models.enums;
+package com.borislavvucicevic.budgetmate.enums;
 
 /**
  * Defines the available time periods for generating financial reports.

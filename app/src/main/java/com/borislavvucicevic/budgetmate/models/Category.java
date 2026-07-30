@@ -1,4 +1,4 @@
-package com.borislavvucicevic.budgetmate.models.classes;
+package com.borislavvucicevic.budgetmate.models;
 
 import com.google.firebase.firestore.DocumentId;
 

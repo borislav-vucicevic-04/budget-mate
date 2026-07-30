@@ -1,6 +1,5 @@
 package com.borislavvucicevic.budgetmate.activities;
 
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -19,9 +18,9 @@ import androidx.core.view.WindowInsetsCompat;
 
 import com.borislavvucicevic.budgetmate.MainActivity;
 import com.borislavvucicevic.budgetmate.R;
-import com.borislavvucicevic.budgetmate.models.exceptions.AuthException;
-import com.borislavvucicevic.budgetmate.models.enums.FirebaseAuthErrorCodes;
-import com.borislavvucicevic.budgetmate.models.exceptions.ValidationException;
+import com.borislavvucicevic.budgetmate.exceptions.AuthException;
+import com.borislavvucicevic.budgetmate.enums.FirebaseAuthErrorCodes;
+import com.borislavvucicevic.budgetmate.exceptions.ValidationException;
 import com.borislavvucicevic.budgetmate.services.AuthService;
 
 import java.util.concurrent.Executors;

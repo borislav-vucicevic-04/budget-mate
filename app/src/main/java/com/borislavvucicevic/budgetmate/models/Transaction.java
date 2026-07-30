@@ -1,6 +1,6 @@
-package com.borislavvucicevic.budgetmate.models.classes;
+package com.borislavvucicevic.budgetmate.models;
 
-import com.borislavvucicevic.budgetmate.models.enums.TransactionType;
+import com.borislavvucicevic.budgetmate.enums.TransactionType;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentId;
 import com.google.firebase.firestore.Exclude;

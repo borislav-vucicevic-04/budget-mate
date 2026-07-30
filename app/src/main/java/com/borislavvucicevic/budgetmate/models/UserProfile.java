@@ -1,6 +1,6 @@
-package com.borislavvucicevic.budgetmate.models.classes;
+package com.borislavvucicevic.budgetmate.models;
 
-import com.borislavvucicevic.budgetmate.models.enums.CurrencyCode;
+import com.borislavvucicevic.budgetmate.enums.CurrencyCode;
 
 /**
  * Represents the data model for an application user within the BudgetMate application.

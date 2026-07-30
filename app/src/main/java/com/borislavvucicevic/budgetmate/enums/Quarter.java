@@ -1,4 +1,4 @@
-package com.borislavvucicevic.budgetmate.models.enums;
+package com.borislavvucicevic.budgetmate.enums;
 
 /**
  * Represents one of the four quarters of a calendar or financial year.

@@ -1,4 +1,4 @@
-package com.borislavvucicevic.budgetmate.models.exceptions;
+package com.borislavvucicevic.budgetmate.exceptions;
 
 public class DatabaseException extends RuntimeException {
   public DatabaseException(String message) {

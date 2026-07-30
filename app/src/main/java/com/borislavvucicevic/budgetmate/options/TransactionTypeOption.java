@@ -1,8 +1,8 @@
-package com.borislavvucicevic.budgetmate.models.classes;
+package com.borislavvucicevic.budgetmate.options;
 
 import androidx.annotation.NonNull;
 
-import com.borislavvucicevic.budgetmate.models.enums.TransactionType;
+import com.borislavvucicevic.budgetmate.enums.TransactionType;
 
 /**
  * Represents a selectable transaction type option with a user-friendly display name.

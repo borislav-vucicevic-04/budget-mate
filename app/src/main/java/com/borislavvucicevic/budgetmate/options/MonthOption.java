@@ -1,9 +1,8 @@
-package com.borislavvucicevic.budgetmate.models.classes;
+package com.borislavvucicevic.budgetmate.options;
 
 import androidx.annotation.NonNull;
 
-import com.borislavvucicevic.budgetmate.models.enums.Month;
-import com.borislavvucicevic.budgetmate.models.enums.Quarter;
+import com.borislavvucicevic.budgetmate.enums.Month;
 
 public class MonthOption {
   private final String displayName;
