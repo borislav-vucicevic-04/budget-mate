@@ -1,5 +1,6 @@
 package com.borislavvucicevic.budgetmate.activities;
 
+import android.icu.text.SimpleDateFormat;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -10,6 +11,7 @@ import android.widget.Spinner;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.AppCompatTextView;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
@@ -20,14 +22,20 @@ import com.borislavvucicevic.budgetmate.options.ReportTypeOption;
 import com.borislavvucicevic.budgetmate.enums.Month;
 import com.borislavvucicevic.budgetmate.enums.Quarter;
 import com.borislavvucicevic.budgetmate.enums.ReportType;
+import com.google.android.material.datepicker.MaterialDatePicker;
+import com.google.firebase.Timestamp;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class ReportsActivity extends AppCompatActivity {
   public static final String REPORTS_ACTIVITY = "REPORTS_ACTIVITY";
   private Spinner spReportType, spMonth, spQuarter;
-  private EditText etDate, etYear, etCustomRangeFrom, etCustomRangeTo;
+  private EditText etYear;
+  private AppCompatTextView dpDate, dpCustomRangeFrom, dpCustomRangeTo;
+  private Timestamp dpDateValue, dpCustomRangeFromValue, dpCustomRangeToValue;
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -60,10 +68,10 @@ public class ReportsActivity extends AppCompatActivity {
     spReportType = findViewById(R.id.spReportType);
     spMonth = findViewById(R.id.spMonth);
     spQuarter = findViewById(R.id.spQuarter);
-    etDate = findViewById(R.id.etDate);
+    dpDate = findViewById(R.id.dpDate);
     etYear = findViewById(R.id.etYear);
-    etCustomRangeFrom = findViewById(R.id.etCustomRangeFrom);
-    etCustomRangeTo = findViewById(R.id.etCustomRangeTo);
+    dpCustomRangeFrom = findViewById(R.id.dpCustomRangeFrom);
+    dpCustomRangeTo = findViewById(R.id.dpCustomRangeTo);
   }
 
   /**
@@ -91,6 +99,9 @@ public class ReportsActivity extends AppCompatActivity {
         // DO NOTHING
       }
     });
+    dpDate.setOnClickListener(v -> showDatePicker(dpDateValue, this::handleDpDateChange));
+    dpCustomRangeFrom.setOnClickListener(v -> showDatePicker(dpCustomRangeFromValue, this::handleDpCustomRangeFromChange));
+    dpCustomRangeTo.setOnClickListener(v -> showDatePicker(dpCustomRangeToValue, this::handleDpCustomRangeToChange));
   }
 
   /**
@@ -205,7 +216,7 @@ public class ReportsActivity extends AppCompatActivity {
 
     switch (reportType) {
       case DAILY:
-        etDate.setVisibility(View.VISIBLE);
+        dpDate.setVisibility(View.VISIBLE);
         break;
       case MONTHLY:
         spMonth.setVisibility(View.VISIBLE);
@@ -219,8 +230,8 @@ public class ReportsActivity extends AppCompatActivity {
         etYear.setVisibility(View.VISIBLE);
         break;
       case CUSTOM:
-        etCustomRangeFrom.setVisibility(View.VISIBLE);
-        etCustomRangeTo.setVisibility(View.VISIBLE);
+        dpCustomRangeFrom.setVisibility(View.VISIBLE);
+        dpCustomRangeTo.setVisibility(View.VISIBLE);
         break;
       default:
         Log.d(REPORTS_ACTIVITY, "For some reason no field has been displayed.");
@@ -237,9 +248,121 @@ public class ReportsActivity extends AppCompatActivity {
     Log.d(REPORTS_ACTIVITY, "Fields are now hidden.");
     spMonth.setVisibility(View.GONE);
     spQuarter.setVisibility(View.GONE);
-    etDate.setVisibility(View.GONE);
+    dpDate.setVisibility(View.GONE);
     etYear.setVisibility(View.GONE);
-    etCustomRangeFrom.setVisibility(View.GONE);
-    etCustomRangeTo.setVisibility(View.GONE);
+    dpCustomRangeFrom.setVisibility(View.GONE);
+    dpCustomRangeTo.setVisibility(View.GONE);
+  }
+
+  /**
+   * Displays a Material single-date picker and passes the selected date
+   * to the supplied change handler.
+   *
+   * <p>When {@code timestamp} is not {@code null}, the picker opens with
+   * that date preselected. After the user confirms a date, the selected
+   * value is converted to a Firebase {@link Timestamp} and supplied to
+   * {@code dateChangeHandler}.</p>
+   *
+   * @param timestamp         the currently selected date to display initially,
+   *                          or {@code null} when no date has been selected
+   * @param dateChangeHandler callback invoked with the newly selected date
+   */
+  private void showDatePicker(
+          Timestamp timestamp,
+          Consumer<Timestamp> dateChangeHandler
+  ) {
+    MaterialDatePicker.Builder<Long> builder =
+            MaterialDatePicker.Builder
+                    .datePicker()
+                    .setTitleText(
+                            getString(R.string.reports_date_picker_text)
+                    );
+
+    /*
+     * When a date was previously selected, open the picker
+     * with that date already selected.
+     */
+    if (timestamp != null) {
+      builder.setSelection(
+              timestamp.toDate().getTime()
+      );
+    }
+
+    MaterialDatePicker<Long> datePicker =
+            builder.build();
+
+    datePicker.addOnPositiveButtonClickListener(selection -> {
+      if (selection == null) {
+        return;
+      }
+
+      dateChangeHandler.accept(
+              new Timestamp(new Date(selection))
+      );
+    });
+
+    datePicker.show(
+            getSupportFragmentManager(),
+            "reports_activity_date_picker"
+    );
+  }
+
+  /**
+   * Handles a change to the daily report date.
+   *
+   * <p>The selected date is formatted as {@code dd.MM.yyyy}, displayed
+   * in the main date picker view, and stored in {@code dpDateValue}.</p>
+   *
+   * @param selection the newly selected date
+   */
+  private void handleDpDateChange(Timestamp selection) {
+    SimpleDateFormat dateFormat =
+            new SimpleDateFormat("dd.MM.yyyy");
+
+    dpDate.setText(
+            dateFormat.format(selection.toDate())
+    );
+
+    dpDateValue = selection;
+  }
+
+  /**
+   * Handles a change to the starting date of the custom report range.
+   *
+   * <p>The selected date is formatted as {@code dd.MM.yyyy}, displayed
+   * in the custom-range start-date view, and stored in
+   * {@code dpCustomRangeFromValue}.</p>
+   *
+   * @param selection the newly selected starting date
+   */
+  private void handleDpCustomRangeFromChange(Timestamp selection) {
+    SimpleDateFormat dateFormat =
+            new SimpleDateFormat("dd.MM.yyyy");
+
+    dpCustomRangeFrom.setText(
+            dateFormat.format(selection.toDate())
+    );
+
+    dpCustomRangeFromValue = selection;
+  }
+
+  /**
+   * Handles a change to the ending date of the custom report range.
+   *
+   * <p>The selected date is formatted as {@code dd.MM.yyyy}, displayed
+   * in the custom-range end-date view, and stored in
+   * {@code dpCustomRangeToValue}.</p>
+   *
+   * @param selection the newly selected ending date
+   */
+  private void handleDpCustomRangeToChange(Timestamp selection) {
+    SimpleDateFormat dateFormat =
+            new SimpleDateFormat("dd.MM.yyyy");
+
+    dpCustomRangeTo.setText(
+            dateFormat.format(selection.toDate())
+    );
+
+    dpCustomRangeToValue = selection;
   }
 }

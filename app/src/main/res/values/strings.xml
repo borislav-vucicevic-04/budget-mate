@@ -112,4 +112,10 @@
     <string name="oct">October</string>
     <string name="nov">November</string>
     <string name="dec">December</string>
+    <string name="report_date_required">You must pick a date.</string>
+    <string name="report_year_required">You must enter the year.</string>
+    <string name="report_from_required">You must pick the start date.</string>
+    <string name="report_to_required">You must pic the end date.</string>
+    <string name="report_from_bigger_than_to">The start date must be smaller than the end date.</string>
+    <string name="reports_date_picker_text">Select the date</string>
 </resources>
