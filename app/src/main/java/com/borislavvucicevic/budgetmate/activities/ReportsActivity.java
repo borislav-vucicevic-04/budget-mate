@@ -6,8 +6,12 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -26,9 +30,13 @@ import com.borislavvucicevic.budgetmate.enums.ReportType;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.firebase.Timestamp;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 
 public class ReportsActivity extends AppCompatActivity {
@@ -36,8 +44,15 @@ public class ReportsActivity extends AppCompatActivity {
   private Spinner spReportType, spMonth, spQuarter;
   private EditText etYear;
   private AppCompatTextView dpDate, dpCustomRangeFrom, dpCustomRangeTo;
+  private TextView tvErrorWrapper;
+  private ProgressBar progressBar;
+  private Button btnGenerate;
   private Timestamp dpDateValue, dpCustomRangeFromValue, dpCustomRangeToValue;
-  private ReportType reportType;
+  private ReportType reportType = ReportType.DAILY;
+  private String etYearValue;
+  private Month spMonthValue = Month.JAN;
+  private Quarter spQuarterValue = Quarter.I;
+  private Timestamp from, to;
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -74,6 +89,9 @@ public class ReportsActivity extends AppCompatActivity {
     etYear = findViewById(R.id.etYear);
     dpCustomRangeFrom = findViewById(R.id.dpCustomRangeFrom);
     dpCustomRangeTo = findViewById(R.id.dpCustomRangeTo);
+    tvErrorWrapper = findViewById(R.id.tvErrorWrapper);
+    progressBar = findViewById(R.id.progressBar);
+    btnGenerate = findViewById(R.id.btnGenerate);
   }
 
   /**
@@ -102,9 +120,34 @@ public class ReportsActivity extends AppCompatActivity {
         // DO NOTHING
       }
     });
+    spMonth.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+      @Override
+      public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        MonthOption monthOption = (MonthOption) parent.getItemAtPosition(position);
+        spMonthValue = monthOption.getMonth();
+      }
+
+      @Override
+      public void onNothingSelected(AdapterView<?> parent) {
+        // DO NOTHING
+      }
+    });
+    spQuarter.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+      @Override
+      public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+        QuarterOption quarterOption = (QuarterOption) parent.getItemAtPosition(position);
+        spQuarterValue = quarterOption.getQuarter();
+      }
+
+      @Override
+      public void onNothingSelected(AdapterView<?> parent) {
+        // DO NOTHING
+      }
+    });
     dpDate.setOnClickListener(v -> showDatePicker(dpDateValue, this::handleDpDateChange));
     dpCustomRangeFrom.setOnClickListener(v -> showDatePicker(dpCustomRangeFromValue, this::handleDpCustomRangeFromChange));
     dpCustomRangeTo.setOnClickListener(v -> showDatePicker(dpCustomRangeToValue, this::handleDpCustomRangeToChange));
+    btnGenerate.setOnClickListener(v -> handleGenerateReport());
   }
 
   /**
@@ -268,10 +311,7 @@ public class ReportsActivity extends AppCompatActivity {
    *                          or {@code null} when no date has been selected
    * @param dateChangeHandler callback invoked with the newly selected date
    */
-  private void showDatePicker(
-          Timestamp timestamp,
-          Consumer<Timestamp> dateChangeHandler
-  ) {
+  private void showDatePicker(Timestamp timestamp, Consumer<Timestamp> dateChangeHandler) {
     MaterialDatePicker.Builder<Long> builder =
             MaterialDatePicker.Builder
                     .datePicker()
@@ -367,6 +407,25 @@ public class ReportsActivity extends AppCompatActivity {
     dpCustomRangeToValue = selection;
   }
 
+  private void handleGenerateReport() {
+    etYearValue = etYear.getText().toString().trim();
+
+    Executors.newSingleThreadExecutor().execute(() -> {
+      try {
+        SimpleDateFormat dateFormatter = new SimpleDateFormat("dd.MMMM.yyyy");
+        handleValidation();
+        handleReportTimeRange();
+
+        Log.d(REPORTS_ACTIVITY, "Start date: " + dateFormatter.format(from.toDate()));
+        Log.d(REPORTS_ACTIVITY, "End date: " + dateFormatter.format(to.toDate()));
+      } catch(ValidationException exception) {
+        runOnUiThread(() -> handleException(exception));
+      } catch(Exception exception) {
+        runOnUiThread(() -> handleException(exception));
+      }
+    });
+  }
+
   /**
    * Validates the input fields required for the selected report type.
    *
@@ -383,11 +442,125 @@ public class ReportsActivity extends AppCompatActivity {
       if(dpCustomRangeFromValue == null) throw new ValidationException(getString(R.string.report_from_required), null);
       if(dpCustomRangeToValue == null) throw new ValidationException(getString(R.string.report_to_required), null);
       if(dpCustomRangeFromValue.toDate().after(dpCustomRangeToValue.toDate())) throw new ValidationException(getString(R.string.report_from_bigger_than_to), null);
-    } else if(reportType == ReportType.DAILY && dpDateValue == null) {
-      throw new ValidationException(getString(R.string.report_date_required), null);
-    } else {
-      String year = etYear.getText().toString().trim();
-      if(year.isEmpty()) throw new ValidationException(getString(R.string.report_year_required), null);
+    } else if(reportType == ReportType.DAILY) {
+      if(dpDateValue == null) throw new ValidationException(getString(R.string.report_date_required), null);
+    } else if (etYearValue.isEmpty()) {
+      throw new ValidationException(getString(R.string.report_year_required), null);
     }
+  }
+
+  /**
+   * Determines and sets the report time range based on the selected {@code reportType}.
+   *
+   * <p>The calculated range is stored in the {@code from} and {@code to} fields:
+   * <ul>
+   *   <li>{@code DAILY}: uses the selected date for both boundaries.</li>
+   *   <li>{@code MONTHLY}: uses the first and last day of the selected month.</li>
+   *   <li>{@code QUARTERLY}: uses the first and last day of the selected quarter.</li>
+   *   <li>{@code YEARLY}: uses the first and last day of the selected year.</li>
+   *   <li>{@code CUSTOM}: uses the manually selected start and end dates.</li>
+   * </ul>
+   *
+   * <p>Calendar-based dates are converted to timestamps at the start of the day
+   * using the system-default time zone.
+   *
+   * @throws NumberFormatException if the provided year value is not a valid integer
+   * @throws java.time.DateTimeException if the selected year, month, or quarter
+   *         produces an invalid date
+   */
+  private void handleReportTimeRange() {
+    int year =  !etYearValue.isEmpty() ? Integer.parseInt(etYearValue) : 0;
+    LocalDate firstDay;
+    LocalDate lastDay;
+    switch (reportType) {
+      case DAILY:
+        from = dpDateValue;
+        to = dpDateValue;
+        break;
+      case MONTHLY:
+        // starting with the first day of the month
+        firstDay = LocalDate.of(year, spMonthValue.getMonthValue(), 1);
+        // getting the last day of the month
+        lastDay = firstDay.with(TemporalAdjusters.lastDayOfMonth());
+        // setting the first day of the month as the starting point of the report's time range
+        from = new Timestamp(Date.from(firstDay.atStartOfDay(ZoneId.systemDefault()).toInstant()));
+        // setting the last day of the month as the end point of the report's time range
+        to = new Timestamp(Date.from(lastDay.atStartOfDay(ZoneId.systemDefault()).toInstant()));
+        break;
+      case QUARTERLY:
+        // starting with the first day of the year
+        firstDay = LocalDate.of(year, spQuarterValue.getStartMonthNumber(), 1);
+        // getting the last day of the year
+        lastDay = LocalDate.of(year, spQuarterValue.getEndMonthNumber(), 1).with(TemporalAdjusters.lastDayOfMonth());
+        // setting the first day of the month as the starting point of the report's time range
+        from = new Timestamp(Date.from(firstDay.atStartOfDay(ZoneId.systemDefault()).toInstant()));
+        // setting the last day of the month as the end point of the report's time range
+        to = new Timestamp(Date.from(lastDay.atStartOfDay(ZoneId.systemDefault()).toInstant()));
+        break;
+      case YEARLY:
+        // starting with the first day of the year
+        firstDay = LocalDate.of(year, 1, 1);
+        // getting the last day of the year
+        lastDay = firstDay.with(TemporalAdjusters.lastDayOfYear());
+        // setting the first day of the month as the starting point of the report's time range
+        from = new Timestamp(Date.from(firstDay.atStartOfDay(ZoneId.systemDefault()).toInstant()));
+        // setting the last day of the month as the end point of the report's time range
+        to = new Timestamp(Date.from(lastDay.atStartOfDay(ZoneId.systemDefault()).toInstant()));
+        break;
+      case CUSTOM:
+        from = dpCustomRangeFromValue;
+        to = dpCustomRangeToValue;
+        break;
+    }
+  }
+
+  /**
+   * Handles validation failures triggered during the registration input check.
+   * <p>
+   * This method updates the UI by attaching an error message directly to the invalid
+   * input field (if a view ID is provided), displaying a general error text wrapper,
+   * showing a toast notification, and hiding the active progress bar. It also logs
+   * the exception details for debugging.
+   * </p>
+   *
+   * @param exception The {@link ValidationException} containing the validation failure
+   *                  details, the error message, and the target view ID.
+   */
+  private void handleException(ValidationException exception) {
+    if(exception.getViewID() != null) {
+      ((EditText) findViewById(exception.getViewID())).setError(exception.getMessage());
+    }
+    Log.e(REPORTS_ACTIVITY, exception.getMessage(), exception);
+    tvErrorWrapper.setVisibility(TextView.VISIBLE);
+    tvErrorWrapper.setText(exception.getMessage());
+    Toast.makeText(
+            ReportsActivity.this,
+            exception.getMessage(),
+            Toast.LENGTH_SHORT
+    ).show();
+    progressBar.setVisibility(View.INVISIBLE);
+  }
+
+  /**
+   * Serves as a fallback handler for any generic or unhandled exceptions during registration.
+   * <p>
+   * This method catches any standard exceptions and logs the specific error details.
+   * It surfaces the explicit exception message via the error text wrapper, but displays
+   * a generic, localized error message to the user via a toast notification. It also
+   * ensures the loading progress bar is hidden.
+   * </p>
+   *
+   * @param exception The generic {@link Exception} encountered during execution.
+   */
+  private void handleException(Exception exception) {
+    Log.e(REPORTS_ACTIVITY, exception.getMessage(), exception);
+    tvErrorWrapper.setVisibility(TextView.VISIBLE);
+    tvErrorWrapper.setText(exception.getMessage());
+    Toast.makeText(
+            ReportsActivity.this,
+            getString(R.string.error_general),
+            Toast.LENGTH_SHORT
+    ).show();
+    progressBar.setVisibility(View.INVISIBLE);
   }
 }

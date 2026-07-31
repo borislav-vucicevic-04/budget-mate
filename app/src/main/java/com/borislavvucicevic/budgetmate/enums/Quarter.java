@@ -50,4 +50,12 @@ public enum Quarter {
   public int getQuarterNumber() {
     return this.quarterNumber;
   }
+
+  public int getStartMonthNumber() {
+    return (quarterNumber - 1) * 3 + 1;
+  }
+
+  public int getEndMonthNumber() {
+    return quarterNumber * 3;
+  }
 }

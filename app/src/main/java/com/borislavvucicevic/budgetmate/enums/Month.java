@@ -3,64 +3,64 @@ package com.borislavvucicevic.budgetmate.enums;
 /**
  * Represents a month of the year.
  *
- * <p>Each month is associated with a zero-based numeric value, where
- * {@code 0} represents January and {@code 11} represents December.</p>
+ * <p>Each month is associated with a one-based numeric value, where
+ * {@code 1} represents January and {@code 12} represents December.</p>
  */
 public enum Month {
 
-  /** January, represented by the value {@code 0}. */
-  JAN(0),
+  /** January, represented by the value {@code 1}. */
+  JAN(1),
 
-  /** February, represented by the value {@code 1}. */
-  FEB(1),
+  /** February, represented by the value {@code 2}. */
+  FEB(2),
 
-  /** March, represented by the value {@code 2}. */
-  MAR(2),
+  /** March, represented by the value {@code 3}. */
+  MAR(3),
 
-  /** April, represented by the value {@code 3}. */
-  APR(3),
+  /** April, represented by the value {@code 4}. */
+  APR(4),
 
-  /** May, represented by the value {@code 4}. */
-  MAY(4),
+  /** May, represented by the value {@code 5}. */
+  MAY(5),
 
-  /** June, represented by the value {@code 5}. */
-  JUN(5),
+  /** June, represented by the value {@code 6}. */
+  JUN(6),
 
-  /** July, represented by the value {@code 6}. */
-  JUL(6),
+  /** July, represented by the value {@code 7}. */
+  JUL(7),
 
-  /** August, represented by the value {@code 7}. */
-  AUG(7),
+  /** August, represented by the value {@code 8}. */
+  AUG(8),
 
-  /** September, represented by the value {@code 8}. */
-  SEP(8),
+  /** September, represented by the value {@code 9}. */
+  SEP(9),
 
-  /** October, represented by the value {@code 9}. */
-  OCT(9),
+  /** October, represented by the value {@code 10}. */
+  OCT(10),
 
-  /** November, represented by the value {@code 10}. */
-  NOV(10),
+  /** November, represented by the value {@code 11}. */
+  NOV(11),
 
-  /** December, represented by the value {@code 11}. */
-  DEC(11);
+  /** December, represented by the value {@code 12}. */
+  DEC(12);
 
-  /** The zero-based numeric value associated with this month. */
+  /** The one-based numeric value associated with this month. */
   private final int monthValue;
 
   /**
-   * Creates a month with the specified zero-based numeric value.
+   * Creates a month with the specified one-based numeric value.
    *
-   * @param monthValue the month value, ranging from {@code 0} for January
-   *     to {@code 11} for December
+   * @param monthValue the month value, ranging from {@code 1} for January
+   *     to {@code 12} for December
    */
   Month(int monthValue) {
     this.monthValue = monthValue;
   }
 
   /**
-   * Returns the zero-based numeric value of this month.
+   * Returns the one-based numeric value of this month.
    *
-   * @return the month value, ranging from {@code 0} to {@code 11}
+   * @return the month value, ranging from {@code 1} to {@code 12}
    */
   public int getMonthValue() {
     return this.monthValue;
