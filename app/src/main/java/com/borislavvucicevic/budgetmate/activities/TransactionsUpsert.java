@@ -211,7 +211,7 @@ public class TransactionsUpsert extends AppCompatActivity {
         // creating transaction
         Transaction transaction = new Transaction(
                 authService.getUserID(),
-                Float.parseFloat(amount),
+                Double.parseDouble(amount),
                 category,
                 transactionType,
                 Timestamp.now(),
@@ -245,7 +245,7 @@ public class TransactionsUpsert extends AppCompatActivity {
                 .orElse(new Category(null, categoryName, authService.getUserID()));
 
         // updating transaction values
-        transactionUpsertObject.setAmount(Float.parseFloat(amount));
+        transactionUpsertObject.setAmount(Double.parseDouble(amount));
         transactionUpsertObject.setCategory(category);
         transactionUpsertObject.setType(transactionType);
         transactionUpsertObject.setNotes(!notes.isEmpty() ? notes : null);

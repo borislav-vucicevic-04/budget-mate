@@ -32,7 +32,7 @@ public class Transaction {
   /**
    * The monetary value of the transaction.
    */
-  private Float amount;
+  private Double amount;
 
   /**
    * The unique identifier of the budget category associated with this transaction.
@@ -83,7 +83,7 @@ public class Transaction {
    * @param createdOn  the timestamp indicating exactly when the transaction occurred
    * @param notes      additional details, comments, or descriptions about the transaction
    */
-  public Transaction(String userID, Float amount, Category category, TransactionType type, Timestamp createdOn, String notes) {
+  public Transaction(String userID, Double amount, Category category, TransactionType type, Timestamp createdOn, String notes) {
     this.userID = userID;
     this.amount = amount;
     this.category = category;
@@ -133,7 +133,7 @@ public class Transaction {
    *
    * @return the transaction amount.
    */
-  public Float getAmount() {
+  public Double getAmount() {
     return amount;
   }
 
@@ -142,7 +142,7 @@ public class Transaction {
    *
    * @param amount the transaction amount to set.
    */
-  public void setAmount(Float amount) {
+  public void setAmount(Double amount) {
     this.amount = amount;
   }
 
