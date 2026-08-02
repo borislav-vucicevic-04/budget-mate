@@ -65,4 +65,22 @@ public enum Month {
   public int getMonthValue() {
     return this.monthValue;
   }
+
+  /**
+   * Returns the {@link Month} corresponding to the specified numeric month value.
+   *
+   * @param monthValue the numeric month value, from {@code 1} for January
+   *                   to {@code 12} for December
+   * @return the matching {@link Month} enum constant
+   * @throws IllegalArgumentException if {@code monthValue} is outside the range
+   *                                  {@code 1} to {@code 12}
+   */
+  public static Month parseMonth(int monthValue) {
+    for (Month month : Month.values()) {
+      if (month.monthValue == monthValue) {
+        return month;
+      }
+    }
+    throw new IllegalArgumentException("Month values must be between 1 and 12");
+  }
 }
