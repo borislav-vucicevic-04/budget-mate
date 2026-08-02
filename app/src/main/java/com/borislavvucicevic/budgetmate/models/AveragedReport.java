@@ -31,7 +31,7 @@ import java.util.Map;
  *
  * <p>The report is prepared automatically when an instance is created.</p>
  */
-public class AveragedReport extends Report {
+public abstract class AveragedReport extends Report {
 
   /**
    * Number of days between the starting and ending dates of the report.
@@ -79,7 +79,7 @@ public class AveragedReport extends Report {
    * @param to the ending date of the reporting period
    * @param transactionList the transactions included in the report
    */
-  public AveragedReport(ReportType type, LocalDate from, LocalDate to, List<Transaction> transactionList) {
+  protected AveragedReport(ReportType type, LocalDate from, LocalDate to, List<Transaction> transactionList) {
     super(type, from, to, transactionList);
     prepare();
   }
