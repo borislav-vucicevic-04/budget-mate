@@ -39,34 +39,34 @@ public class AveragedReport extends Report {
    * <p>The ending date is treated as exclusive when this value is
    * calculated.</p>
    */
-  protected long dayCount;
+  private long dayCount;
 
   /**
    * Number of calendar months covered by the reporting period.
    *
    * <p>Both the starting and ending months are included.</p>
    */
-  protected long monthCount;
+  private long monthCount;
 
   /**
    * Income totals grouped by calendar month.
    */
-  protected final Map<Month, Double> totalIncomesByMonth = new HashMap<>();
+  private final Map<Month, Double> totalIncomesByMonth = new HashMap<>();
 
   /**
    * Expense totals grouped by calendar month.
    */
-  protected final Map<Month, Double> totalExpensesByMonth = new HashMap<>();
+  private final Map<Month, Double> totalExpensesByMonth = new HashMap<>();
 
   /**
    * Average income and expense amounts per day, grouped by transaction type.
    */
-  protected final Map<TransactionType, Double> averagesPerDay = new HashMap<>();
+  private final Map<TransactionType, Double> averagesPerDay = new HashMap<>();
 
   /**
    * Average income and expense amounts per month, grouped by transaction type.
    */
-  protected final Map<TransactionType, Double> averagesPerMonth = new HashMap<>();
+  private final Map<TransactionType, Double> averagesPerMonth = new HashMap<>();
 
   /**
    * Creates and prepares an averaged financial report.
@@ -82,6 +82,70 @@ public class AveragedReport extends Report {
   public AveragedReport(ReportType type, LocalDate from, LocalDate to, List<Transaction> transactionList) {
     super(type, from, to, transactionList);
     prepare();
+  }
+
+  /**
+   * Returns the number of days covered by the reporting period. * * @return the number of days in the reporting period
+   * */
+  public long getDayCount() {
+    return dayCount;
+  }
+
+  /**
+   * Returns the number of calendar months covered by the reporting period.
+   *
+   * @return the number of months in the reporting period
+   * */
+  public long getMonthCount() {
+    return monthCount;
+  }
+
+  /**
+   * Returns the total income amounts grouped by month.
+   *
+   * <p>Each key represents a month, while the corresponding value represents
+   * the total income recorded during that month.</p>
+   *
+   * @return a map of months to total income amounts
+   * */
+  public Map<Month, Double> getTotalIncomesByMonth() {
+    return totalIncomesByMonth;
+  }
+
+  /**
+   * Returns the total expense amounts grouped by month.
+   *
+   * <p>Each key represents a month, while the corresponding value represents
+   * the total expenses recorded during that month.</p>
+   *
+   * @return a map of months to total expense amounts
+   * */
+  public Map<Month, Double> getTotalExpensesByMonth() {
+    return totalExpensesByMonth;
+  }
+
+  /**
+   * Returns the average income and expense amounts per day.
+   *
+   * <p>Each key represents a transaction type, while the corresponding value
+   * represents its average amount per day.</p>
+   *
+   * @return a map of transaction types to average daily amounts
+   * */
+  public Map<TransactionType, Double> getAveragesPerDay() {
+    return averagesPerDay;
+  }
+
+  /**
+   * Returns the average income and expense amounts per month.
+   *
+   * <p>Each key represents a transaction type, while the corresponding value
+   * represents its average amount per month.</p>
+   *
+   * @return a map of transaction types to average monthly amounts
+   * */
+  public Map<TransactionType, Double> getAveragesPerMonth() {
+    return averagesPerMonth;
   }
 
   /**
@@ -149,7 +213,7 @@ public class AveragedReport extends Report {
       Double byCategoryValue = transactionType == TransactionType.INCOME ?
               totalIncomesByCategory.get(categoryName) :
               totalExpensesByCategory.get(categoryName);
-      
+
       if (byCategoryValue == null) {
         byCategoryValue = 0.0;
       }
