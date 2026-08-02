@@ -1,19 +1,25 @@
 package com.borislavvucicevic.budgetmate.models;
 
 import com.borislavvucicevic.budgetmate.enums.ReportType;
+import com.borislavvucicevic.budgetmate.enums.TransactionType;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
- * Defines the common state and behavior of a financial report.
+ * Represents the common foundation for financial reports.
  *
- * <p>Each report has a type, a reporting period, and a collection of
- * transactions from which its financial values are calculated.</p>
+ * <p>A report contains a report type, a reporting period, and a collection of
+ * transactions used to calculate financial totals.</p>
  *
- * <p>This class cannot be instantiated directly. Concrete subclasses must
- * define how the report is prepared and how transaction totals are
- * calculated.</p>
+ * <p>This class also stores shared calculated values, including income totals
+ * by category, expense totals by category, and general report totals.</p>
+ *
+ * <p>Because this class is abstract, it cannot be instantiated directly.
+ * Concrete report implementations must define how the report is prepared and
+ * how its totals are calculated.</p>
  */
 public abstract class Report {
 
@@ -23,30 +29,54 @@ public abstract class Report {
   private final ReportType type;
 
   /**
-   * Starting date of the reporting period.
+   * First date included in the reporting period.
    */
   private final LocalDate from;
 
   /**
-   * Ending date of the reporting period.
+   * Last date included in the reporting period.
    */
   private final LocalDate to;
 
   /**
    * Transactions included in this report.
    */
-  private final List<Transaction> transactionList;
+  protected final List<Transaction> transactionList;
+
+  /**
+   * Income totals grouped by category name.
+   *
+   * <p>Each key represents a category name, while the corresponding value
+   * represents the total income assigned to that category.</p>
+   */
+  protected final Map<String, Double> totalIncomesByCategory = new HashMap<>();
+
+  /**
+   * Expense totals grouped by category name.
+   *
+   * <p>Each key represents a category name, while the corresponding value
+   * represents the total expense assigned to that category.</p>
+   */
+  protected final Map<String, Double> totalExpensesByCategory = new HashMap<>();
+
+  /**
+   * General financial totals calculated for this report.
+   *
+   * <p>The meaning of each key is determined by the concrete report
+   * implementation.</p>
+   */
+  protected final Map<TransactionType, Double> totals = new HashMap<>();
 
   /**
    * Creates a report with the specified type, reporting period, and
    * transactions.
    *
-   * <p>The constructor is protected because reports must be instantiated
+   * <p>This constructor is protected because reports must be instantiated
    * through concrete subclasses.</p>
    *
    * @param type            the type of report
-   * @param from            the starting date of the reporting period
-   * @param to              the ending date of the reporting period
+   * @param from            the first date included in the reporting period
+   * @param to              the last date included in the reporting period
    * @param transactionList the transactions included in the report
    */
   protected Report(
@@ -71,18 +101,18 @@ public abstract class Report {
   }
 
   /**
-   * Returns the starting date of the reporting period.
+   * Returns the first date included in the reporting period.
    *
-   * @return the starting date
+   * @return the starting date of the report
    */
   public LocalDate getFrom() {
     return from;
   }
 
   /**
-   * Returns the ending date of the reporting period.
+   * Returns the last date included in the reporting period.
    *
-   * @return the ending date
+   * @return the ending date of the report
    */
   public LocalDate getTo() {
     return to;
@@ -92,20 +122,57 @@ public abstract class Report {
    * Returns the transactions included in this report.
    *
    * <p>The returned list is the same list supplied to the constructor.
-   * Modifying it may therefore affect the report.</p>
+   * Modifying the list may therefore affect the report.</p>
    *
-   * @return the list of transactions
+   * @return the transactions included in the report
    */
   public List<Transaction> getTransactionList() {
     return transactionList;
   }
 
   /**
-   * Prepares this report by performing all calculations required by its
-   * concrete report type.
+   * Returns income totals grouped by category name.
    *
-   * <p>Subclasses determine which calculation steps are necessary and the
-   * order in which they are executed.</p>
+   * <p>The returned map is mutable. Changes made to it directly affect the
+   * report's stored income totals.</p>
+   *
+   * @return a map of category names to total income amounts
+   */
+  public Map<String, Double> getTotalIncomesByCategory() {
+    return totalIncomesByCategory;
+  }
+
+  /**
+   * Returns expense totals grouped by category name.
+   *
+   * <p>The returned map is mutable. Changes made to it directly affect the
+   * report's stored expense totals.</p>
+   *
+   * @return a map of category names to total expense amounts
+   */
+  public Map<String, Double> getTotalExpensesByCategory() {
+    return totalExpensesByCategory;
+  }
+
+  /**
+   * Returns the general totals calculated for this report.
+   *
+   * <p>The keys and their meanings are defined by the concrete report
+   * implementation. The returned map is mutable, and changes made to it
+   * directly affect the report.</p>
+   *
+   * @return a map containing the report's calculated totals
+   */
+  public Map<TransactionType, Double> getTotals() {
+    return totals;
+  }
+
+  /**
+   * Prepares this report by executing the calculations required by the
+   * concrete report implementation.
+   *
+   * <p>Subclasses determine which calculations are performed and the order in
+   * which they are executed.</p>
    */
   protected abstract void prepare();
 
@@ -113,8 +180,8 @@ public abstract class Report {
    * Calculates the financial totals for the transactions included in this
    * report.
    *
-   * <p>Subclasses determine which totals are calculated and how transactions
-   * are grouped.</p>
+   * <p>Subclasses determine how transactions are grouped and which calculated
+   * values are stored in the report's totals maps.</p>
    */
   protected abstract void calculateTotals();
 }
