@@ -5,171 +5,395 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>[report title]</title>
 
-  <style>
+<style>
+  /*
+    Print settings:
+    - Page: A4 landscape
+    - Page margins: 10 mm
+    - Font: Times New Roman, 12 pt
+    - Long transaction tables may continue across pages
+    - Transaction table headers repeat on every page
+  */
+
+  @page {
+    margin: 1in;
+  }
+
+  :root {
+    --income-color: #16863d;
+    --expense-color: #dc2626;
+    --accent-color: #45b0e1;
+    --accent-background: #c1e4f5;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+
+    background: #ffffff;
+    color: #131313;
+
+    font-family: "Times New Roman", "Liberation Serif", serif;
+    font-size: 12pt;
+    line-height: 1.2;
+
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body {
+    overflow: visible;
+  }
+
+  h1,
+  h2 {
+    font-family: "Times New Roman", "Liberation Serif", serif;
+    font-weight: 700;
+
     /*
-      Print settings:
-      - Page: A4, portrait
-      - Page margins: 1in on all sides
-      - Body: Times New Roman, 12pt, #131313
-      - Tables: responsive and at least as wide as the printable page area
+      Keep the heading together with at least the first part
+      of the content following it.
     */
-    @page {
-      size: A4 landscape;
-      margin: 1in;
-    }
+    break-after: avoid;
+    page-break-after: avoid;
+  }
 
-    * {
-      box-sizing: border-box;
-    }
+  h1 {
+    margin: 10pt 0 18pt;
+    font-size: 16pt;
+    line-height: 18pt;
+    text-align: center;
+  }
 
+  h2 {
+    margin: 18pt 0 8pt;
+    font-size: 14pt;
+    line-height: 16pt;
+    text-align: left;
+  }
+
+  table {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+
+    border: 0;
+    border-collapse: collapse;
+    border-spacing: 0;
+
+    table-layout: auto;
+
+    font-size: 12pt;
+    line-height: 1.15;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tbody {
+    display: table-row-group;
+  }
+
+  tfoot {
+    display: table-footer-group;
+  }
+
+  tr {
+    /*
+      Keep an individual row together, but allow the complete
+      table to continue on another page.
+    */
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  th,
+  td {
+    height: auto;
+    min-height: 20pt;
+    padding: 3pt 5.4pt;
+
+    border: 0;
+
+    vertical-align: middle;
+    text-align: left;
+
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  th {
+    font-weight: 700;
+  }
+
+  .align-right {
+    text-align: right;
+  }
+
+  .income,
+  .income-green {
+    color: var(--income-color);
+  }
+
+  .expense,
+  .expense-red {
+    color: var(--expense-color);
+  }
+
+  /*
+    Color income and expense values in summary tables.
+  */
+
+  .categories-table th:first-child,
+  .categories-table tbody td:nth-child(1),
+  .categories-table tbody td:nth-child(2),
+  .monthly-table th:nth-child(2),
+  .monthly-table tbody td:nth-child(2),
+  .average-table th:nth-child(2),
+  .average-table tbody td:nth-child(2) {
+    color: var(--income-color);
+  }
+
+  .categories-table th:last-child,
+  .categories-table tbody td:nth-child(3),
+  .categories-table tbody td:nth-child(4),
+  .monthly-table th:nth-child(3),
+  .monthly-table tbody td:nth-child(3),
+  .average-table th:nth-child(3),
+  .average-table tbody td:nth-child(3) {
+    color: var(--expense-color);
+  }
+
+  /*
+    Transaction amount colors.
+  */
+
+  .transactions-table .income-amount {
+    color: var(--income-color);
+  }
+
+  .transactions-table .expense-amount {
+    color: var(--expense-color);
+  }
+
+  /*
+    Reporting-period table.
+  */
+
+  .period-table {
+    font-size: 14pt;
+    line-height: 16pt;
+  }
+
+  .period-table th,
+  .period-table td {
+    min-height: 22pt;
+    padding-top: 3pt;
+    padding-bottom: 3pt;
+  }
+
+  /*
+    Word-inspired "List Table 1 Light Accent 1" styling.
+  */
+
+  .accent-list thead th {
+    border-bottom: 0.5pt solid var(--accent-color);
+  }
+
+  .accent-list tbody tr:nth-child(odd) td {
+    background: var(--accent-background);
+  }
+
+  .accent-list tbody tr:last-child td {
+    border-bottom: 0.5pt solid var(--accent-color);
+  }
+
+  /*
+    Category table has one vertical separator at its midpoint.
+  */
+
+  .categories-table .mid-separator {
+    border-left: 0.5pt solid var(--accent-color);
+  }
+
+  /*
+    Monthly and average tables have separators between columns.
+  */
+
+  .monthly-table th + th,
+  .monthly-table td + td,
+  .average-table th + th,
+  .average-table td + td {
+    border-left: 0.5pt solid var(--accent-color);
+  }
+
+  /*
+    Keep small summary sections together.
+
+    Do not apply this class to the Transactions section.
+  */
+
+  .keep-together {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /*
+    Transactions must be allowed to use the remaining space on
+    the current page and then continue onto following pages.
+  */
+
+  .transactions-section,
+  .transactions-container,
+  .transactions-table,
+  .transactions-table tbody {
+    height: auto;
+    min-height: 0;
+
+    break-before: auto;
+    break-after: auto;
+    break-inside: auto;
+
+    page-break-before: auto;
+    page-break-after: auto;
+    page-break-inside: auto;
+  }
+
+  /*
+    Override keep-together if it was accidentally added directly
+    to the Transactions section.
+  */
+
+  .transactions-section.keep-together,
+  .transactions-container.keep-together,
+  .transactions-table.keep-together {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  /*
+    Override a parent marked keep-together when it contains the
+    transaction table. Supported by modern Android System WebView.
+  */
+
+  .keep-together:has(.transactions-table) {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .transactions-table {
+    width: 100%;
+    table-layout: auto;
+  }
+
+  .transactions-table thead {
+    display: table-header-group;
+  }
+
+  .transactions-table tbody {
+    display: table-row-group;
+  }
+
+  .transactions-table tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .transactions-table th,
+  .transactions-table td {
+    height: auto;
+    min-height: 20pt;
+    padding-top: 3pt;
+    padding-bottom: 3pt;
+    vertical-align: middle;
+  }
+
+  .transactions-table tbody tr:last-child td {
+    border-top: 0;
+    border-bottom: 0.5pt solid var(--accent-color);
+  }
+
+  /*
+    Preserve the height of an intentionally empty template cell.
+  */
+
+  .empty-cell::after {
+    content: "\00a0";
+  }
+
+  @media print {
     html,
     body {
+      width: auto;
+      height: auto;
+      min-height: 0;
       margin: 0;
       padding: 0;
-      background: #ffffff;
-      color: #131313;
-      font-family: "Times New Roman", "Liberation Serif", serif;
-      font-size: 12pt;
-      line-height: 1.1583; /* Word default: 278/240 */
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
-
-    h1,
-    h2 {
-      font-family: "Times New Roman", "Liberation Serif", serif;
-      font-weight: 700;
-      break-after: avoid;
-      page-break-after: avoid;
+      overflow: visible;
     }
 
     h1 {
-      margin: 12pt 0;
-      font-size: 16pt;
-      line-height: 18pt;
-      text-align: center;
+      margin-top: 0;
     }
 
     h2 {
-      margin: 36pt 0 12pt;
-      font-size: 14pt;
-      line-height: 14pt;
-      text-align: left;
+      margin: 18pt 0 8pt;
     }
 
     table {
-      width: auto;
-      min-width: 100%;
-      margin: 0;
-      border: 0;
-      border-collapse: collapse;
-      border-spacing: 0;
-      table-layout: auto;
-      font-size: 12pt;
-      line-height: 12pt;
+      width: 100%;
+      max-width: 100%;
     }
 
-    th,
-    td {
-      height: 26.3pt;
-      padding: 0 5.4pt; /* Word normal-table left/right cell margin: 108 twips */
-      border: 0;
-      vertical-align: middle;
-      text-align: left;
-      overflow-wrap: anywhere;
+    /*
+      Small summary sections remain together.
+    */
+
+    .keep-together {
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
 
-    th {
-      font-weight: 700;
-    }
+    /*
+      Long transaction content is explicitly allowed to split.
+    */
 
-    .align-right {
-      text-align: right;
-    }
+    .transactions-section,
+    .transactions-container,
+    .transactions-section.keep-together,
+    .transactions-container.keep-together,
+    .transactions-table,
+    .transactions-table.keep-together,
+    .transactions-table tbody,
+    .keep-together:has(.transactions-table) {
+      height: auto;
+      min-height: 0;
 
-    :root {
-      --income-color: #16863d;
-      --expense-color: #dc2626;
-    }
+      break-before: auto;
+      break-after: auto;
+      break-inside: auto !important;
 
-    .income,
-    .income-green {
-      color: var(--income-color);
+      page-break-before: auto;
+      page-break-after: auto;
+      page-break-inside: auto !important;
     }
-
-    .expense,
-    .expense-red {
-      color: var(--expense-color);
-    }
-
-    /* Color all income and expense content in the summary tables. */
-    .categories-table th:first-child,
-    .categories-table tbody td:nth-child(1),
-    .categories-table tbody td:nth-child(2),
-    .monthly-table th:nth-child(2),
-    .monthly-table tbody td:nth-child(2),
-    .average-table th:nth-child(2),
-    .average-table tbody td:nth-child(2) {
-      color: var(--income-color);
-    }
-
-    .categories-table th:last-child,
-    .categories-table tbody td:nth-child(3),
-    .categories-table tbody td:nth-child(4),
-    .monthly-table th:nth-child(3),
-    .monthly-table tbody td:nth-child(3),
-    .average-table th:nth-child(3),
-    .average-table tbody td:nth-child(3) {
-      color: var(--expense-color);
-    }
-
-    /* Apply one of these classes to a transaction amount based on its type. */
-    .transactions-table .income-amount {
-      color: var(--income-color);
-    }
-
-    .transactions-table .expense-amount {
-      color: var(--expense-color);
-    }
-
-    /* First table: report-period metadata. */
-    .period-table {
-      font-size: 14pt;
-      line-height: 16pt;
-    }
-
-    .period-table td {
-      height: 28.1pt;
-    }
-
-    /* Word style: “List Table 1 Light Accent 1”. */
-    .accent-list thead th {
-      border-bottom: 0.5pt solid #45b0e1;
-    }
-
-    .accent-list tbody tr:nth-child(odd) td {
-      background: #c1e4f5;
-    }
-
-    .accent-list tbody tr:last-child td {
-      border-top: 0.5pt solid #45b0e1;
-    }
-
-    /* Category table has only one vertical separator, at the 50% point. */
-    .categories-table .mid-separator {
-      border-left: 0.5pt solid #45b0e1;
-    }
-
-    /* Month table has separators between all three columns. */
-    .monthly-table th + th,
-    .monthly-table td + td {
-      border-left: 0.5pt solid #45b0e1;
-    }
-
-    /* The average table uses the same accent-list styling as the monthly table. */
 
     .transactions-table thead {
       display: table-header-group;
+    }
+
+    .transactions-table tbody {
+      display: table-row-group;
     }
 
     .transactions-table tr {
@@ -177,22 +401,15 @@
       page-break-inside: avoid;
     }
 
-    .transactions-table tbody tr:last-child td {
-      border-top: 0;
-      border-bottom: 0.5pt solid #45b0e1;
+    .transactions-table th,
+    .transactions-table td {
+      height: auto;
+      min-height: 0;
+      padding-top: 3pt;
+      padding-bottom: 3pt;
     }
-
-    /* Prevent an empty template row from adding visible text while retaining Word row height. */
-    .empty-cell::after {
-      content: "\00a0";
-    }
-
-    /* Keep small summary tables with their headings when the report grows. */
-    .keep-together {
-      break-inside: avoid;
-      page-break-inside: avoid;
-    }
-  </style>
+  }
+</style>
 </head>
 <body>
   <h1>[report title]</h1>

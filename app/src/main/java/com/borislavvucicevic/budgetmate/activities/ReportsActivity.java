@@ -1,9 +1,14 @@
 package com.borislavvucicevic.budgetmate.activities;
 
-import android.icu.text.SimpleDateFormat;
+import android.content.Context;
 import android.os.Bundle;
+import android.print.PrintAttributes;
+import android.print.PrintDocumentAdapter;
+import android.print.PrintManager;
 import android.util.Log;
 import android.view.View;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -20,18 +25,35 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.borislavvucicevic.budgetmate.R;
+import com.borislavvucicevic.budgetmate.enums.CacheKey;
+import com.borislavvucicevic.budgetmate.enums.CurrencyCode;
 import com.borislavvucicevic.budgetmate.exceptions.ValidationException;
+import com.borislavvucicevic.budgetmate.models.CustomReport;
+import com.borislavvucicevic.budgetmate.models.DailyReport;
+import com.borislavvucicevic.budgetmate.models.MonthlyReport;
+import com.borislavvucicevic.budgetmate.models.QuarterlyReport;
+import com.borislavvucicevic.budgetmate.models.Report;
+import com.borislavvucicevic.budgetmate.models.Transaction;
+import com.borislavvucicevic.budgetmate.models.UserProfile;
+import com.borislavvucicevic.budgetmate.models.YearlyReport;
 import com.borislavvucicevic.budgetmate.options.MonthOption;
 import com.borislavvucicevic.budgetmate.options.QuarterOption;
 import com.borislavvucicevic.budgetmate.options.ReportTypeOption;
 import com.borislavvucicevic.budgetmate.enums.Month;
 import com.borislavvucicevic.budgetmate.enums.Quarter;
 import com.borislavvucicevic.budgetmate.enums.ReportType;
+import com.borislavvucicevic.budgetmate.services.AuthService;
+import com.borislavvucicevic.budgetmate.services.CacheService;
+import com.borislavvucicevic.budgetmate.services.DatabaseService;
+import com.borislavvucicevic.budgetmate.services.ReportHtmlService;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.firebase.Timestamp;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Date;
@@ -47,12 +69,16 @@ public class ReportsActivity extends AppCompatActivity {
   private TextView tvErrorWrapper;
   private ProgressBar progressBar;
   private Button btnGenerate;
-  private Timestamp dpDateValue, dpCustomRangeFromValue, dpCustomRangeToValue;
+  private WebView webView;
+  private LocalDate dpDateValue, dpCustomRangeFromValue, dpCustomRangeToValue;
   private ReportType reportType = ReportType.DAILY;
   private String etYearValue;
   private Month spMonthValue = Month.JAN;
   private Quarter spQuarterValue = Quarter.I;
   private Timestamp from, to;
+  private String reportHtml;
+  private final AuthService authService = new AuthService();
+  private final DatabaseService databaseService = new DatabaseService();
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -92,6 +118,7 @@ public class ReportsActivity extends AppCompatActivity {
     tvErrorWrapper = findViewById(R.id.tvErrorWrapper);
     progressBar = findViewById(R.id.progressBar);
     btnGenerate = findViewById(R.id.btnGenerate);
+    webView = findViewById(R.id.webView);
   }
 
   /**
@@ -148,6 +175,25 @@ public class ReportsActivity extends AppCompatActivity {
     dpCustomRangeFrom.setOnClickListener(v -> showDatePicker(dpCustomRangeFromValue, this::handleDpCustomRangeFromChange));
     dpCustomRangeTo.setOnClickListener(v -> showDatePicker(dpCustomRangeToValue, this::handleDpCustomRangeToChange));
     btnGenerate.setOnClickListener(v -> handleGenerateReport());
+    webView.setWebViewClient(new WebViewClient() {
+      @Override
+      public void onPageFinished(WebView view, String url) {
+        super.onPageFinished(view, url);
+        String documentTitle = view.getTitle();
+
+        // 2. Fallback to a default name if the HTML has no <title> tag
+        if (documentTitle == null || documentTitle.trim().isEmpty()) {
+          documentTitle = getString(R.string.report_generic_document_name);
+        }
+
+        // 3. Clean up the title (removes characters that might break file names)
+        documentTitle = documentTitle.replaceAll("[\\\\/:*?\"<>|]", "_");
+
+        // 4. Pass the custom title to your print method
+
+        triggerWebViewPrint(view, documentTitle);
+      }
+    });
   }
 
   /**
@@ -299,6 +345,51 @@ public class ReportsActivity extends AppCompatActivity {
   }
 
   /**
+   * Enables all report configuration fields and controls.
+   *
+   * <p>This method restores user interaction with the report type, month,
+   * quarter, date, year and custom date-range fields. It also enables the
+   * error wrapper, progress indicator and report generation button.</p>
+   */
+  private void enableFields() {
+    spReportType.setEnabled(true);
+    spReportType.setEnabled(true);
+    spMonth.setEnabled(true);
+    spQuarter.setEnabled(true);
+    dpDate.setEnabled(true);
+    etYear.setEnabled(true);
+    dpCustomRangeFrom.setEnabled(true);
+    dpCustomRangeTo.setEnabled(true);
+    tvErrorWrapper.setEnabled(true);
+    progressBar.setEnabled(true);
+    btnGenerate.setEnabled(true);
+  }
+
+  /**
+   * Disables all report configuration fields and controls.
+   *
+   * <p>This method prevents user interaction with the report type, month,
+   * quarter, date, year and custom date-range fields. It also disables the
+   * error wrapper, progress indicator and report generation button.</p>
+   *
+   * <p>This is typically used while a report is being generated or while
+   * another operation requiring temporary UI locking is in progress.</p>
+   */
+  private void disableFields() {
+    spReportType.setEnabled(false);
+    spReportType.setEnabled(false);
+    spMonth.setEnabled(false);
+    spQuarter.setEnabled(false);
+    dpDate.setEnabled(false);
+    etYear.setEnabled(false);
+    dpCustomRangeFrom.setEnabled(false);
+    dpCustomRangeTo.setEnabled(false);
+    tvErrorWrapper.setEnabled(false);
+    progressBar.setEnabled(false);
+    btnGenerate.setEnabled(false);
+  }
+
+  /**
    * Displays a Material single-date picker and passes the selected date
    * to the supplied change handler.
    *
@@ -307,11 +398,11 @@ public class ReportsActivity extends AppCompatActivity {
    * value is converted to a Firebase {@link Timestamp} and supplied to
    * {@code dateChangeHandler}.</p>
    *
-   * @param timestamp         the currently selected date to display initially,
+   * @param date         the currently selected date to display initially,
    *                          or {@code null} when no date has been selected
    * @param dateChangeHandler callback invoked with the newly selected date
    */
-  private void showDatePicker(Timestamp timestamp, Consumer<Timestamp> dateChangeHandler) {
+  private void showDatePicker(LocalDate date, Consumer<LocalDate> dateChangeHandler) {
     MaterialDatePicker.Builder<Long> builder =
             MaterialDatePicker.Builder
                     .datePicker()
@@ -323,9 +414,11 @@ public class ReportsActivity extends AppCompatActivity {
      * When a date was previously selected, open the picker
      * with that date already selected.
      */
-    if (timestamp != null) {
+    if (date != null) {
       builder.setSelection(
-              timestamp.toDate().getTime()
+              date.atStartOfDay()
+                      .toInstant(ZoneOffset.UTC)
+                      .toEpochMilli()
       );
     }
 
@@ -338,7 +431,9 @@ public class ReportsActivity extends AppCompatActivity {
       }
 
       dateChangeHandler.accept(
-              new Timestamp(new Date(selection))
+              Instant.ofEpochMilli(selection)
+                      .atZone(ZoneOffset.UTC)
+                      .toLocalDate()
       );
     });
 
@@ -356,14 +451,9 @@ public class ReportsActivity extends AppCompatActivity {
    *
    * @param selection the newly selected date
    */
-  private void handleDpDateChange(Timestamp selection) {
-    SimpleDateFormat dateFormat =
-            new SimpleDateFormat("dd.MM.yyyy");
-
-    dpDate.setText(
-            dateFormat.format(selection.toDate())
-    );
-
+  private void handleDpDateChange(LocalDate selection) {
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+    dpDate.setText(formatter.format(selection));
     dpDateValue = selection;
   }
 
@@ -376,14 +466,9 @@ public class ReportsActivity extends AppCompatActivity {
    *
    * @param selection the newly selected starting date
    */
-  private void handleDpCustomRangeFromChange(Timestamp selection) {
-    SimpleDateFormat dateFormat =
-            new SimpleDateFormat("dd.MM.yyyy");
-
-    dpCustomRangeFrom.setText(
-            dateFormat.format(selection.toDate())
-    );
-
+  private void handleDpCustomRangeFromChange(LocalDate selection) {
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+    dpCustomRangeFrom.setText(formatter.format(selection));
     dpCustomRangeFromValue = selection;
   }
 
@@ -396,28 +481,95 @@ public class ReportsActivity extends AppCompatActivity {
    *
    * @param selection the newly selected ending date
    */
-  private void handleDpCustomRangeToChange(Timestamp selection) {
-    SimpleDateFormat dateFormat =
-            new SimpleDateFormat("dd.MM.yyyy");
-
-    dpCustomRangeTo.setText(
-            dateFormat.format(selection.toDate())
-    );
-
+  private void handleDpCustomRangeToChange(LocalDate selection) {
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+    dpCustomRangeTo.setText(formatter.format(selection));
     dpCustomRangeToValue = selection;
   }
 
+  /**
+   * Validates the selected report configuration, retrieves the matching
+   * transactions and generates the report HTML asynchronously.
+   *
+   * <p>The method first reads the entered year, displays the progress indicator,
+   * shows a report-generation message and disables the report configuration
+   * controls to prevent additional user interaction while generation is in
+   * progress.</p>
+   *
+   * <p>The report generation is performed on a background thread. The method:</p>
+   *
+   * <ul>
+   *   <li>validates the entered report parameters;</li>
+   *   <li>calculates the report's start and end dates;</li>
+   *   <li>retrieves the current user's transactions for the selected period;</li>
+   *   <li>creates the appropriate {@link Report} implementation;</li>
+   *   <li>retrieves the user's configured home currency;</li>
+   *   <li>generates the report HTML using {@link ReportHtmlService}.</li>
+   * </ul>
+   *
+   * <p>After successful generation, the UI controls are enabled again, the
+   * progress indicator is hidden and the generated HTML is loaded into the
+   * report {@link WebView} on the main thread.</p>
+   *
+   * <p>Validation and unexpected exceptions are forwarded to
+   * {@code handleException(...)} on the main thread.</p>
+   */
   private void handleGenerateReport() {
     etYearValue = etYear.getText().toString().trim();
+    progressBar.setVisibility(View.VISIBLE);
+
+    Toast.makeText(
+            ReportsActivity.this,
+            getString(R.string.report_generating_message),
+            Toast.LENGTH_SHORT
+    ).show();
+    this.disableFields();
 
     Executors.newSingleThreadExecutor().execute(() -> {
       try {
-        SimpleDateFormat dateFormatter = new SimpleDateFormat("dd.MMMM.yyyy");
         handleValidation();
         handleReportTimeRange();
+        String uid = authService.getUserID();
+        Log.d(REPORTS_ACTIVITY, "Retrieving transactions...");
+        List<Transaction> transactionList = databaseService.getTransactions(uid, from, to);
 
-        Log.d(REPORTS_ACTIVITY, "Start date: " + dateFormatter.format(from.toDate()));
-        Log.d(REPORTS_ACTIVITY, "End date: " + dateFormatter.format(to.toDate()));
+        Report report;
+
+        switch (reportType) {
+          case DAILY:
+            report = new DailyReport(dpDateValue, transactionList);
+            break;
+          case MONTHLY:
+            report  = new MonthlyReport(spMonthValue, Integer.parseInt(etYearValue), transactionList);
+            break;
+          case QUARTERLY:
+            report = new QuarterlyReport(spQuarterValue, Integer.parseInt(etYearValue), transactionList);
+            break;
+          case YEARLY:
+            report = new YearlyReport(Integer.parseInt(etYearValue), transactionList);
+            break;
+          default:
+            report = new CustomReport(dpCustomRangeFromValue, dpCustomRangeToValue, transactionList);
+            break;
+        }
+        UserProfile userProfile = CacheService.read(CacheKey.USER_PROFILE, UserProfile.class);
+        ReportHtmlService reportHtmlService = new ReportHtmlService(
+                report,
+                ReportsActivity.this,
+                userProfile != null ? CurrencyCode.parse(userProfile.getHomeCurrency()) : ""
+        );
+        reportHtml = reportHtmlService.generateHtml();
+        runOnUiThread(() -> {
+          enableFields();
+          progressBar.setVisibility(View.GONE);
+          webView.loadDataWithBaseURL(
+                  null,
+                  reportHtml,       // Your HTML string variable
+                  "text/html",        // Content type
+                  "UTF-8",            // Character encoding
+                  null
+          );
+        });
       } catch(ValidationException exception) {
         runOnUiThread(() -> handleException(exception));
       } catch(Exception exception) {
@@ -441,7 +593,7 @@ public class ReportsActivity extends AppCompatActivity {
     if(reportType == ReportType.CUSTOM) {
       if(dpCustomRangeFromValue == null) throw new ValidationException(getString(R.string.report_from_required), null);
       if(dpCustomRangeToValue == null) throw new ValidationException(getString(R.string.report_to_required), null);
-      if(dpCustomRangeFromValue.toDate().after(dpCustomRangeToValue.toDate())) throw new ValidationException(getString(R.string.report_from_bigger_than_to), null);
+      if(dpCustomRangeFromValue.isAfter(dpCustomRangeToValue)) throw new ValidationException(getString(R.string.report_from_bigger_than_to), null);
     } else if(reportType == ReportType.DAILY) {
       if(dpDateValue == null) throw new ValidationException(getString(R.string.report_date_required), null);
     } else if (etYearValue.isEmpty()) {
@@ -470,48 +622,54 @@ public class ReportsActivity extends AppCompatActivity {
    */
   private void handleReportTimeRange() {
     int year =  !etYearValue.isEmpty() ? Integer.parseInt(etYearValue) : 0;
-    LocalDate firstDay;
-    LocalDate lastDay;
+    LocalDate firstDay = null;
+    LocalDate lastDay = null;
     switch (reportType) {
       case DAILY:
-        from = dpDateValue;
-        to = dpDateValue;
+        firstDay = dpDateValue;
+        lastDay = dpDateValue;
         break;
       case MONTHLY:
         // starting with the first day of the month
         firstDay = LocalDate.of(year, spMonthValue.getMonthValue(), 1);
         // getting the last day of the month
         lastDay = firstDay.with(TemporalAdjusters.lastDayOfMonth());
-        // setting the first day of the month as the starting point of the report's time range
-        from = new Timestamp(Date.from(firstDay.atStartOfDay(ZoneId.systemDefault()).toInstant()));
-        // setting the last day of the month as the end point of the report's time range
-        to = new Timestamp(Date.from(lastDay.atStartOfDay(ZoneId.systemDefault()).toInstant()));
         break;
       case QUARTERLY:
         // starting with the first day of the year
         firstDay = LocalDate.of(year, spQuarterValue.getStartMonthNumber(), 1);
         // getting the last day of the year
         lastDay = LocalDate.of(year, spQuarterValue.getEndMonthNumber(), 1).with(TemporalAdjusters.lastDayOfMonth());
-        // setting the first day of the month as the starting point of the report's time range
-        from = new Timestamp(Date.from(firstDay.atStartOfDay(ZoneId.systemDefault()).toInstant()));
-        // setting the last day of the month as the end point of the report's time range
-        to = new Timestamp(Date.from(lastDay.atStartOfDay(ZoneId.systemDefault()).toInstant()));
         break;
       case YEARLY:
         // starting with the first day of the year
         firstDay = LocalDate.of(year, 1, 1);
         // getting the last day of the year
         lastDay = firstDay.with(TemporalAdjusters.lastDayOfYear());
-        // setting the first day of the month as the starting point of the report's time range
-        from = new Timestamp(Date.from(firstDay.atStartOfDay(ZoneId.systemDefault()).toInstant()));
-        // setting the last day of the month as the end point of the report's time range
-        to = new Timestamp(Date.from(lastDay.atStartOfDay(ZoneId.systemDefault()).toInstant()));
         break;
+        // setting the first day of the month as the starting point of the report's time range
       case CUSTOM:
-        from = dpCustomRangeFromValue;
-        to = dpCustomRangeToValue;
+        firstDay = dpCustomRangeFromValue;
+        lastDay = dpCustomRangeToValue;
         break;
     }
+
+    // Adjusting boundary values
+    ZoneId userTimeZone = ZoneId.systemDefault();
+
+    // Beginning of the selected "from" date.
+    Instant fromInstant =  firstDay
+            .atStartOfDay(userTimeZone)
+            .toInstant();
+
+    // Beginning of the day after the selected final "to" date
+    Instant toInstant = lastDay
+            .plusDays(1)
+            .atStartOfDay(userTimeZone)
+            .toInstant();
+
+    from = new Timestamp(Date.from(fromInstant));
+    to = new Timestamp(Date.from(toInstant));
   }
 
   /**
@@ -562,5 +720,35 @@ public class ReportsActivity extends AppCompatActivity {
             Toast.LENGTH_SHORT
     ).show();
     progressBar.setVisibility(View.INVISIBLE);
+  }
+
+  /**
+   * Starts a print job for the HTML content currently displayed in the supplied
+   * {@link WebView}.
+   *
+   * <p>The report is configured for A4 paper in landscape orientation, color
+   * printing and no minimum page margins. The {@link PrintManager} opens the
+   * Android system print dialog, where the user can select a printer or save the
+   * document as a PDF.</p>
+   *
+   * <p>If the system print service is unavailable, the method performs no
+   * action.</p>
+   *
+   * @param webView the WebView containing the HTML content to print
+   * @param jobName the name displayed for the print job and generated document
+   */
+  private void triggerWebViewPrint(WebView webView, String jobName) {
+    PrintManager printManager = (PrintManager) getSystemService(Context.PRINT_SERVICE);
+
+    if (printManager != null) {
+      PrintDocumentAdapter printAdapter = webView.createPrintDocumentAdapter(jobName);
+      PrintAttributes attributes = new PrintAttributes.Builder()
+              .setMediaSize(PrintAttributes.MediaSize.ISO_A4.asLandscape())
+              .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
+              .setColorMode(PrintAttributes.COLOR_MODE_COLOR)
+              .build();
+
+      printManager.print(jobName, printAdapter, attributes);
+    }
   }
 }

@@ -168,7 +168,7 @@ public abstract class AveragedReport extends Report {
    * containing the starting date and the month containing the ending date.</p>
    */
   private void calculateNumberOfDaysAndMonths() {
-    dayCount = ChronoUnit.DAYS.between(getFrom(), getTo());
+    dayCount = ChronoUnit.DAYS.between(getFrom(), getTo().plusDays(1));
     monthCount = ChronoUnit.MONTHS.between(YearMonth.from(getFrom()), YearMonth.from(getTo())) + 1;
   }
 

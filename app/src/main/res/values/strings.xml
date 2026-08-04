@@ -71,8 +71,8 @@
     <string name="transaction_type_required">You must choose the transaction type</string>
     <string name="transaction_edit">Edit</string>
     <string name="transaction_delete">Delete</string>
-    <string name="created_on">Created on</string>
-    <string name="modified_on">Modified on</string>
+    <string name="created_on">Created</string>
+    <string name="modified_on">Modified</string>
     <string name="loading_data">Loading necessary data</string>
     <string name="data_loaded">Necessary data has been loaded</string>
     <string name="transactions_loading">Loading your transactions...</string>
@@ -118,4 +118,23 @@
     <string name="report_to_required">You must pic the end date.</string>
     <string name="report_from_bigger_than_to">The start date must be smaller than the end date.</string>
     <string name="reports_date_picker_text">Select the date</string>
+    <string name="custom_report_title">Report for Custom Period</string>
+    <string name="daily_report_title">Daily report – [date]</string>
+    <string name="monthly_report_title">Monthly report for [month], [year].</string>
+    <string name="quarterly_report_title">Quarterly report – [quarter], [year].</string>
+    <string name="yearly_report_title">Yearly report – [year].</string>
+    <string name="report_period_from">From</string>
+    <string name="report_period_to">To</string>
+    <string name="report_day_count">Days</string>
+    <string name="report_month_count">Months</string>
+    <string name="report_totals_section_title">Total income and expenses</string>
+    <string name="report_totals_by_category_section_title">Total income and expenses (by category)</string>
+    <string name="report_totals_by_month_section_title">Totals income and expense (by month)</string>
+    <string name="report_averages_section_title">Average income and expenses</string>
+    <string name="report_average_per_day">Per day</string>
+    <string name="report_average_per_month">Per month</string>
+    <string name="report_transactions_section_title">Transactions</string>
+    <string name="report_period_section_title">Reporting period</string>
+    <string name="report_generic_document_name">Report</string>
+    <string name="report_generating_message">The report is generating...</string>
 </resources>

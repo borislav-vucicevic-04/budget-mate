@@ -1,4 +1,4 @@
-  <div class="report-section">
+  <div class="transactions-section">
     <h2>[transactions title]</h2>
 
     <table class="accent-list transactions-table" aria-label="Transactions">
