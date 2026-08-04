@@ -1,0 +1,18 @@
+  <div class="report-section">
+    <h2>[transactions title]</h2>
+
+    <table class="accent-list transactions-table" aria-label="Transactions">
+      <thead>
+        <tr>
+          <th>[amount text]</th>
+          <th>[category text]</th>
+          <th>[created on text]</th>
+          <th>[modified on text]</th>
+          <th>[notes text]</th>
+        </tr>
+      </thead>
+      <tbody>
+        [rows]
+      </tbody>
+    </table>
+  </div>

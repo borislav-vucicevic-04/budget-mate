@@ -1,0 +1,5 @@
+        <tr>
+          <td>[month]</td>
+          <td class="align-right">[income amount]</td>
+          <td class="align-right">[expense amount]</td>
+        </tr>

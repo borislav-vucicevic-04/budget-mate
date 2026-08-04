@@ -1,0 +1,6 @@
+        <tr>
+          <td>[income category name]</td>
+          <td class="align-right">[income amount]</td>
+          <td class="mid-separator">[expense category name]</td>
+          <td class="align-right">[expense amount]</td>
+        </tr>

@@ -1,0 +1,22 @@
+  <div class="report-section">
+    <h2>[totals by month title]</h2>
+
+    <table class="accent-list monthly-table" aria-label="Income and expenses by month">
+      <colgroup>
+        <col style="width: 33.333%;" />
+        <col style="width: 33.333%;" />
+        <col style="width: 33.334%;" />
+      </colgroup>
+      <thead>
+        <tr>
+          <th>Month</th>
+          <th class="income">[income text]</th>
+          <th class="expense">[expense text]</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Repeat this row for each month. -->
+        [rows]
+      </tbody>
+    </table>
+  </div>

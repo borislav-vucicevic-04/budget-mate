@@ -1,0 +1,30 @@
+  <div class="report-section keep-together">
+    <h2>[averages title]</h2>
+
+    <table class="accent-list monthly-table average-table" aria-label="Average income and expenses">
+      <colgroup>
+        <col style="width: 33.333%;" />
+        <col style="width: 33.333%;" />
+        <col style="width: 33.334%;" />
+      </colgroup>
+      <thead>
+        <tr>
+          <th></th>
+          <th class="income">[income text]</th>
+          <th class="expense">[expense text]</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>[per day text]</strong></td>
+          <td class="align-right">[income amount]</td>
+          <td class="align-right">[expense amount]</td>
+        </tr>
+        <tr>
+          <td><strong>[per month text]</strong></td>
+          <td class="align-right">[income amount]</td>
+          <td class="align-right">[expense amount]</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>

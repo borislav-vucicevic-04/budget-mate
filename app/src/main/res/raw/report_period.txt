@@ -1,0 +1,22 @@
+  <div class="report-section">
+    <h2>[report period title]</h2>
+
+    <table class="accent-list" aria-label="report period">
+      <tr>
+        <td><strong>[from text]</strong></td>
+        <td class="mid-separator"><strong>[to text]</strong></td>
+      </tr>
+      <tr>
+        <td>[from date]</td>
+        <td class="mid-separator">[to date]</td>
+      </tr>
+      <tr>
+        <td><strong>[day count text]</strong></td>
+        <td class="mid-separator"><strong>[month count text]</strong></td>
+      </tr>
+      <tr>
+        <td>[day count]</td>
+        <td class="mid-separator">[month count]</td>
+      </tr>
+    </table>
+  </div>

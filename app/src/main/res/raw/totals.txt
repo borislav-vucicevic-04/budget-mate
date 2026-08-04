@@ -1,0 +1,18 @@
+  <div class="report-section">
+    <h2>[totals title]</h2>
+
+    <table class="accent-list" aria-label="Income and expenses by category">
+      <thead>
+        <tr>
+          <th class="income-green">[income text]</th>
+          <th class="expense-red mid-separator">[expense text]</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="align-right income-green">[income amount]</td>
+          <td class="align-right expense-red mid-separator">[expense amount]</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>

@@ -1,0 +1,7 @@
+        <tr>
+          <td>[amount value]</td>
+          <td>[category value]</td>
+          <td>[created on value]</td>
+          <td>[modified on value]</td>
+          <td>[notes value]</td>
+        </tr>
