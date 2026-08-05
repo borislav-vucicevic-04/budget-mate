@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Budget Mate</string>
+    <string name="full_name">Puno ime</string>
+    <string name="email">Email</string>
+    <string name="password">Lozinka</string>
+    <string name="repeat_password">Potvrdite lozinku</string>
+    <string name="home_currency">Izaberite svoju valutu…</string>
+    <string name="currency_bam">Konvertibilna marka Bosne i Hercegovine (BAM)</string>
+    <string name="currency_rsd">Dinar Republike Srbije (RSD)</string>
+    <string name="currency_usd">Američki dolar (USD)</string>
+    <string name="currency_eur">Evro (EUR)</string>
+
+    <string name="full_name_required">Polje <b>\"Puno ime\"</b> ne sme biti prazno.</string>
+    <string name="email_required">Polje <b>\"Email\"</b> ne sme biti prazno.</string>
+    <string name="password_required">Polje <b>\"Lozinka\"</b> ne sme biti prazno.</string>
+    <string name="repeat_password_required">Polje <b>\"Potvrdite lozinku\"</b> ne sme biti prazno.</string>
+    <string name="home_currency_required">Morate izabrati svoju valutu.</string>
+    <string name="password_too_short">Lozinka mora imati najmanje 6 znakova.</string>
+    <string name="password_mismatch">Unesene lozinke se ne podudaraju.</string>
+    <string name="error_invalid_email">Email adresa nije ispravna.</string>
+    <string name="error_email_already_in_use">Ova email adresa je već povezana sa drugim korisničkim nalogom.</string>
+    <string name="error_wrong_password">Unesena lozinka nije ispravna.</string>
+    <string name="error_invalid_credential">Email adresa ili lozinka nisu ispravni.</string>
+    <string name="error_user_disabled">Ovaj korisnički nalog je onemogućen.</string>
+    <string name="error_email_not_verified">Vaša email adresa nije potvrđena. Potvrdite je pre nego što se prijavite.</string>
+    <string name="error_too_many_requests">Poslali ste previše zahteva za email poruke. Pokušajte ponovo kasnije.</string>
+    <string name="error_general">Došlo je do neočekivane greške.</string>
+
+    <string name="password_reset_dialog_title">Promeni lozinku?</string>
+    <string name="password_reset_dialog_message">Unesite email adresu na koju želite da primite link za promenu lozinke.</string>
+    <string name="password_reset_dialog_positive">Pošalji</string>
+    <string name="password_reset_dialog_negative">Otkaži</string>
+    <string name="password_reset_dialog_success">Link za promenu lozinke poslat je na vašu email adresu.</string>
+
+    <string name="reset_password_link"><u>Zaboravili ste lozinku? Promenite je ovde…</u></string>
+    <string name="register_link"><u>Nemate nalog? Registrujte se ovde…</u></string>
+    <string name="login_title">Prijavite se na svoj nalog</string>
+    <string name="login_button">Prijavi se</string>
+    <string name="verify_email_link"><u>Pošalji email za potvrdu…</u></string>
+    <string name="resend_verification_email"><u>Ponovo pošalji email za potvrdu…</u></string>
+    <string name="verification_email_sent">Email za potvrdu je poslat. Proverite neželjenou poštu.</string>
+    <string name="login_success">Uspešno ste se prijavili na svoj nalog!</string>
+
+    <string name="register_title">Napravite korisnički nalog</string>
+    <string name="register_button">Registrujte se</string>
+    <string name="login_link"><u>Već imate nalog? Prijavite se ovde…</u></string>
+    <string name="register_success">Uspešno ste se registrovali! Email za potvrdu je poslat. Proverite neželjenu poštom.</string>
+
+    <string name="dashboard_title">Kontrolna tabla</string>
+    <string name="dashboard_user_profile_button">Vaš profil</string>
+    <string name="dashboard_view_transactions_button">Pregled transakcija</string>
+    <string name="dashboard_generate_reports_button">Napravi izveštaj</string>
+    <string name="user_profile_title">Vaš profil</string>
+
+    <string name="transactions_title">Vaše transakcije</string>
+    <string name="transactions_insert">Napravi novu transakciju</string>
+    <string name="amount">Iznos</string>
+    <string name="category">Kategorija</string>
+    <string name="notes">Bilješke (opcionalno)</string>
+    <string name="transactions_categories_loaded">Vaše kategorije su učitane.</string>
+    <string name="amount_required">Polje za iznos je obavezno.</string>
+    <string name="amount_not_zero">Iznos ne sme biti nula.</string>
+    <string name="category_required">Polje za kategoriju je obavezno.</string>
+    <string name="notes_too_long">Bilješke ne mogu biti duže od 256 znakova.</string>
+    <string name="transaction_insert_success">Transakcija je uspešno napravljena.</string>
+
+    <string name="discard_changes_title">Odbaciti promene?</string>
+    <string name="discard_changes_message">Ako se sada vratite, sve nesačuvane promene biće trajno odbačene.</string>
+    <string name="discard_changes_yes">Napusti</string>
+    <string name="discard_changes_no">Ostani</string>
+
+    <string name="income">Prihod</string>
+    <string name="expense">Rashod</string>
+    <string name="transaction_type">Izaberite vrstu transakcije…</string>
+    <string name="transaction_type_required">Morate izabrati vrstu transakcije.</string>
+    <string name="transaction_edit">Izmeni</string>
+    <string name="transaction_delete">Obriši</string>
+    <string name="created_on">Napravljeno</string>
+    <string name="modified_on">Izmenjeno</string>
+
+    <string name="loading_data">Učitavanje potrebnih podataka…</string>
+    <string name="data_loaded">Potrebni podaci su učitani.</string>
+    <string name="transactions_loading">Učitavanje transakcija…</string>
+    <string name="transactions_loaded">Transakcije su uspešno učitane.</string>
+    <string name="deleting_transaction">Brisanje transakcije…</string>
+    <string name="transaction_deleted">Transakcija je uspešno obrisana!</string>
+
+    <string name="delete_transaction_title">Obriši ovu transakciju?</string>
+    <string name="delete_transaction_message">Da li ste sigurni da želite da obrišete ovu transakciju? Imajte na umu da je ova radnja neopoziva.</string>
+    <string name="delete_transaction_yes">Obriši</string>
+    <string name="delete_transaction_no">Otkaži</string>
+    <string name="transaction_update_success">Transakcija je uspešno izmenjena.</string>
+    <string name="transactions_update">Sačuvaj promene</string>
+
+    <string name="generate_report_title">Napravi izveštaj</string>
+    <string name="generate_report_btn">Napravi izveštaj</string>
+    <string name="report_daily">Dnevni izveštaj</string>
+    <string name="report_monthly">Mesečni izveštaj</string>
+    <string name="report_quarterly">Kvartalni izveštaj</string>
+    <string name="report_yearly">Godišnji izveštaj</string>
+    <string name="report_custom">Proizvoljan vremenski period</string>
+    <string name="reports_date">Izaberite datum</string>
+    <string name="report_year">Unesite godinu</string>
+    <string name="report_custom_from">Izaberite početni datum</string>
+    <string name="report_custom_to">Izaberite krajnji datum</string>
+
+    <string name="reports_quarter_first">Prvi kvartal</string>
+    <string name="report_quarter_second">Drugi kvartal</string>
+    <string name="report_quarter_third">Treći kvartal</string>
+    <string name="report_quarter_fourth">Četvrti kvartal</string>
+
+    <string name="jan">Januar</string>
+    <string name="feb">Februar</string>
+    <string name="mar">Mart</string>
+    <string name="apr">April</string>
+    <string name="may">Maj</string>
+    <string name="jun">Jun</string>
+    <string name="jul">Jul</string>
+    <string name="aug">Avgust</string>
+    <string name="sep">Septembar</string>
+    <string name="oct">Oktobar</string>
+    <string name="nov">Novembar</string>
+    <string name="dec">Decembar</string>
+
+    <string name="report_date_required">Morate izabrati datum.</string>
+    <string name="report_year_required">Morate uneti godinu.</string>
+    <string name="report_from_required">Morate izabrati početni datum.</string>
+    <string name="report_to_required">Morate izabrati krajnji datum.</string>
+    <string name="report_from_bigger_than_to">Početni datum mora biti pre krajnjeg datuma.</string>
+    <string name="reports_date_picker_text">Izaberite datum</string>
+
+    <string name="custom_report_title">Izveštaj za proizvoljan period</string>
+    <string name="daily_report_title">Dnevni izveštaj – [date]</string>
+    <string name="monthly_report_title">Mesečni izveštaj – [month] [year]</string>
+    <string name="quarterly_report_title">Kvartalni izveštaj – [quarter] [year]</string>
+    <string name="yearly_report_title">Godišnji izveštaj – [year]</string>
+
+    <string name="report_period_from">Od</string>
+    <string name="report_period_to">Do</string>
+    <string name="report_day_count">Broj dana</string>
+    <string name="report_month_count">Broj meseci</string>
+    <string name="report_totals_section_title">Ukupni prihodi i rashodi</string>
+    <string name="report_totals_by_category_section_title">Ukupni prihodi i rashodi po kategorijama</string>
+    <string name="report_totals_by_month_section_title">Ukupni prihodi i rashodi po mesecima</string>
+    <string name="report_averages_section_title">Prosečni prihodi i rashodi</string>
+    <string name="report_average_per_day">Po danu</string>
+    <string name="report_average_per_month">Po mesecu</string>
+    <string name="report_transactions_section_title">Transakcije</string>
+    <string name="report_period_section_title">Period izveštavanja</string>
+    <string name="report_generic_document_name">Izveštaj</string>
+    <string name="report_generating_message">Izveštaj se priprema…</string>
+</resources>

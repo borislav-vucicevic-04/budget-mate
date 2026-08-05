@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Budget Mate</string>
+    <string name="full_name">Nombre completo</string>
+    <string name="email">Correo electrónico</string>
+    <string name="password">Contraseña</string>
+    <string name="repeat_password">Confirmar contraseña</string>
+    <string name="home_currency">Selecciona tu moneda principal…</string>
+    <string name="currency_bam">Marco convertible de Bosnia y Herzegovina (BAM)</string>
+    <string name="currency_rsd">Dinar serbio (RSD)</string>
+    <string name="currency_usd">Dólar estadounidense (USD)</string>
+    <string name="currency_eur">Euro (EUR)</string>
+
+    <string name="full_name_required">El campo <b>\"Nombre completo\"</b> no puede estar vacío.</string>
+    <string name="email_required">El campo <b>\"Correo electrónico\"</b> no puede estar vacío.</string>
+    <string name="password_required">El campo <b>\"Contraseña\"</b> no puede estar vacío.</string>
+    <string name="repeat_password_required">El campo <b>\"Confirmar contraseña\"</b> no puede estar vacío.</string>
+    <string name="home_currency_required">Selecciona una moneda principal.</string>
+    <string name="password_too_short">La contraseña debe tener al menos 6 caracteres.</string>
+    <string name="password_mismatch">Las contraseñas no coinciden.</string>
+    <string name="error_invalid_email">Introduce una dirección de correo electrónico válida.</string>
+    <string name="error_email_already_in_use">Ya existe una cuenta asociada a este correo electrónico.</string>
+    <string name="error_wrong_password">La contraseña introducida no es correcta.</string>
+    <string name="error_invalid_credential">El correo electrónico o la contraseña no son correctos.</string>
+    <string name="error_user_disabled">Esta cuenta de usuario está desactivada.</string>
+    <string name="error_email_not_verified">Primero debes verificar tu correo electrónico para poder iniciar sesión.</string>
+    <string name="error_too_many_requests">Has realizado demasiadas solicitudes. Inténtalo de nuevo más tarde.</string>
+    <string name="error_general">Se ha producido un error inesperado.</string>
+
+    <string name="password_reset_dialog_title">¿Restablecer la contraseña?</string>
+    <string name="password_reset_dialog_message">Introduce tu correo electrónico y te enviaremos un enlace para restablecer la contraseña.</string>
+    <string name="password_reset_dialog_positive">Enviar enlace</string>
+    <string name="password_reset_dialog_negative">Cancelar</string>
+    <string name="password_reset_dialog_success">Te hemos enviado un enlace para restablecer la contraseña.</string>
+
+    <!-- Textos de inicio de sesión -->
+    <string name="reset_password_link"><u>¿Has olvidado la contraseña? Restablécela aquí…</u></string>
+    <string name="register_link"><u>¿Aún no tienes una cuenta? Regístrate aquí…</u></string>
+    <string name="login_title">Iniciar sesión</string>
+    <string name="login_button">Iniciar sesión</string>
+    <string name="verify_email_link"><u>Solicitar correo de verificación…</u></string>
+    <string name="resend_verification_email"><u>Volver a enviar el correo de verificación…</u></string>
+    <string name="verification_email_sent">Te hemos enviado un correo de verificación. Revisa también la carpeta de correo no deseado.</string>
+    <string name="login_success">Has iniciado sesión correctamente.</string>
+
+    <!-- Textos de registro -->
+    <string name="register_title">Crear una cuenta</string>
+    <string name="register_button">Registrarse</string>
+    <string name="login_link"><u>¿Ya tienes una cuenta? Inicia sesión aquí…</u></string>
+    <string name="register_success">¡Registro completado! Te hemos enviado un correo de verificación. Revisa también la carpeta de correo no deseado.</string>
+
+    <string name="dashboard_title">Resumen</string>
+    <string name="dashboard_user_profile_button">Mi perfil</string>
+    <string name="dashboard_view_transactions_button">Ver movimientos</string>
+    <string name="dashboard_generate_reports_button">Crear informe</string>
+    <string name="user_profile_title">Mi perfil</string>
+
+    <!-- Textos de navegación -->
+    <string name="transactions_title">Mis movimientos</string>
+    <string name="transactions_insert">Añadir un movimiento</string>
+    <string name="amount">Importe</string>
+    <string name="category">Categoría</string>
+    <string name="notes">Notas (opcional)</string>
+    <string name="transactions_categories_loaded">Las categorías se han cargado correctamente.</string>
+    <string name="amount_required">Introduce un importe.</string>
+    <string name="amount_not_zero">El importe no puede ser cero.</string>
+    <string name="category_required">Selecciona una categoría.</string>
+    <string name="notes_too_long">Las notas no pueden superar los 256 caracteres.</string>
+    <string name="transaction_insert_success">El movimiento se ha guardado correctamente.</string>
+
+    <string name="discard_changes_title">¿Descartar los cambios?</string>
+    <string name="discard_changes_message">Si vuelves atrás ahora, perderás todos los cambios que no hayas guardado.</string>
+    <string name="discard_changes_yes">Descartar</string>
+    <string name="discard_changes_no">Seguir editando</string>
+
+    <string name="income">Ingreso</string>
+    <string name="expense">Gasto</string>
+    <string name="transaction_type">Selecciona el tipo de movimiento…</string>
+    <string name="transaction_type_required">Selecciona un tipo de movimiento.</string>
+    <string name="transaction_edit">Editar</string>
+    <string name="transaction_delete">Eliminar</string>
+    <string name="created_on">Creado el</string>
+    <string name="modified_on">Modificado el</string>
+
+    <string name="loading_data">Cargando datos…</string>
+    <string name="data_loaded">Los datos se han cargado correctamente.</string>
+    <string name="transactions_loading">Cargando movimientos…</string>
+    <string name="transactions_loaded">Los movimientos se han cargado correctamente.</string>
+    <string name="deleting_transaction">Eliminando el movimiento…</string>
+    <string name="transaction_deleted">El movimiento se ha eliminado correctamente.</string>
+
+    <string name="delete_transaction_title">¿Eliminar este movimiento?</string>
+    <string name="delete_transaction_message">¿Seguro que quieres eliminar este movimiento? Esta acción no se puede deshacer.</string>
+    <string name="delete_transaction_yes">Eliminar</string>
+    <string name="delete_transaction_no">Cancelar</string>
+    <string name="transaction_update_success">Los cambios se han guardado correctamente.</string>
+    <string name="transactions_update">Guardar cambios</string>
+
+    <string name="generate_report_title">Crear informe</string>
+    <string name="generate_report_btn">Generar informe</string>
+    <string name="report_daily">Informe diario</string>
+    <string name="report_monthly">Informe mensual</string>
+    <string name="report_quarterly">Informe trimestral</string>
+    <string name="report_yearly">Informe anual</string>
+    <string name="report_custom">Periodo personalizado</string>
+    <string name="reports_date">Seleccionar fecha</string>
+    <string name="report_year">Introducir año</string>
+    <string name="report_custom_from">Seleccionar fecha de inicio</string>
+    <string name="report_custom_to">Seleccionar fecha de finalización</string>
+
+    <string name="reports_quarter_first">Primer trimestre</string>
+    <string name="report_quarter_second">Segundo trimestre</string>
+    <string name="report_quarter_third">Tercer trimestre</string>
+    <string name="report_quarter_fourth">Cuarto trimestre</string>
+
+    <string name="jan">Enero</string>
+    <string name="feb">Febrero</string>
+    <string name="mar">Marzo</string>
+    <string name="apr">Abril</string>
+    <string name="may">Mayo</string>
+    <string name="jun">Junio</string>
+    <string name="jul">Julio</string>
+    <string name="aug">Agosto</string>
+    <string name="sep">Septiembre</string>
+    <string name="oct">Octubre</string>
+    <string name="nov">Noviembre</string>
+    <string name="dec">Diciembre</string>
+
+    <string name="report_date_required">Selecciona una fecha.</string>
+    <string name="report_year_required">Introduce un año.</string>
+    <string name="report_from_required">Selecciona una fecha de inicio.</string>
+    <string name="report_to_required">Selecciona una fecha de finalización.</string>
+    <string name="report_from_bigger_than_to">La fecha de inicio debe ser anterior a la fecha de finalización.</string>
+    <string name="reports_date_picker_text">Seleccionar fecha</string>
+
+    <string name="custom_report_title">Informe del periodo seleccionado</string>
+    <string name="daily_report_title">Informe diario del [date]</string>
+    <string name="monthly_report_title">Informe mensual de [month] de [year]</string>
+    <string name="quarterly_report_title">Informe del [quarter] de [year]</string>
+    <string name="yearly_report_title">Informe anual de [year]</string>
+
+    <string name="report_period_from">Desde</string>
+    <string name="report_period_to">Hasta</string>
+    <string name="report_day_count">Días</string>
+    <string name="report_month_count">Meses</string>
+    <string name="report_totals_section_title">Total de ingresos y gastos</string>
+    <string name="report_totals_by_category_section_title">Ingresos y gastos por categoría</string>
+    <string name="report_totals_by_month_section_title">Ingresos y gastos por mes</string>
+    <string name="report_averages_section_title">Promedio de ingresos y gastos</string>
+    <string name="report_average_per_day">Por día</string>
+    <string name="report_average_per_month">Por mes</string>
+    <string name="report_transactions_section_title">Movimientos</string>
+    <string name="report_period_section_title">Periodo del informe</string>
+    <string name="report_generic_document_name">Informe</string>
+    <string name="report_generating_message">Generando el informe…</string>
+</resources>

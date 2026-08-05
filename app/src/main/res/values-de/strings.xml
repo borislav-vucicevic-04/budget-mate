@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Budget Mate</string>
+    <string name="full_name">Vor- und Nachname</string>
+    <string name="email">E-Mail-Adresse</string>
+    <string name="password">Passwort</string>
+    <string name="repeat_password">Passwort bestätigen</string>
+    <string name="home_currency">Standardwährung auswählen…</string>
+    <string name="currency_bam">Konvertible Mark (BAM)</string>
+    <string name="currency_rsd">Serbischer Dinar (RSD)</string>
+    <string name="currency_usd">US-Dollar (USD)</string>
+    <string name="currency_eur">Euro (EUR)</string>
+
+    <string name="full_name_required">Das Feld <b>„Vor- und Nachname“</b> darf nicht leer sein.</string>
+    <string name="email_required">Das Feld <b>„E-Mail-Adresse“</b> darf nicht leer sein.</string>
+    <string name="password_required">Das Feld <b>„Passwort“</b> darf nicht leer sein.</string>
+    <string name="repeat_password_required">Das Feld <b>„Passwort bestätigen“</b> darf nicht leer sein.</string>
+    <string name="home_currency_required">Bitte wählen Sie eine Standardwährung aus.</string>
+    <string name="password_too_short">Das Passwort muss mindestens 6 Zeichen enthalten.</string>
+    <string name="password_mismatch">Die eingegebenen Passwörter stimmen nicht überein.</string>
+    <string name="error_invalid_email">Bitte geben Sie eine gültige E-Mail-Adresse ein.</string>
+    <string name="error_email_already_in_use">Für diese E-Mail-Adresse besteht bereits ein Konto.</string>
+    <string name="error_wrong_password">Das eingegebene Passwort ist nicht korrekt.</string>
+    <string name="error_invalid_credential">E-Mail-Adresse oder Passwort ist nicht korrekt.</string>
+    <string name="error_user_disabled">Dieses Benutzerkonto ist deaktiviert.</string>
+    <string name="error_email_not_verified">Bitte bestätigen Sie zunächst Ihre E-Mail-Adresse, bevor Sie sich anmelden.</string>
+    <string name="error_too_many_requests">Sie haben zu viele Anfragen gesendet. Bitte versuchen Sie es später noch einmal.</string>
+    <string name="error_general">Es ist ein unerwarteter Fehler aufgetreten.</string>
+
+    <string name="password_reset_dialog_title">Passwort zurücksetzen?</string>
+    <string name="password_reset_dialog_message">Geben Sie Ihre E-Mail-Adresse ein. Wir senden Ihnen einen Link zum Zurücksetzen Ihres Passworts.</string>
+    <string name="password_reset_dialog_positive">Link senden</string>
+    <string name="password_reset_dialog_negative">Abbrechen</string>
+    <string name="password_reset_dialog_success">Der Link zum Zurücksetzen Ihres Passworts wurde an Ihre E-Mail-Adresse gesendet.</string>
+
+    <!-- Texte für die Anmeldung -->
+    <string name="reset_password_link"><u>Passwort vergessen? Hier zurücksetzen…</u></string>
+    <string name="register_link"><u>Noch kein Konto? Jetzt registrieren…</u></string>
+    <string name="login_title">Anmelden</string>
+    <string name="login_button">Anmelden</string>
+    <string name="verify_email_link"><u>Bestätigungs-E-Mail anfordern…</u></string>
+    <string name="resend_verification_email"><u>Bestätigungs-E-Mail erneut senden…</u></string>
+    <string name="verification_email_sent">Wir haben Ihnen eine Bestätigungs-E-Mail geschickt. Prüfen Sie bitte auch Ihren Spam-Ordner.</string>
+    <string name="login_success">Sie wurden erfolgreich angemeldet.</string>
+
+    <!-- Texte für die Registrierung -->
+    <string name="register_title">Konto erstellen</string>
+    <string name="register_button">Registrieren</string>
+    <string name="login_link"><u>Sie haben bereits ein Konto? Jetzt anmelden…</u></string>
+    <string name="register_success">Registrierung erfolgreich! Wir haben Ihnen eine Bestätigungs-E-Mail geschickt. Prüfen Sie bitte auch Ihren Spam-Ordner.</string>
+
+    <string name="dashboard_title">Übersicht</string>
+    <string name="dashboard_user_profile_button">Profil</string>
+    <string name="dashboard_view_transactions_button">Buchungen anzeigen</string>
+    <string name="dashboard_generate_reports_button">Bericht erstellen</string>
+    <string name="user_profile_title">Ihr Profil</string>
+
+    <!-- Texte für die Navigation -->
+    <string name="transactions_title">Ihre Buchungen</string>
+    <string name="transactions_insert">Neue Buchung hinzufügen</string>
+    <string name="amount">Betrag</string>
+    <string name="category">Kategorie</string>
+    <string name="notes">Notiz (optional)</string>
+    <string name="transactions_categories_loaded">Die Kategorien wurden geladen.</string>
+    <string name="amount_required">Bitte geben Sie einen Betrag ein.</string>
+    <string name="amount_not_zero">Der Betrag darf nicht null sein.</string>
+    <string name="category_required">Bitte wählen Sie eine Kategorie aus.</string>
+    <string name="notes_too_long">Die Notiz darf höchstens 256 Zeichen lang sein.</string>
+    <string name="transaction_insert_success">Die Buchung wurde erfolgreich gespeichert.</string>
+
+    <string name="discard_changes_title">Änderungen verwerfen?</string>
+    <string name="discard_changes_message">Wenn Sie jetzt zurückgehen, gehen alle nicht gespeicherten Änderungen verloren.</string>
+    <string name="discard_changes_yes">Verwerfen</string>
+    <string name="discard_changes_no">Weiter bearbeiten</string>
+
+    <string name="income">Einnahme</string>
+    <string name="expense">Ausgabe</string>
+    <string name="transaction_type">Buchungsart auswählen…</string>
+    <string name="transaction_type_required">Bitte wählen Sie eine Buchungsart aus.</string>
+    <string name="transaction_edit">Bearbeiten</string>
+    <string name="transaction_delete">Löschen</string>
+    <string name="created_on">Erstellt am</string>
+    <string name="modified_on">Geändert am</string>
+
+    <string name="loading_data">Daten werden geladen…</string>
+    <string name="data_loaded">Die Daten wurden geladen.</string>
+    <string name="transactions_loading">Buchungen werden geladen…</string>
+    <string name="transactions_loaded">Die Buchungen wurden erfolgreich geladen.</string>
+    <string name="deleting_transaction">Buchung wird gelöscht…</string>
+    <string name="transaction_deleted">Die Buchung wurde erfolgreich gelöscht.</string>
+
+    <string name="delete_transaction_title">Buchung löschen?</string>
+    <string name="delete_transaction_message">Möchten Sie diese Buchung wirklich löschen? Dieser Vorgang kann nicht rückgängig gemacht werden.</string>
+    <string name="delete_transaction_yes">Löschen</string>
+    <string name="delete_transaction_no">Abbrechen</string>
+    <string name="transaction_update_success">Die Änderungen wurden erfolgreich gespeichert.</string>
+    <string name="transactions_update">Änderungen speichern</string>
+
+    <string name="generate_report_title">Bericht erstellen</string>
+    <string name="generate_report_btn">Bericht erstellen</string>
+    <string name="report_daily">Tagesbericht</string>
+    <string name="report_monthly">Monatsbericht</string>
+    <string name="report_quarterly">Quartalsbericht</string>
+    <string name="report_yearly">Jahresbericht</string>
+    <string name="report_custom">Benutzerdefinierter Zeitraum</string>
+    <string name="reports_date">Datum auswählen</string>
+    <string name="report_year">Jahr eingeben</string>
+    <string name="report_custom_from">Startdatum auswählen</string>
+    <string name="report_custom_to">Enddatum auswählen</string>
+
+    <string name="reports_quarter_first">Erstes Quartal</string>
+    <string name="report_quarter_second">Zweites Quartal</string>
+    <string name="report_quarter_third">Drittes Quartal</string>
+    <string name="report_quarter_fourth">Viertes Quartal</string>
+
+    <string name="jan">Januar</string>
+    <string name="feb">Februar</string>
+    <string name="mar">März</string>
+    <string name="apr">April</string>
+    <string name="may">Mai</string>
+    <string name="jun">Juni</string>
+    <string name="jul">Juli</string>
+    <string name="aug">August</string>
+    <string name="sep">September</string>
+    <string name="oct">Oktober</string>
+    <string name="nov">November</string>
+    <string name="dec">Dezember</string>
+
+    <string name="report_date_required">Bitte wählen Sie ein Datum aus.</string>
+    <string name="report_year_required">Bitte geben Sie ein Jahr ein.</string>
+    <string name="report_from_required">Bitte wählen Sie ein Startdatum aus.</string>
+    <string name="report_to_required">Bitte wählen Sie ein Enddatum aus.</string>
+    <string name="report_from_bigger_than_to">Das Startdatum muss vor dem Enddatum liegen.</string>
+    <string name="reports_date_picker_text">Datum auswählen</string>
+
+    <string name="custom_report_title">Bericht für den ausgewählten Zeitraum</string>
+    <string name="daily_report_title">Tagesbericht vom [date]</string>
+    <string name="monthly_report_title">Monatsbericht für [month] [year]</string>
+    <string name="quarterly_report_title">Quartalsbericht für [quarter] [year]</string>
+    <string name="yearly_report_title">Jahresbericht für [year]</string>
+
+    <string name="report_period_from">Von</string>
+    <string name="report_period_to">Bis</string>
+    <string name="report_day_count">Tage</string>
+    <string name="report_month_count">Monate</string>
+    <string name="report_totals_section_title">Einnahmen und Ausgaben insgesamt</string>
+    <string name="report_totals_by_category_section_title">Einnahmen und Ausgaben nach Kategorie</string>
+    <string name="report_totals_by_month_section_title">Einnahmen und Ausgaben nach Monat</string>
+    <string name="report_averages_section_title">Durchschnittliche Einnahmen und Ausgaben</string>
+    <string name="report_average_per_day">Pro Tag</string>
+    <string name="report_average_per_month">Pro Monat</string>
+    <string name="report_transactions_section_title">Buchungen</string>
+    <string name="report_period_section_title">Berichtszeitraum</string>
+    <string name="report_generic_document_name">Bericht</string>
+    <string name="report_generating_message">Bericht wird erstellt…</string>
+</resources>
