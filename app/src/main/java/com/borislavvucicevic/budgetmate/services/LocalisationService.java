@@ -1,10 +1,20 @@
 package com.borislavvucicevic.budgetmate.services;
 
+import android.content.Context;
+import android.view.View;
+import android.widget.AdapterView;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.os.LocaleListCompat;
 
+import com.borislavvucicevic.budgetmate.R;
+import com.borislavvucicevic.budgetmate.adapters.LocaleAdapter;
 import com.borislavvucicevic.budgetmate.enums.Locale;
+import com.borislavvucicevic.budgetmate.options.LocaleOption;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Provides utility methods for managing the application's language settings.
@@ -74,5 +84,104 @@ public final class LocalisationService {
             !locales.isEmpty() ? locales.get(0) : null;
 
     return currentLocale != null ? currentLocale.toLanguageTag() : "";
+  }
+  /**
+   * Creates and returns an adapter containing all languages supported by the
+   * application.
+   *
+   * <p>Each supported language is represented by a {@link LocaleOption}
+   * containing its display name, corresponding {@link Locale} value, and flag
+   * drawable resource.</p>
+   *
+   * <p>The returned adapter can be assigned to an
+   * {@link android.widget.AdapterView}, such as a
+   * {@link android.widget.Spinner}, to display the available language
+   * options.</p>
+   *
+   * @param context the context used by the adapter to inflate views and access
+   *                application resources; must not be {@code null}
+   * @return a locale adapter containing the supported application languages
+   */
+  @NonNull
+  public static LocaleAdapter getLocaleAdapter(@NonNull Context context) {
+    List<LocaleOption> localeOptions = new ArrayList<>();
+    localeOptions.add(new LocaleOption("English", Locale.EN, R.drawable.uk));
+    localeOptions.add(new LocaleOption("Srpski", Locale.SR, R.drawable.serbian));
+    localeOptions.add(new LocaleOption("Español", Locale.ES, R.drawable.spanish));
+    localeOptions.add(new LocaleOption("Deutsch", Locale.DE, R.drawable.german));
+
+    return new LocaleAdapter(context, localeOptions);
+  }
+
+  /**
+   * Creates and returns a listener that applies a newly selected application
+   * language.
+   *
+   * <p>When an item is selected, the listener retrieves the corresponding
+   * {@link LocaleOption} from the parent adapter, extracts its {@link Locale},
+   * and applies it through {@link #setLanguage(Locale)}.</p>
+   *
+   * <p>No action is performed when the adapter has no selected item.</p>
+   *
+   * @return a listener that handles locale selection changes
+   */
+  @NonNull
+  public static AdapterView.OnItemSelectedListener getLocaleChangeHandler() {
+    return new AdapterView.OnItemSelectedListener() {
+
+      /**
+       * Applies the locale associated with the selected adapter item.
+       *
+       * @param parent   the adapter view in which the selection occurred
+       * @param view     the selected item view
+       * @param position the position of the selected item
+       * @param id       the row ID of the selected item
+       */
+      @Override
+      public void onItemSelected(
+              AdapterView<?> parent,
+              View view,
+              int position,
+              long id
+      ) {
+        LocaleOption localeOption =
+                (LocaleOption) parent.getItemAtPosition(position);
+
+        Locale locale = localeOption.getLocaleCode();
+        LocalisationService.setLanguage(locale);
+      }
+
+      /**
+       * Called when the adapter view has no selected item.
+       *
+       * <p>This implementation intentionally performs no action.</p>
+       *
+       * @param parent the adapter view whose selection was cleared
+       */
+      @Override
+      public void onNothingSelected(AdapterView<?> parent) {
+        // No action required.
+      }
+    };
+  }
+
+  /**
+   * Creates a locale option representing the application's currently selected
+   * language.
+   *
+   * <p>The current application language tag is retrieved through
+   * {@link #getLanguage()} and converted to a supported {@link Locale} using
+   * {@link Locale#parse(String)}.</p>
+   *
+   * <p>The returned option contains an empty display title and uses the UK flag
+   * drawable as its icon.</p>
+   *
+   * @return a locale option representing the currently selected application
+   *         language
+   */
+  @NonNull
+  public static LocaleOption getCurrentLocaleOption() {
+    Locale locale = Locale.parse(LocalisationService.getLanguage());
+    return new LocaleOption("", locale, R.drawable.uk);
   }
 }
