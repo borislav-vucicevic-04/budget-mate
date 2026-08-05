@@ -54,6 +54,8 @@ public class UserProfileActivity extends AppCompatActivity {
 
     // setting listeners
     this.setListeners();
+    // setting locale switch
+    LocalisationService.setLocaleSwitch(localeSwitch, this);
 
     // executing the heavy task on background process
     Executors.newSingleThreadExecutor().execute(this::loadUserProfile);

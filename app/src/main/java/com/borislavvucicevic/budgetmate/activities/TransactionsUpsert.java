@@ -70,6 +70,8 @@ public class TransactionsUpsert extends AppCompatActivity {
     this.grabWidgets();
     // setting listeners
     this.setListeners();
+    // setting locale switch
+    LocalisationService.setLocaleSwitch(localeSwitch, this);
 
     // setting the autocomplete textview
     this.setEtCategory();
