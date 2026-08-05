@@ -45,4 +45,14 @@ public enum Locale {
   public String getLocaleCode() {
     return localeCode;
   }
+
+  public static Locale parse(String localeCode) {
+    for(Locale locale : Locale.values()) {
+      if (locale.getLocaleCode().equals(localeCode)) {
+        return locale;
+      }
+    }
+
+    return null;
+  }
 }

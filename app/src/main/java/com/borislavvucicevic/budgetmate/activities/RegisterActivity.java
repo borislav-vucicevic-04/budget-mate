@@ -26,6 +26,7 @@ import com.borislavvucicevic.budgetmate.enums.FirebaseAuthErrorCodes;
 import com.borislavvucicevic.budgetmate.exceptions.ValidationException;
 import com.borislavvucicevic.budgetmate.services.AuthService;
 import com.borislavvucicevic.budgetmate.services.DatabaseService;
+import com.borislavvucicevic.budgetmate.services.LocalisationService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,8 +35,9 @@ import java.util.concurrent.Executors;
 public class RegisterActivity extends AppCompatActivity {
   public static final String REGISTER_ACTIVITY = "REGISTER_ACTIVITY";
   private EditText etFullName, etEmail, etPassword, etRepeatPassword;
-  private TextView tvErrorWrapper;
-  private Spinner spHomeCurrency;
+  private TextView tvErrorWrapper, tvLoginLink;
+  private Spinner spHomeCurrency, localeSwitch;
+  private Button btnRegister;
   private ProgressBar progressBar;
   private AuthService authService;
   private DatabaseService databaseService;
@@ -56,6 +58,14 @@ public class RegisterActivity extends AppCompatActivity {
     authService = new AuthService();
     databaseService = new DatabaseService();
     // getting widgets
+    this.grabWidgets();
+    // setting event handlers
+    this.setListeners();
+    // setting locale switcher
+    LocalisationService.setLocaleSwitch(localeSwitch, this);
+  }
+
+  private void grabWidgets() {
     etFullName = findViewById(R.id.etFullName);
     etEmail = findViewById(R.id.etEmail);
     etPassword = findViewById(R.id.etPassword);
@@ -63,12 +73,15 @@ public class RegisterActivity extends AppCompatActivity {
     spHomeCurrency = findViewById(R.id.spReportType);
     tvErrorWrapper = findViewById(R.id.tvErrorWrapper);
     progressBar = findViewById(R.id.progressBar);
-    Button btnRegister = findViewById(R.id.btnRegister);
-    TextView tvLoginLink = findViewById(R.id.tvLoginLink);
+    btnRegister = findViewById(R.id.btnRegister);
+    tvLoginLink = findViewById(R.id.tvLoginLink);
+    localeSwitch = findViewById(R.id.localeSwitch);
+  }
 
-    // setting event handlers
+  private void setListeners() {
     btnRegister.setOnClickListener(v -> this.handleRegistration());
     tvLoginLink.setOnClickListener(v -> this.handleLoginLink());
+    localeSwitch.setOnItemSelectedListener(LocalisationService.getLocaleChangeHandler());
   }
 
   /**

@@ -29,6 +29,7 @@ import com.borislavvucicevic.budgetmate.exceptions.ValidationException;
 import com.borislavvucicevic.budgetmate.services.AuthService;
 import com.borislavvucicevic.budgetmate.services.CacheService;
 import com.borislavvucicevic.budgetmate.services.DatabaseService;
+import com.borislavvucicevic.budgetmate.services.LocalisationService;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.firebase.Timestamp;
 
@@ -48,6 +49,7 @@ public class TransactionsUpsert extends AppCompatActivity {
   private Spinner spTransactionType;
   private ProgressBar progressBar;
   private Button btnUpsertTransaction;
+  private Spinner localeSwitch;
   private Transaction transactionUpsertObject = CacheService.read(CacheKey.TRANSACTION_UPSERT_OBJECT, Transaction.class);
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -65,21 +67,9 @@ public class TransactionsUpsert extends AppCompatActivity {
     databaseService = new DatabaseService();
 
     // grabbing widgets
-    btnUpsertTransaction = findViewById(R.id.btnUpsertTransaction);
-    etCategory = findViewById(R.id.etCategory);
-    tvErrorWrapper = findViewById(R.id.tvErrorWrapper);
-    etAmount = findViewById(R.id.etAmount);
-    etNotes = findViewById(R.id.etNotes);
-    spTransactionType = findViewById(R.id.spTransactionType);
-    progressBar = findViewById(R.id.progressBar);
+    this.grabWidgets();
     // setting listeners
-    btnUpsertTransaction.setOnClickListener(v -> this.handleUpsertTransaction());
-    etCategory.setOnFocusChangeListener((v, hasFocus) -> {
-      if (hasFocus) {
-        etCategory.showDropDown();
-      }
-    });
-    etCategory.setOnClickListener(v -> etCategory.showDropDown());
+    this.setListeners();
 
     // setting the autocomplete textview
     this.setEtCategory();
@@ -100,6 +90,28 @@ public class TransactionsUpsert extends AppCompatActivity {
         showDiscardChangesDialog();
       }
     });
+  }
+
+  private void grabWidgets() {
+    btnUpsertTransaction = findViewById(R.id.btnUpsertTransaction);
+    etCategory = findViewById(R.id.etCategory);
+    tvErrorWrapper = findViewById(R.id.tvErrorWrapper);
+    etAmount = findViewById(R.id.etAmount);
+    etNotes = findViewById(R.id.etNotes);
+    spTransactionType = findViewById(R.id.spTransactionType);
+    progressBar = findViewById(R.id.progressBar);
+    localeSwitch = findViewById(R.id.localeSwitch);
+  }
+
+  private void setListeners() {
+    btnUpsertTransaction.setOnClickListener(v -> this.handleUpsertTransaction());
+    etCategory.setOnFocusChangeListener((v, hasFocus) -> {
+      if (hasFocus) {
+        etCategory.showDropDown();
+      }
+    });
+    etCategory.setOnClickListener(v -> etCategory.showDropDown());
+    localeSwitch.setOnItemSelectedListener(LocalisationService.getLocaleChangeHandler());
   }
 
   /**

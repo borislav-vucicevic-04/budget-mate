@@ -13,4 +13,9 @@
     <color name="transaction_notes_background">#FAFBFD</color>
     <color name="transaction_card_stroke">#DDE1E7</color>
     <color name="indicator_overlay">#4D878787</color>
+    <color name="primary_blue">#3F6FAE</color>
+    <color name="primary_blue_pressed">#315A8F</color>
+    <color name="dark_navy">#15263F</color>
+    <color name="language_background">#EAF2FB</color>
+    <color name="language_border">#7598C5</color>
 </resources>

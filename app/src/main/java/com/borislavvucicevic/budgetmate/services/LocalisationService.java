@@ -3,6 +3,7 @@ package com.borislavvucicevic.budgetmate.services;
 import android.content.Context;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Spinner;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatDelegate;
@@ -183,5 +184,11 @@ public final class LocalisationService {
   public static LocaleOption getCurrentLocaleOption() {
     Locale locale = Locale.parse(LocalisationService.getLanguage());
     return new LocaleOption("", locale, R.drawable.uk);
+  }
+
+  public static void setLocaleSwitch(Spinner localeSwitch, Context context) {
+    localeSwitch.setAdapter(LocalisationService.getLocaleAdapter(context));
+    int position = ((LocaleAdapter) localeSwitch.getAdapter()).getPosition(LocalisationService.getCurrentLocaleOption());
+    localeSwitch.setSelection(Math.max(position, 0));
   }
 }

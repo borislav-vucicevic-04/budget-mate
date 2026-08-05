@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,6 +31,7 @@ import com.borislavvucicevic.budgetmate.enums.CacheKey;
 import com.borislavvucicevic.budgetmate.services.AuthService;
 import com.borislavvucicevic.budgetmate.services.CacheService;
 import com.borislavvucicevic.budgetmate.services.DatabaseService;
+import com.borislavvucicevic.budgetmate.services.LocalisationService;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -56,6 +58,8 @@ public class TransactionsActivity extends AppCompatActivity {
   private RecyclerView recyclerView;
   private LinearLayout processIndicator;
   private TextView tvProcessMessage;
+  private Spinner localeSwitch;
+  FloatingActionButton floatingActionButton;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -72,13 +76,12 @@ public class TransactionsActivity extends AppCompatActivity {
     transactionList.sort(Comparator.comparing(Transaction::getCreatedOn).reversed());
 
     // grabbing widgets
-    recyclerView = findViewById(R.id.recyclerView);
-    processIndicator = findViewById(R.id.processIndicator);
-    tvProcessMessage = findViewById(R.id.tvProcessMessage);
-    FloatingActionButton floatingActionButton = findViewById(R.id.floatingActionButton);
-
+    this.grabWidgets();
     // setting listeners
-    floatingActionButton.setOnClickListener(v -> this.openTransactionsUpsertActivity());
+    this.setListeners();
+
+    // setting up the locale switch
+    LocalisationService.setLocaleSwitch(localeSwitch, this);
 
     // initializing adapter
     adapter = new TransactionCardAdapter(this, transactionList, this::showDeleteConfirmationDialog, this::openTransactionsUpsertActivity);
@@ -97,6 +100,19 @@ public class TransactionsActivity extends AppCompatActivity {
     super.onDetachedFromWindow();
     CacheService.store(CacheKey.HAS_NEXT_PAGE, this.hasNextPage);
     CacheService.store(CacheKey.LAST_VISIBLE_DOCUMENT, this.lastVisibleDocument);
+  }
+
+  private void grabWidgets() {
+    recyclerView = findViewById(R.id.recyclerView);
+    processIndicator = findViewById(R.id.processIndicator);
+    tvProcessMessage = findViewById(R.id.tvProcessMessage);
+    floatingActionButton = findViewById(R.id.floatingActionButton);
+    localeSwitch = findViewById(R.id.localeSwitch);
+  }
+
+  private void setListeners() {
+    floatingActionButton.setOnClickListener(v -> this.openTransactionsUpsertActivity());
+    localeSwitch.setOnItemSelectedListener(LocalisationService.getLocaleChangeHandler());
   }
 
   private void setUpRecyclerView() {
@@ -128,6 +144,7 @@ public class TransactionsActivity extends AppCompatActivity {
       }
     });
   }
+
   private void openTransactionsUpsertActivity() {
     Intent intent = new Intent(TransactionsActivity.this, TransactionsUpsert.class);
     transactionUpsertLauncher.launch(intent);
@@ -172,6 +189,7 @@ public class TransactionsActivity extends AppCompatActivity {
       tvProcessMessage.setText(getString(resourceStringID));
     }
   }
+
   private void loadTransactions() {
     // Exit immediately if loading is in process, or there are no more transactions to load
     if(this.isLoadingTransactions || !this.hasNextPage) {
@@ -210,6 +228,7 @@ public class TransactionsActivity extends AppCompatActivity {
       }
     });
   }
+
   private void loadSuccess(int positionStart, int itemCount) {
     Toast.makeText(
             TransactionsActivity.this,
@@ -219,6 +238,7 @@ public class TransactionsActivity extends AppCompatActivity {
     // refreshing data
     adapter.notifyItemRangeInserted(positionStart, itemCount);
   }
+
   private void handleException(Exception exception) {
     Toast.makeText(
             TransactionsActivity.this,

@@ -45,6 +45,7 @@ import com.borislavvucicevic.budgetmate.enums.ReportType;
 import com.borislavvucicevic.budgetmate.services.AuthService;
 import com.borislavvucicevic.budgetmate.services.CacheService;
 import com.borislavvucicevic.budgetmate.services.DatabaseService;
+import com.borislavvucicevic.budgetmate.services.LocalisationService;
 import com.borislavvucicevic.budgetmate.services.ReportHtmlService;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.firebase.Timestamp;
@@ -63,7 +64,7 @@ import java.util.function.Consumer;
 
 public class ReportsActivity extends AppCompatActivity {
   public static final String REPORTS_ACTIVITY = "REPORTS_ACTIVITY";
-  private Spinner spReportType, spMonth, spQuarter;
+  private Spinner spReportType, spMonth, spQuarter, localeSwitch;
   private EditText etYear;
   private AppCompatTextView dpDate, dpCustomRangeFrom, dpCustomRangeTo;
   private TextView tvErrorWrapper;
@@ -96,6 +97,7 @@ public class ReportsActivity extends AppCompatActivity {
     this.setSpReportType();
     this.setSpQuarter();
     this.setSpMonth();
+    LocalisationService.setLocaleSwitch(localeSwitch, this);
     // setting event listeners
     this.setListeners();
   }
@@ -111,6 +113,7 @@ public class ReportsActivity extends AppCompatActivity {
     spReportType = findViewById(R.id.spReportType);
     spMonth = findViewById(R.id.spMonth);
     spQuarter = findViewById(R.id.spQuarter);
+    localeSwitch = findViewById(R.id.localeSwitch);
     dpDate = findViewById(R.id.dpDate);
     etYear = findViewById(R.id.etYear);
     dpCustomRangeFrom = findViewById(R.id.dpCustomRangeFrom);
@@ -171,6 +174,7 @@ public class ReportsActivity extends AppCompatActivity {
         // DO NOTHING
       }
     });
+    localeSwitch.setOnItemSelectedListener(LocalisationService.getLocaleChangeHandler());
     dpDate.setOnClickListener(v -> showDatePicker(dpDateValue, this::handleDpDateChange));
     dpCustomRangeFrom.setOnClickListener(v -> showDatePicker(dpCustomRangeFromValue, this::handleDpCustomRangeFromChange));
     dpCustomRangeTo.setOnClickListener(v -> showDatePicker(dpCustomRangeToValue, this::handleDpCustomRangeToChange));

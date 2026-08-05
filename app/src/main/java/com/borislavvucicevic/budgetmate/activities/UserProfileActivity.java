@@ -5,6 +5,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -19,6 +20,7 @@ import com.borislavvucicevic.budgetmate.models.UserProfile;
 import com.borislavvucicevic.budgetmate.enums.CurrencyCode;
 import com.borislavvucicevic.budgetmate.services.AuthService;
 import com.borislavvucicevic.budgetmate.services.DatabaseService;
+import com.borislavvucicevic.budgetmate.services.LocalisationService;
 
 import java.util.Objects;
 import java.util.concurrent.Executors;
@@ -31,6 +33,7 @@ public class UserProfileActivity extends AppCompatActivity {
   private TextView tvFullName, tvEmail, tvHomeCurrency;
   private ScrollView formWrapper;
   private ProgressBar progressBar;
+  private Spinner localeSwitch;
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -47,15 +50,28 @@ public class UserProfileActivity extends AppCompatActivity {
     databaseService = new DatabaseService();
 
     // grabbing widgets
+    this.grabWidgets();
+
+    // setting listeners
+    this.setListeners();
+
+    // executing the heavy task on background process
+    Executors.newSingleThreadExecutor().execute(this::loadUserProfile);
+  }
+
+  private void grabWidgets() {
     tvFullName = findViewById(R.id.tvFullName);
     tvEmail = findViewById(R.id.tvEmail);
     tvHomeCurrency = findViewById(R.id.tvHomeCurrency);
     formWrapper = findViewById(R.id.formWrapper);
     progressBar = findViewById(R.id.progressBar);
-
-    // executing the heavy task on background process
-    Executors.newSingleThreadExecutor().execute(this::loadUserProfile);
+    localeSwitch = findViewById(R.id.localeSwitch);
   }
+
+  private void setListeners() {
+    localeSwitch.setOnItemSelectedListener(LocalisationService.getLocaleChangeHandler());
+  }
+
   private void loadUserProfile() {
     String uid = authService.getUserID();
     try {
