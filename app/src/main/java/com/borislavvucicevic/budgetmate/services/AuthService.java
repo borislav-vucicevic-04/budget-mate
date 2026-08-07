@@ -36,10 +36,24 @@ public class AuthService {
     this.firebaseAuth = FirebaseAuth.getInstance();
   }
 
+  /**
+   * Checks if user is logged in.
+   *
+   * @return {@code true} if the user is logged in, otherwise {@code false}
+   * */
   public boolean isLoggedIn() {
     return firebaseAuth.getCurrentUser() != null;
   }
 
+  /**
+   * Returns the unique identifier of the currently authenticated Firebase user.
+   *
+   * <p>The method retrieves the currently signed-in {@link FirebaseUser} from
+   * the Firebase authentication service. If no user is currently authenticated,
+   * the method returns {@code null}.</p>
+   *
+   * @return the unique Firebase user ID, or {@code null} if no user is currently signed in
+   */
   public String getUserID() {
     FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
     if (firebaseUser == null) return null;

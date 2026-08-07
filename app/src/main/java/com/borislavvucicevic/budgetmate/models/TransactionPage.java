@@ -10,10 +10,32 @@ import java.util.List;
  * This class encapsulates the transactions retrieved for the current page, the
  * last visible Firestore document used as the pagination cursor, and a flag
  * indicating whether additional pages of results are available.
+ * </p>
+ *
+ * <p>Instances of this class are used to transfer both transaction data and
+ * pagination metadata between the database layer and the application.</p>
+ *
+ * @see Transaction
+ * @see DocumentSnapshot
  */
 public class TransactionPage {
+
+  /**
+   * List of transactions contained in the current page.
+   */
   private final List<Transaction> transactionList;
+
+  /**
+   * Last visible Firestore document retrieved for the current page.
+   *
+   * <p>This document is used as the pagination cursor when requesting
+   * the next page of transactions.</p>
+   */
   private final DocumentSnapshot lastVisibleDocument;
+
+  /**
+   * Indicates whether additional pages of transactions are available.
+   */
   private final boolean hasNextPage;
 
   /**
@@ -45,6 +67,7 @@ public class TransactionPage {
    * Returns the last visible Firestore document for this page.
    * <p>
    * This document can be used as the pagination cursor when retrieving the next page.
+   * </p>
    *
    * @return the last visible document, or {@code null} if the page is empty
    */

@@ -56,42 +56,208 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Executors;
 
+/**
+ * Activity responsible for generating financial reports in the BudgetMate
+ * application.
+ *
+ * <p>This activity allows the user to generate reports for different time
+ * periods, including daily, monthly, quarterly, yearly, and custom
+ * date ranges. The appropriate report configuration fields are displayed
+ * dynamically depending on the selected {@link ReportType}.</p>
+ *
+ * <p>After the report parameters have been validated, the activity calculates
+ * the required date range and retrieves the authenticated user's transactions
+ * from the database. The corresponding {@link Report} implementation is then
+ * created and converted into HTML using {@link ReportHtmlService}.</p>
+ *
+ * <p>The generated HTML report is displayed in a {@link WebView}. Once the
+ * report has finished loading, the Android printing framework is opened,
+ * allowing the report to be printed or saved as a PDF document.</p>
+ *
+ * <p>Database and report-generation operations are executed on a background
+ * thread to avoid blocking the Android UI thread. User-interface changes are
+ * returned to the main thread through {@code runOnUiThread(...)}.</p>
+ *
+ * <p>The activity also supports changing the application language using
+ * the locale selector inherited from {@link TemplateActivity}.</p>
+ *
+ * @see TemplateActivity
+ * @see Report
+ * @see DailyReport
+ * @see MonthlyReport
+ * @see QuarterlyReport
+ * @see YearlyReport
+ * @see CustomReport
+ * @see ReportHtmlService
+ */
 public class ReportsActivity extends TemplateActivity {
+
+  /**
+   * Tag used when writing log messages associated with this activity.
+   */
   public static final String REPORTS_ACTIVITY = "REPORTS_ACTIVITY";
-  private Spinner spReportType, spMonth, spQuarter;
+
+  /**
+   * Spinner used to select the type of report to generate.
+   */
+  private Spinner spReportType;
+
+  /**
+   * Spinner used to select a month for monthly reports.
+   */
+  private Spinner spMonth;
+
+  /**
+   * Spinner used to select a quarter for quarterly reports.
+   */
+  private Spinner spQuarter;
+
+  /**
+   * Input field used to specify the year for monthly, quarterly,
+   * and yearly reports.
+   */
   private EditText etYear;
-  private AppCompatTextView dpDate, dpCustomRangeFrom, dpCustomRangeTo;
+
+  /**
+   * Date-selection field used when generating a daily report.
+   */
+  private AppCompatTextView dpDate;
+
+  /**
+   * Date-selection field representing the beginning of a custom report range.
+   */
+  private AppCompatTextView dpCustomRangeFrom;
+
+  /**
+   * Date-selection field representing the end of a custom report range.
+   */
+  private AppCompatTextView dpCustomRangeTo;
+
+  /**
+   * Button used to initiate report generation.
+   */
   private Button btnGenerate;
+
+  /**
+   * WebView used to display the generated HTML report.
+   */
   private WebView webView;
-  private LocalDate dpDateValue, dpCustomRangeFromValue, dpCustomRangeToValue;
+
+  /**
+   * Selected date used when generating a daily report.
+   */
+  private LocalDate dpDateValue;
+
+  /**
+   * Selected starting date of a custom report range.
+   */
+  private LocalDate dpCustomRangeFromValue;
+
+  /**
+   * Selected ending date of a custom report range.
+   */
+  private LocalDate dpCustomRangeToValue;
+
+  /**
+   * Currently selected type of report.
+   *
+   * <p>The default report type is {@link ReportType#DAILY}.</p>
+   */
   private ReportType reportType = ReportType.DAILY;
+
+  /**
+   * String representation of the year entered by the user.
+   */
   private String etYearValue;
+
+  /**
+   * Currently selected month for monthly reports.
+   *
+   * <p>The default month is January.</p>
+   */
   private Month spMonthValue = Month.JAN;
+
+  /**
+   * Currently selected quarter for quarterly reports.
+   *
+   * <p>The default value is the first quarter.</p>
+   */
   private Quarter spQuarterValue = Quarter.I;
-  private Timestamp from, to;
+
+  /**
+   * Beginning of the database query time range.
+   */
+  private Timestamp from;
+
+  /**
+   * Exclusive upper boundary of the database query time range.
+   */
+  private Timestamp to;
+
+  /**
+   * HTML representation of the generated report.
+   */
   private String reportHtml;
+
+  /**
+   * Called when the reports activity is first created.
+   *
+   * <p>This method enables edge-to-edge rendering and adjusts the activity
+   * layout for the on-screen keyboard using window insets.</p>
+   *
+   * <p>It also initializes the report-type, quarter, and month selection
+   * spinners.</p>
+   *
+   * @param savedInstanceState previously saved activity state, or
+   *                           {@code null} if the activity is being
+   *                           created for the first time
+   */
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    EdgeToEdge.enable(this);
-    ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.reportsMain), (v, insets) -> {
-      int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
-      v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), imeBottom);
-      return insets;
-    });
 
-    // setting up spinners
+    EdgeToEdge.enable(this);
+
+    ViewCompat.setOnApplyWindowInsetsListener(
+            findViewById(R.id.reportsMain),
+            (v, insets) -> {
+              int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
+
+              v.setPadding(
+                      v.getPaddingLeft(),
+                      v.getPaddingTop(),
+                      v.getPaddingRight(),
+                      imeBottom
+              );
+
+              return insets;
+            }
+    );
+
+    // Set up report configuration spinners.
     this.setSpReportType();
     this.setSpQuarter();
     this.setSpMonth();
   }
 
+  /**
+   * Returns the layout resource used by this activity.
+   *
+   * @return resource identifier of the reports activity layout
+   */
   @Override
   protected int getLayoutID() {
     return R.layout.activity_reports;
   }
 
-
+  /**
+   * Retrieves and stores references to the user-interface widgets
+   * contained in the reports activity layout.
+   *
+   * <p>This includes report configuration spinners, date fields, year
+   * input, report generation controls, progress and error elements,
+   * locale selector, and the {@link WebView} used to display reports.</p>
+   */
   @Override
   protected void grabWidgets() {
     spReportType = findViewById(R.id.spReportType);
@@ -108,125 +274,209 @@ public class ReportsActivity extends TemplateActivity {
     webView = findViewById(R.id.webView);
   }
 
+  /**
+   * Registers event listeners for the report configuration controls.
+   *
+   * <p>The report-type listener updates the currently selected
+   * {@link ReportType} and displays the fields required for that type.
+   * Month and quarter listeners store their corresponding selections.</p>
+   *
+   * <p>Date fields open a {@link MaterialDatePicker}, while the report
+   * generation button initiates the report-generation process.</p>
+   *
+   * <p>The {@link WebViewClient} waits until the generated report has
+   * completely loaded before retrieving and sanitizing the document title
+   * and starting the Android print process.</p>
+   */
+  @Override
   protected void setListeners() {
     spReportType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-      @Override
-      public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        // Cast the item directly to your custom object type
-        ReportTypeOption reportTypeOption = (ReportTypeOption) parent.getItemAtPosition(position);
-        reportType = reportTypeOption.getType();
-        displayFields();
-      }
 
-      @Override
-      public void onNothingSelected(AdapterView<?> parent) {
-        // DO NOTHING
-      }
-    });
+              @Override
+              public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                ReportTypeOption reportTypeOption =
+                        (ReportTypeOption) parent.getItemAtPosition(position);
+
+                reportType = reportTypeOption.getType();
+
+                displayFields();
+              }
+
+              @Override
+              public void onNothingSelected(AdapterView<?> parent) {
+                // Do nothing.
+              }
+            });
     spMonth.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-      @Override
-      public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        MonthOption monthOption = (MonthOption) parent.getItemAtPosition(position);
-        spMonthValue = monthOption.getMonth();
-      }
 
-      @Override
-      public void onNothingSelected(AdapterView<?> parent) {
-        // DO NOTHING
-      }
-    });
+              @Override
+              public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                MonthOption monthOption =
+                        (MonthOption) parent.getItemAtPosition(position);
+
+                spMonthValue = monthOption.getMonth();
+              }
+
+              @Override
+              public void onNothingSelected(AdapterView<?> parent) {
+                // Do nothing.
+              }
+            });
     spQuarter.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-      @Override
-      public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        QuarterOption quarterOption = (QuarterOption) parent.getItemAtPosition(position);
-        spQuarterValue = quarterOption.getQuarter();
-      }
 
-      @Override
-      public void onNothingSelected(AdapterView<?> parent) {
-        // DO NOTHING
-      }
-    });
+              @Override
+              public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                QuarterOption quarterOption =
+                        (QuarterOption) parent.getItemAtPosition(position);
+
+                spQuarterValue = quarterOption.getQuarter();
+              }
+
+              @Override
+              public void onNothingSelected(AdapterView<?> parent) {
+                // Do nothing.
+              }
+            });
     localeSwitch.setOnItemSelectedListener(LocalisationService.getLocaleChangeHandler());
     dpDate.setOnClickListener(v -> showDatePicker(dpDateValue, v.getId()));
     dpCustomRangeFrom.setOnClickListener(v -> showDatePicker(dpCustomRangeFromValue, v.getId()));
     dpCustomRangeTo.setOnClickListener(v -> showDatePicker(dpCustomRangeToValue, v.getId()));
     btnGenerate.setOnClickListener(v -> handleGenerateReport());
-    webView.setWebViewClient(new WebViewClient() {
-      @Override
-      public void onPageFinished(WebView view, String url) {
-        super.onPageFinished(view, url);
-        String documentTitle = view.getTitle();
+    webView.setWebViewClient(
+            new WebViewClient() {
 
-        // 2. Fallback to a default name if the HTML has no <title> tag
-        if (documentTitle == null || documentTitle.trim().isEmpty()) {
-          documentTitle = getString(R.string.report_generic_document_name);
-        }
+              /**
+               * Called when the generated report has finished loading
+               * inside the WebView.
+               *
+               * <p>The method retrieves the HTML document title and uses
+               * a generic localized title if no document title exists.
+               * Characters that could cause problems in generated file
+               * names are replaced before the print process is started.</p>
+               *
+               * @param view WebView that finished loading the report
+               * @param url  URL associated with the loaded document
+               */
+              @Override
+              public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
 
-        // 3. Clean up the title (removes characters that might break file names)
-        documentTitle = documentTitle.replaceAll("[\\\\/:*?\"<>|]", "_");
+                String documentTitle = view.getTitle();
 
-        // 4. Pass the custom title to your print method
+                if (documentTitle == null || documentTitle.trim().isEmpty()) {
+                  documentTitle = getString(R.string.report_generic_document_name);
+                }
 
-        triggerWebViewPrint(view, documentTitle);
-      }
-    });
+                // Remove characters unsuitable for file names.
+                documentTitle = documentTitle.replaceAll("[\\\\/:*?\"<>|]", "_");
+
+                triggerWebViewPrint(view, documentTitle);
+              }
+            }
+    );
   }
 
   /**
-   * Initializes the report-type spinner with all available report type options.
+   * Initializes the report-type spinner with all supported report types.
    *
-   * <p>Each displayed, localized label is associated with its corresponding
-   * {@link ReportType} value. The configured adapter is then assigned to
-   * {@code spReportType}.</p>
+   * <p>Each localized label is represented by a
+   * {@link ReportTypeOption} containing the corresponding
+   * {@link ReportType} value.</p>
+   *
+   * <p>The supported report types are:</p>
+   *
+   * <ul>
+   *     <li>{@link ReportType#DAILY}</li>
+   *     <li>{@link ReportType#MONTHLY}</li>
+   *     <li>{@link ReportType#QUARTERLY}</li>
+   *     <li>{@link ReportType#YEARLY}</li>
+   *     <li>{@link ReportType#CUSTOM}</li>
+   * </ul>
    */
   private void setSpReportType() {
     List<ReportTypeOption> reportTypeOptions = new ArrayList<>();
-    reportTypeOptions.add(
-            new ReportTypeOption(getString(R.string.report_daily), ReportType.DAILY));
-    reportTypeOptions.add(
-            new ReportTypeOption(getString(R.string.report_monthly), ReportType.MONTHLY));
-    reportTypeOptions.add(
-            new ReportTypeOption(getString(R.string.report_quarterly), ReportType.QUARTERLY));
-    reportTypeOptions.add(
-            new ReportTypeOption(getString(R.string.report_yearly), ReportType.YEARLY));
-    reportTypeOptions.add(
-            new ReportTypeOption(getString(R.string.report_custom), ReportType.CUSTOM));
+
+    reportTypeOptions.add(new ReportTypeOption(
+                    getString(R.string.report_daily),
+                    ReportType.DAILY
+    ));
+
+    reportTypeOptions.add(new ReportTypeOption(
+                    getString(R.string.report_monthly),
+                    ReportType.MONTHLY
+    ));
+
+    reportTypeOptions.add(new ReportTypeOption(
+                    getString(R.string.report_quarterly),
+                    ReportType.QUARTERLY
+    ));
+
+    reportTypeOptions.add(new ReportTypeOption(
+                    getString(R.string.report_yearly),
+                    ReportType.YEARLY
+    ));
+
+    reportTypeOptions.add(new ReportTypeOption(
+                    getString(R.string.report_custom),
+                    ReportType.CUSTOM
+    ));
 
     ArrayAdapter<ReportTypeOption> adapter = new ArrayAdapter<>(
             this,
             R.layout.spinner_layout,
             reportTypeOptions
     );
-    adapter.setDropDownViewResource(R.layout.spinner_layout);
 
+    adapter.setDropDownViewResource(R.layout.spinner_layout);
     spReportType.setAdapter(adapter);
   }
 
   /**
-   * Initializes the quarter spinner with the four available quarters.
+   * Initializes the quarter spinner with the four quarters of a year.
    *
-   * <p>Each displayed, localized label is associated with its corresponding
-   * {@link Quarter} value. The configured adapter is then assigned to
-   * {@code spQuarter}.</p>
+   * <p>Each localized label is represented by a {@link QuarterOption}
+   * associated with its corresponding {@link Quarter} enumeration value.</p>
    */
   private void setSpQuarter() {
     List<QuarterOption> quarterOptions = new ArrayList<>();
+
     quarterOptions.add(
-            new QuarterOption(getString(R.string.reports_quarter_first), Quarter.I));
+            new QuarterOption(
+                    getString(R.string.reports_quarter_first),
+                    Quarter.I
+            )
+    );
+
     quarterOptions.add(
-            new QuarterOption(getString(R.string.report_quarter_second), Quarter.II));
+            new QuarterOption(
+                    getString(R.string.report_quarter_second),
+                    Quarter.II
+            )
+    );
+
     quarterOptions.add(
-            new QuarterOption(getString(R.string.report_quarter_third), Quarter.III));
+            new QuarterOption(
+                    getString(R.string.report_quarter_third),
+                    Quarter.III
+            )
+    );
+
     quarterOptions.add(
-            new QuarterOption(getString(R.string.report_quarter_fourth), Quarter.IV));
+            new QuarterOption(
+                    getString(R.string.report_quarter_fourth),
+                    Quarter.IV
+            )
+    );
 
     ArrayAdapter<QuarterOption> adapter = new ArrayAdapter<>(
             this,
             R.layout.spinner_layout,
             quarterOptions
     );
-    adapter.setDropDownViewResource(R.layout.spinner_layout);
+
+    adapter.setDropDownViewResource(
+            R.layout.spinner_layout
+    );
 
     spQuarter.setAdapter(adapter);
   }
@@ -234,80 +484,126 @@ public class ReportsActivity extends TemplateActivity {
   /**
    * Initializes the month spinner with all twelve months of the year.
    *
-   * <p>Each displayed, localized month label is associated with its corresponding
-   * {@link Month} value. The configured adapter is then assigned to
-   * {@code spMonth}.</p>
+   * <p>Each localized month label is represented by a
+   * {@link MonthOption} associated with its corresponding
+   * {@link Month} enumeration value.</p>
    */
   private void setSpMonth() {
     List<MonthOption> monthOptions = new ArrayList<>();
-    monthOptions.add(new MonthOption(getString(R.string.jan), Month.JAN));
-    monthOptions.add(new MonthOption(getString(R.string.feb), Month.FEB));
-    monthOptions.add(new MonthOption(getString(R.string.mar), Month.MAR));
-    monthOptions.add(new MonthOption(getString(R.string.apr), Month.APR));
-    monthOptions.add(new MonthOption(getString(R.string.may), Month.MAY));
-    monthOptions.add(new MonthOption(getString(R.string.jun), Month.JUN));
-    monthOptions.add(new MonthOption(getString(R.string.jul), Month.JUL));
-    monthOptions.add(new MonthOption(getString(R.string.aug), Month.AUG));
-    monthOptions.add(new MonthOption(getString(R.string.sep), Month.SEP));
-    monthOptions.add(new MonthOption(getString(R.string.oct), Month.OCT));
-    monthOptions.add(new MonthOption(getString(R.string.nov), Month.NOV));
-    monthOptions.add(new MonthOption(getString(R.string.dec), Month.DEC));
+
+    for (Month month : Month.values()) {
+      int stringResId;
+
+      switch (month) {
+        case JAN:
+          stringResId = R.string.jan;
+          break;
+        case FEB:
+          stringResId = R.string.feb;
+          break;
+        case MAR:
+          stringResId = R.string.mar;
+          break;
+        case APR:
+          stringResId = R.string.apr;
+          break;
+        case MAY:
+          stringResId = R.string.may;
+          break;
+        case JUN:
+          stringResId = R.string.jun;
+          break;
+        case JUL:
+          stringResId = R.string.jul;
+          break;
+        case AUG:
+          stringResId = R.string.aug;
+          break;
+        case SEP:
+          stringResId = R.string.sep;
+          break;
+        case OCT:
+          stringResId = R.string.oct;
+          break;
+        case NOV:
+          stringResId = R.string.nov;
+          break;
+        case DEC:
+          stringResId = R.string.dec;
+          break;
+        default:
+          throw new IllegalArgumentException("Unknown month: " + month);
+      }
+
+      monthOptions.add(new MonthOption(getString(stringResId), month));
+    }
 
     ArrayAdapter<MonthOption> adapter = new ArrayAdapter<>(
             this,
             R.layout.spinner_layout,
             monthOptions
     );
-    adapter.setDropDownViewResource(R.layout.spinner_layout);
 
+    adapter.setDropDownViewResource(R.layout.spinner_layout);
     spMonth.setAdapter(adapter);
   }
 
   /**
-   * Displays the input fields required for the specified report type.
+   * Displays the input fields required by the currently selected report type.
    *
-   * <p>All report-related input fields are hidden before the fields associated
-   * with the selected report type are made visible.</p>
+   * <p>All report configuration fields are initially hidden by
+   * {@link #hideFields()}. The method then displays only the controls
+   * required for the value stored in {@link #reportType}.</p>
    *
    * <ul>
-   *   <li>{@link ReportType#DAILY}: displays the date field.</li>
-   *   <li>{@link ReportType#MONTHLY}: displays the month and year fields.</li>
-   *   <li>{@link ReportType#QUARTERLY}: displays the quarter and year fields.</li>
-   *   <li>{@link ReportType#YEARLY}: displays the year field.</li>
-   *   <li>{@link ReportType#CUSTOM}: displays the start-date and end-date fields.</li>
+   *     <li>{@link ReportType#DAILY} displays the date selector.</li>
+   *     <li>{@link ReportType#MONTHLY} displays the month and year fields.</li>
+   *     <li>{@link ReportType#QUARTERLY} displays the quarter and year fields.</li>
+   *     <li>{@link ReportType#YEARLY} displays the year field.</li>
+   *     <li>{@link ReportType#CUSTOM} displays the custom start and end dates.</li>
    * </ul>
    */
   private void displayFields() {
     this.hideFields();
+
     switch (reportType) {
+
       case DAILY:
         dpDate.setVisibility(View.VISIBLE);
         break;
+
       case MONTHLY:
         spMonth.setVisibility(View.VISIBLE);
         etYear.setVisibility(View.VISIBLE);
         break;
+
       case QUARTERLY:
         spQuarter.setVisibility(View.VISIBLE);
         etYear.setVisibility(View.VISIBLE);
         break;
+
       case YEARLY:
         etYear.setVisibility(View.VISIBLE);
         break;
+
       case CUSTOM:
         dpCustomRangeFrom.setVisibility(View.VISIBLE);
         dpCustomRangeTo.setVisibility(View.VISIBLE);
         break;
+
       default:
-        Log.d(REPORTS_ACTIVITY, "For some reason no field has been displayed.");
+        Log.d(
+                REPORTS_ACTIVITY,
+                "For some reason no field has been displayed."
+        );
     }
   }
 
   /**
-   * Hides all input fields used to configure a report period.
+   * Hides all fields used to configure the report period.
    *
-   * <p>This includes the month spinner, quarter spinner, date field, year field,
-   * and both custom date-range fields.</p>
+   * <p>This method is called before displaying the controls corresponding
+   * to the currently selected report type.</p>
    */
   private void hideFields() {
     spMonth.setVisibility(View.GONE);
@@ -319,11 +615,10 @@ public class ReportsActivity extends TemplateActivity {
   }
 
   /**
-   * Enables all report configuration fields and controls.
+   * Enables the report configuration controls.
    *
-   * <p>This method restores user interaction with the report type, month,
-   * quarter, date, year and custom date-range fields. It also enables the
-   * error wrapper, progress indicator and report generation button.</p>
+   * <p>This method restores user interaction after report generation or
+   * validation processing has completed.</p>
    */
   private void enableFields() {
     spReportType.setEnabled(true);
@@ -338,14 +633,11 @@ public class ReportsActivity extends TemplateActivity {
   }
 
   /**
-   * Disables all report configuration fields and controls.
+   * Disables the report configuration controls.
    *
-   * <p>This method prevents user interaction with the report type, month,
-   * quarter, date, year and custom date-range fields. It also disables the
-   * error wrapper, progress indicator and report generation button.</p>
-   *
-   * <p>This is typically used while a report is being generated or while
-   * another operation requiring temporary UI locking is in progress.</p>
+   * <p>The controls are temporarily disabled while a report is being
+   * generated to prevent the user from changing report parameters or
+   * starting multiple report-generation operations simultaneously.</p>
    */
   private void disableFields() {
     spReportType.setEnabled(false);
@@ -360,65 +652,69 @@ public class ReportsActivity extends TemplateActivity {
   }
 
   /**
-   * Displays a Material single-date picker and passes the selected date
-   * to the supplied change handler.
+   * Displays a Material Design date picker for one of the report date fields.
    *
-   * <p>When {@code timestamp} is not {@code null}, the picker opens with
-   * that date preselected. After the user confirms a date, the selected
-   * value is converted to a Firebase {@link Timestamp} and supplied to
-   * {@code dateChangeHandler}.</p>
+   * <p>If a date has previously been selected, that date is initially
+   * selected when the picker opens. The selected date is formatted as
+   * {@code dd.MM.yyyy} and displayed in the corresponding field.</p>
    *
-   * @param date         the currently selected date to display initially,
-   *                          or {@code null} when no date has been selected
-   * @param spinnerID id of the spinner calling the method
+   * <p>The ID supplied through {@code spinnerID} determines which stored
+   * date value and UI element should be updated.</p>
+   *
+   * @param date      currently selected date, or {@code null} if no date
+   *                  has previously been selected
+   * @param spinnerID resource ID of the date field that opened the picker
    */
   private void showDatePicker(LocalDate date, int spinnerID) {
     MaterialDatePicker.Builder<Long> builder =
             MaterialDatePicker.Builder
                     .datePicker()
                     .setTitleText(
-                            getString(R.string.reports_date_picker_text)
+                            getString(
+                                    R.string.reports_date_picker_text
+                            )
                     );
 
     /*
-     * When a date was previously selected, open the picker
-     * with that date already selected.
+     * If a date has already been selected, display it as the
+     * initially selected date.
      */
     if (date != null) {
-      builder.setSelection(
-              date.atStartOfDay()
+      builder.setSelection(date.atStartOfDay()
                       .toInstant(ZoneOffset.UTC)
-                      .toEpochMilli()
-      );
+                      .toEpochMilli());
     }
 
-    MaterialDatePicker<Long> datePicker =
-            builder.build();
+    MaterialDatePicker<Long> datePicker = builder.build();
 
-    datePicker.addOnPositiveButtonClickListener(selection -> {
-      if (selection == null) {
-        return;
-      }
+    datePicker.addOnPositiveButtonClickListener(
+            selection -> {
 
+              if (selection == null) {
+                return;
+              }
 
-      DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
-      LocalDate selected = Instant.ofEpochMilli(selection)
-              .atZone(ZoneOffset.UTC)
-              .toLocalDate();
+              DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
-      if(spinnerID == R.id.dpDate) {
-        dpDate.setText(formatter.format(selected));
-        dpDateValue = selected;
-      }
-      else if (spinnerID == R.id.dpCustomRangeFrom) {
-        dpCustomRangeFrom.setText(formatter.format(selected));
-        dpCustomRangeFromValue = selected;
-      }
-      else if (spinnerID == R.id.dpCustomRangeTo) {
-        dpCustomRangeTo.setText(formatter.format(selected));
-        dpCustomRangeToValue = selected;
-      }
-    });
+              LocalDate selected = Instant
+                      .ofEpochMilli(selection)
+                      .atZone(ZoneOffset.UTC)
+                      .toLocalDate();
+
+              if (spinnerID == R.id.dpDate) {
+                dpDate.setText(formatter.format(selected));
+                dpDateValue = selected;
+              }
+              else if (spinnerID == R.id.dpCustomRangeFrom) {
+                dpCustomRangeFrom.setText(formatter.format(selected));
+                dpCustomRangeFromValue = selected;
+              }
+              else if (spinnerID== R.id.dpCustomRangeTo) {
+                dpCustomRangeTo.setText(formatter.format(selected));
+                dpCustomRangeToValue = selected;
+              }
+            }
+    );
 
     datePicker.show(
             getSupportFragmentManager(),
@@ -427,31 +723,30 @@ public class ReportsActivity extends TemplateActivity {
   }
 
   /**
-   * Validates the selected report configuration, retrieves the matching
-   * transactions and generates the report HTML asynchronously.
+   * Generates a report using the currently selected report configuration.
    *
-   * <p>The method first reads the entered year, displays the progress indicator,
-   * shows a report-generation message and disables the report configuration
-   * controls to prevent additional user interaction while generation is in
-   * progress.</p>
+   * <p>The method retrieves the entered year, displays a progress indicator,
+   * informs the user that report generation has started, and disables the
+   * configuration controls.</p>
    *
-   * <p>The report generation is performed on a background thread. The method:</p>
+   * <p>Report processing is performed using a background executor. The
+   * operation performs the following steps:</p>
    *
-   * <ul>
-   *   <li>validates the entered report parameters;</li>
-   *   <li>calculates the report's start and end dates;</li>
-   *   <li>retrieves the current user's transactions for the selected period;</li>
-   *   <li>creates the appropriate {@link Report} implementation;</li>
-   *   <li>retrieves the user's configured home currency;</li>
-   *   <li>generates the report HTML using {@link ReportHtmlService}.</li>
-   * </ul>
+   * <ol>
+   *     <li>validates the selected report parameters;</li>
+   *     <li>calculates the report start and end timestamps;</li>
+   *     <li>retrieves the authenticated user's transactions;</li>
+   *     <li>creates the appropriate {@link Report} implementation;</li>
+   *     <li>retrieves the user's home currency from the cache;</li>
+   *     <li>generates the report HTML using {@link ReportHtmlService}.</li>
+   * </ol>
    *
-   * <p>After successful generation, the UI controls are enabled again, the
-   * progress indicator is hidden and the generated HTML is loaded into the
-   * report {@link WebView} on the main thread.</p>
+   * <p>After successful generation, the controls are enabled again,
+   * the progress indicator is hidden, and the generated HTML is loaded
+   * into the activity's {@link WebView}.</p>
    *
-   * <p>Validation and unexpected exceptions are forwarded to
-   * {@code handleException(...)} on the main thread.</p>
+   * <p>Validation and unexpected exceptions are handled on the Android
+   * UI thread.</p>
    */
   private void handleGenerateReport() {
     etYearValue = etYear.getText().toString().trim();
@@ -464,176 +759,367 @@ public class ReportsActivity extends TemplateActivity {
       try {
         handleValidation();
         handleReportTimeRange();
+
         String uid = authService.getUserID();
-        List<Transaction> transactionList = databaseService.getTransactions(uid, from, to);
+
+        List<Transaction> transactionList =
+                databaseService.getTransactions(
+                        uid,
+                        from,
+                        to
+                );
 
         Report report;
 
         switch (reportType) {
+
           case DAILY:
-            report = new DailyReport(dpDateValue, transactionList);
+            report = new DailyReport(
+                    dpDateValue,
+                    transactionList
+            );
             break;
+
           case MONTHLY:
-            report  = new MonthlyReport(spMonthValue, Integer.parseInt(etYearValue), transactionList);
+            report = new MonthlyReport(
+                    spMonthValue,
+                    Integer.parseInt(etYearValue),
+                    transactionList
+            );
             break;
+
           case QUARTERLY:
-            report = new QuarterlyReport(spQuarterValue, Integer.parseInt(etYearValue), transactionList);
+            report = new QuarterlyReport(
+                    spQuarterValue,
+                    Integer.parseInt(etYearValue),
+                    transactionList
+            );
             break;
+
           case YEARLY:
-            report = new YearlyReport(Integer.parseInt(etYearValue), transactionList);
+            report = new YearlyReport(
+                    Integer.parseInt(etYearValue),
+                    transactionList
+            );
             break;
+
           default:
-            report = new CustomReport(dpCustomRangeFromValue, dpCustomRangeToValue, transactionList);
+            report = new CustomReport(
+                    dpCustomRangeFromValue,
+                    dpCustomRangeToValue,
+                    transactionList
+            );
             break;
         }
-        UserProfile userProfile = CacheService.read(CacheKey.USER_PROFILE, UserProfile.class);
-        ReportHtmlService reportHtmlService = new ReportHtmlService(
-                report,
-                ReportsActivity.this,
-                userProfile != null ? CurrencyCode.parse(userProfile.getHomeCurrency()) : ""
-        );
+
+        UserProfile userProfile =
+                CacheService.read(
+                        CacheKey.USER_PROFILE,
+                        UserProfile.class
+                );
+
+        ReportHtmlService reportHtmlService =
+                new ReportHtmlService(
+                        report,
+                        ReportsActivity.this,
+                        userProfile != null
+                                ? CurrencyCode.parse(
+                                userProfile.getHomeCurrency()
+                        )
+                                : ""
+                );
+
         reportHtml = reportHtmlService.generateHtml();
+
         runOnUiThread(() -> {
           enableFields();
           toggleProgressBarVisibility();
           webView.loadDataWithBaseURL(
                   null,
-                  reportHtml,       // Your HTML string variable
-                  "text/html",        // Content type
-                  "UTF-8",            // Character encoding
+                  reportHtml,
+                  "text/html",
+                  "UTF-8",
                   null
           );
         });
-      } catch(ValidationException exception) {
+
+      }
+      catch (ValidationException exception) {
         runOnUiThread(() -> {
           enableFields();
-          handleException(exception, ReportsActivity.class);
+          this.handleException(
+                  exception,
+                  ReportsActivity.class
+          );
         });
-      } catch(Exception exception) {
-        runOnUiThread(() -> handleException(exception, getString(R.string.error_general), ReportsActivity.class));
+      }
+      catch (Exception exception) {
+        runOnUiThread(
+                () -> this.handleException(
+                        exception,
+                        getString(R.string.error_general),
+                        ReportsActivity.class
+                )
+        );
       }
     });
   }
 
   /**
-   * Validates the input fields required for the selected report type.
+   * Validates the fields required by the currently selected report type.
    *
-   * <p>For a {@link ReportType#CUSTOM} report, both the start and end dates
-   * must be selected, and the start date must not be later than the end date.
-   * For a {@link ReportType#DAILY} report, a report date must be selected.
-   * For other report types, the year field must not be empty.</p>
+   * <p>The validation requirements depend on the selected
+   * {@link ReportType}:</p>
    *
-   * @throws ValidationException if a required value is missing or the custom
-   *                             date range is invalid
+   * <ul>
+   *     <li>
+   *         {@link ReportType#DAILY} requires a selected report date.
+   *     </li>
+   *     <li>
+   *         {@link ReportType#CUSTOM} requires both start and end dates,
+   *         and the starting date must not occur after the ending date.
+   *     </li>
+   *     <li>
+   *         Monthly, quarterly, and yearly reports require a year value.
+   *     </li>
+   * </ul>
+   *
+   * @throws ValidationException if one of the required report parameters
+   *                             is missing or a custom date range is invalid
    */
   private void handleValidation() {
-    if(reportType == ReportType.CUSTOM) {
-      if(dpCustomRangeFromValue == null) throw new ValidationException(getString(R.string.report_from_required), null);
-      if(dpCustomRangeToValue == null) throw new ValidationException(getString(R.string.report_to_required), null);
-      if(dpCustomRangeFromValue.isAfter(dpCustomRangeToValue)) throw new ValidationException(getString(R.string.report_from_bigger_than_to), null);
-    } else if(reportType == ReportType.DAILY) {
-      if(dpDateValue == null) throw new ValidationException(getString(R.string.report_date_required), null);
+    if (reportType == ReportType.CUSTOM) {
+
+      if (dpCustomRangeFromValue == null) {
+        throw new ValidationException(
+                getString(
+                        R.string.report_from_required
+                ),
+                null
+        );
+      }
+
+      if (dpCustomRangeToValue == null) {
+        throw new ValidationException(
+                getString(
+                        R.string.report_to_required
+                ),
+                null
+        );
+      }
+
+      if (
+              dpCustomRangeFromValue.isAfter(
+                      dpCustomRangeToValue
+              )
+      ) {
+        throw new ValidationException(
+                getString(
+                        R.string.report_from_bigger_than_to
+                ),
+                null
+        );
+      }
+
+    } else if (
+            reportType == ReportType.DAILY
+    ) {
+
+      if (dpDateValue == null) {
+        throw new ValidationException(
+                getString(
+                        R.string.report_date_required
+                ),
+                null
+        );
+      }
+
     } else if (etYearValue.isEmpty()) {
-      throw new ValidationException(getString(R.string.report_year_required), null);
+
+      throw new ValidationException(
+              getString(
+                      R.string.report_year_required
+              ),
+              null
+      );
     }
   }
 
   /**
-   * Determines and sets the report time range based on the selected {@code reportType}.
+   * Calculates the start and end timestamps for the selected report period.
    *
-   * <p>The calculated range is stored in the {@code from} and {@code to} fields:
+   * <p>The calculated values are stored in the {@link #from} and
+   * {@link #to} fields and are later used when querying transactions
+   * from the database.</p>
+   *
+   * <p>The time range is calculated according to the report type:</p>
+   *
    * <ul>
-   *   <li>{@code DAILY}: uses the selected date for both boundaries.</li>
-   *   <li>{@code MONTHLY}: uses the first and last day of the selected month.</li>
-   *   <li>{@code QUARTERLY}: uses the first and last day of the selected quarter.</li>
-   *   <li>{@code YEARLY}: uses the first and last day of the selected year.</li>
-   *   <li>{@code CUSTOM}: uses the manually selected start and end dates.</li>
+   *     <li>
+   *         {@link ReportType#DAILY}: selected date only.
+   *     </li>
+   *     <li>
+   *         {@link ReportType#MONTHLY}: first through last day of
+   *         the selected month.
+   *     </li>
+   *     <li>
+   *         {@link ReportType#QUARTERLY}: first through last day
+   *         of the selected quarter.
+   *     </li>
+   *     <li>
+   *         {@link ReportType#YEARLY}: first through last day
+   *         of the selected year.
+   *     </li>
+   *     <li>
+   *         {@link ReportType#CUSTOM}: manually selected start
+   *         and end dates.
+   *     </li>
    * </ul>
    *
-   * <p>Calendar-based dates are converted to timestamps at the start of the day
-   * using the system-default time zone.
+   * <p>The lower boundary represents the beginning of the selected
+   * starting date. The upper boundary represents the beginning of the
+   * day immediately following the selected ending date. This allows the
+   * database query to include the entire final day of the report period.</p>
    *
-   * @throws NumberFormatException if the provided year value is not a valid integer
-   * @throws java.time.DateTimeException if the selected year, month, or quarter
-   *         produces an invalid date
+   * <p>Date boundaries are converted using the system's default
+   * {@link ZoneId} before being converted to Firebase
+   * {@link Timestamp} values.</p>
+   *
+   * @throws NumberFormatException if the entered year cannot be converted
+   *                               to an integer
+   * @throws java.time.DateTimeException if a calculated calendar date
+   *                                     is invalid
    */
   private void handleReportTimeRange() {
-    int year =  !etYearValue.isEmpty() ? Integer.parseInt(etYearValue) : 0;
+    int year = !etYearValue.isEmpty()
+                    ? Integer.parseInt(etYearValue)
+                    : 0;
+
     LocalDate firstDay = null;
     LocalDate lastDay = null;
+
     switch (reportType) {
+
       case DAILY:
         firstDay = dpDateValue;
         lastDay = dpDateValue;
         break;
+
       case MONTHLY:
-        // starting with the first day of the month
-        firstDay = LocalDate.of(year, spMonthValue.getMonthValue(), 1);
-        // getting the last day of the month
-        lastDay = firstDay.with(TemporalAdjusters.lastDayOfMonth());
+        // First day of the selected month.
+        firstDay = LocalDate.of(
+                year,
+                spMonthValue.getMonthValue(),
+                1
+        );
+
+        // Last day of the selected month.
+        lastDay = firstDay.with(
+                TemporalAdjusters.lastDayOfMonth()
+        );
+
         break;
+
       case QUARTERLY:
-        // starting with the first day of the year
-        firstDay = LocalDate.of(year, spQuarterValue.getStartMonthNumber(), 1);
-        // getting the last day of the year
-        lastDay = LocalDate.of(year, spQuarterValue.getEndMonthNumber(), 1).with(TemporalAdjusters.lastDayOfMonth());
+        // First day of the selected quarter.
+        firstDay = LocalDate.of(
+                year,
+                spQuarterValue.getStartMonthNumber(),
+                1
+        );
+
+        // Last day of the selected quarter.
+        lastDay = LocalDate.of(
+                        year,
+                        spQuarterValue.getEndMonthNumber(),
+                        1
+                )
+                .with(
+                        TemporalAdjusters.lastDayOfMonth()
+                );
+
         break;
+
       case YEARLY:
-        // starting with the first day of the year
-        firstDay = LocalDate.of(year, 1, 1);
-        // getting the last day of the year
-        lastDay = firstDay.with(TemporalAdjusters.lastDayOfYear());
+        // First day of the selected year.
+        firstDay = LocalDate.of(
+                year,
+                1,
+                1
+        );
+
+        // Last day of the selected year.
+        lastDay = firstDay.with(
+                TemporalAdjusters.lastDayOfYear()
+        );
+
         break;
-        // setting the first day of the month as the starting point of the report's time range
+
       case CUSTOM:
         firstDay = dpCustomRangeFromValue;
         lastDay = dpCustomRangeToValue;
         break;
     }
 
-    // Adjusting boundary values
-    ZoneId userTimeZone = ZoneId.systemDefault();
+    ZoneId userTimeZone =
+            ZoneId.systemDefault();
 
-    // Beginning of the selected "from" date.
-    Instant fromInstant =  firstDay
-            .atStartOfDay(userTimeZone)
-            .toInstant();
+    /*
+     * Beginning of the first selected day.
+     */
+    Instant fromInstant =
+            firstDay
+                    .atStartOfDay(userTimeZone)
+                    .toInstant();
 
-    // Beginning of the day after the selected final "to" date
-    Instant toInstant = lastDay
-            .plusDays(1)
-            .atStartOfDay(userTimeZone)
-            .toInstant();
+    /*
+     * Beginning of the day after the final selected date.
+     * This forms an exclusive upper boundary.
+     */
+    Instant toInstant =
+            lastDay
+                    .plusDays(1)
+                    .atStartOfDay(userTimeZone)
+                    .toInstant();
 
-    from = new Timestamp(Date.from(fromInstant));
-    to = new Timestamp(Date.from(toInstant));
+    from = new Timestamp(
+            Date.from(fromInstant)
+    );
+
+    to = new Timestamp(
+            Date.from(toInstant)
+    );
   }
 
   /**
-   * Starts a print job for the HTML content currently displayed in the supplied
-   * {@link WebView}.
+   * Starts an Android print job for the HTML report displayed in the
+   * supplied {@link WebView}.
    *
-   * <p>The report is configured for A4 paper in landscape orientation, color
-   * printing and no minimum page margins. The {@link PrintManager} opens the
-   * Android system print dialog, where the user can select a printer or save the
-   * document as a PDF.</p>
+   * <p>The method obtains the system {@link PrintManager} and creates
+   * a {@link PrintDocumentAdapter} from the WebView. The report is
+   * configured for A4 landscape paper, color output, and no minimum
+   * margins.</p>
    *
-   * <p>If the system print service is unavailable, the method performs no
-   * action.</p>
+   * <p>The Android print dialog allows the user to send the report to
+   * an available printer or save it as a PDF document.</p>
    *
-   * @param webView the WebView containing the HTML content to print
-   * @param jobName the name displayed for the print job and generated document
+   * <p>If the system print service cannot be obtained, no print operation
+   * is performed.</p>
+   *
+   * @param webView WebView containing the generated report to print
+   * @param jobName name used for the print job and generated document
    */
   private void triggerWebViewPrint(WebView webView, String jobName) {
     PrintManager printManager = (PrintManager) getSystemService(Context.PRINT_SERVICE);
 
     if (printManager != null) {
       PrintDocumentAdapter printAdapter = webView.createPrintDocumentAdapter(jobName);
+
       PrintAttributes attributes = new PrintAttributes.Builder()
-              .setMediaSize(PrintAttributes.MediaSize.ISO_A4.asLandscape())
-              .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
-              .setColorMode(PrintAttributes.COLOR_MODE_COLOR)
-              .build();
+                      .setMediaSize(PrintAttributes.MediaSize.ISO_A4.asLandscape())
+                      .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
+                      .setColorMode(PrintAttributes.COLOR_MODE_COLOR)
+                      .build();
 
       printManager.print(jobName, printAdapter, attributes);
     }

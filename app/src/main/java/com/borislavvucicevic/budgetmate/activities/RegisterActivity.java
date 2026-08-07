@@ -27,30 +27,130 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 
+/**
+ * Activity responsible for registering new users in the BudgetMate application.
+ *
+ * <p>This activity provides the user interface and functionality required
+ * for creating a new BudgetMate account. The user must provide their full
+ * name, email address, password, password confirmation, and preferred home
+ * currency.</p>
+ *
+ * <p>Before an account is created, the supplied registration data is validated.
+ * If validation succeeds, the authentication service creates the user account
+ * and sends an email verification message. A corresponding
+ * {@link UserProfile} is then created and stored through the database
+ * service.</p>
+ *
+ * <p>Registration operations are executed on a background thread to prevent
+ * blocking the Android UI thread. Results and errors are subsequently handled
+ * on the main UI thread.</p>
+ *
+ * <p>The activity also supports changing the application language through
+ * the locale selector inherited from {@link TemplateActivity}.</p>
+ *
+ * @see TemplateActivity
+ * @see LoginActivity
+ * @see UserProfile
+ * @see CurrencyOption
+ */
 public class RegisterActivity extends TemplateActivity {
-  private EditText etFullName, etEmail, etPassword, etRepeatPassword;
+
+  /**
+   * Input field used to enter the user's full name.
+   */
+  private EditText etFullName;
+
+  /**
+   * Input field used to enter the user's email address.
+   */
+  private EditText etEmail;
+
+  /**
+   * Input field used to enter the user's password.
+   */
+  private EditText etPassword;
+
+  /**
+   * Input field used to confirm the user's password.
+   */
+  private EditText etRepeatPassword;
+
+  /**
+   * Link used to navigate from the registration screen to the login screen.
+   */
   private TextView tvLoginLink;
+
+  /**
+   * Spinner used to select the user's preferred home currency.
+   */
   private Spinner spHomeCurrency;
+
+  /**
+   * Button used to submit the registration form.
+   */
   private Button btnRegister;
 
+  /**
+   * Called when the registration activity is first created.
+   *
+   * <p>This method enables edge-to-edge rendering and configures the root
+   * view to account for the on-screen keyboard by applying the appropriate
+   * window insets.</p>
+   *
+   * <p>It also initializes the home-currency selection spinner by calling
+   * {@link #setupCurrencySpinner()}.</p>
+   *
+   * @param savedInstanceState previously saved activity state, or
+   *                           {@code null} if the activity is being
+   *                           created for the first time
+   */
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+
     EdgeToEdge.enable(this);
-    ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.activity_register), (v, insets) -> {
-      int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
-      v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), imeBottom);
-      return insets;
-    });
-    // Setting up the currency spinner
+
+    ViewCompat.setOnApplyWindowInsetsListener(
+            findViewById(R.id.activity_register),
+            (v, insets) -> {
+              int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
+
+              v.setPadding(
+                      v.getPaddingLeft(),
+                      v.getPaddingTop(),
+                      v.getPaddingRight(),
+                      imeBottom
+              );
+
+              return insets;
+            }
+    );
+
+    // Set up the currency selection spinner.
     this.setupCurrencySpinner();
   }
 
+  /**
+   * Returns the layout resource used by this activity.
+   *
+   * <p>The returned resource is used by {@link TemplateActivity} when
+   * initializing the activity interface.</p>
+   *
+   * @return resource identifier of the registration activity layout
+   */
   @Override
   protected int getLayoutID() {
     return R.layout.activity_register;
   }
 
+  /**
+   * Retrieves and stores references to the user-interface widgets
+   * contained in the registration activity layout.
+   *
+   * <p>This includes the registration input fields, home-currency spinner,
+   * error wrapper, progress indicator, registration button, login link,
+   * and locale selector.</p>
+   */
   @Override
   protected void grabWidgets() {
     etFullName = findViewById(R.id.etFullName);
@@ -65,6 +165,14 @@ public class RegisterActivity extends TemplateActivity {
     localeSwitch = findViewById(R.id.localeSwitch);
   }
 
+  /**
+   * Registers event listeners for the interactive widgets on the
+   * registration screen.
+   *
+   * <p>The registration button initiates account creation, the login link
+   * navigates to {@link LoginActivity}, and the locale selector handles
+   * application language changes through {@link LocalisationService}.</p>
+   */
   @Override
   protected void setListeners() {
     btnRegister.setOnClickListener(v -> this.handleRegistration());
@@ -73,142 +181,249 @@ public class RegisterActivity extends TemplateActivity {
   }
 
   /**
-   * Initializes and configures the currency selection spinner.
-   * This method creates a list of supported currency options, including a default
-   * home currency and specific international currencies (BAM, RSD, EUR, USD).
-   * It binds this data to an {@link android.widget.ArrayAdapter} using default
-   * Android spinner layouts and attaches the adapter to the {@code spHomeCurrency} view component.
-   * */
+   * Initializes and configures the home-currency selection spinner.
+   *
+   * <p>The method creates a collection of {@link CurrencyOption} objects
+   * representing the currencies supported by the application. The first
+   * entry acts as the default placeholder, followed by BAM, RSD, EUR,
+   * and USD currency options.</p>
+   *
+   * <p>The currency options are assigned to an {@link ArrayAdapter},
+   * which uses the application's custom spinner layout. The configured
+   * adapter is then attached to the home-currency spinner.</p>
+   *
+   * @see CurrencyOption
+   * @see CurrencyCode
+   */
   private void setupCurrencySpinner() {
     List<CurrencyOption> currencies = new ArrayList<>();
+
     currencies.add(new CurrencyOption(getString(R.string.home_currency), null));
     currencies.add(new CurrencyOption(getString(R.string.currency_bam), CurrencyCode.BAM));
     currencies.add(new CurrencyOption(getString(R.string.currency_rsd), CurrencyCode.RSD));
     currencies.add(new CurrencyOption(getString(R.string.currency_eur), CurrencyCode.EUR));
     currencies.add(new CurrencyOption(getString(R.string.currency_usd), CurrencyCode.USD));
+
     ArrayAdapter<CurrencyOption> adapter = new ArrayAdapter<>(
             this,
             R.layout.spinner_layout,
             currencies
     );
-    adapter.setDropDownViewResource(
-            R.layout.spinner_layout
-    );
 
+    adapter.setDropDownViewResource(R.layout.spinner_layout);
     Spinner spinner = findViewById(R.id.spReportType);
     spinner.setAdapter(adapter);
   }
 
   /**
    * Initiates the asynchronous user registration process.
-   * <p>
-   * This method extracts the user inputs from the form fields, activates the
-   * background progress bar indicator, and offloads processing to a single-thread background
-   * executor. On the background thread, it performs input validation and makes an
-   * authentication API call to create the account. Results and encountered exceptions
-   * are subsequently piped back to the main UI thread via dedicated handler methods.
-   * </p>
+   *
+   * <p>The method retrieves the user's full name, email address, password,
+   * and selected home currency from the registration form. The loading
+   * indicator is then displayed before registration processing is moved
+   * to a single-thread background executor.</p>
+   *
+   * <p>The registration form is first validated using
+   * {@link #validateForm()}. If validation succeeds, a new authentication
+   * account is created, a verification email is sent, and a corresponding
+   * {@link UserProfile} is stored in the database.</p>
+   *
+   * <p>If all operations complete successfully, {@link #handleSuccess()}
+   * is executed on the main UI thread. Validation, authentication, and
+   * unexpected exceptions are forwarded to their appropriate error
+   * handlers.</p>
    */
   private void handleRegistration() {
-    // getting form values
+    // Get registration form values.
     String fullName = etFullName.getText().toString().trim();
     String email = etEmail.getText().toString().trim();
     String password = etPassword.getText().toString().trim();
-    String homeCurrency = ((CurrencyOption) spHomeCurrency.getSelectedItem()).getCodeAsString();
+    String homeCurrency =((CurrencyOption) spHomeCurrency.getSelectedItem()).getCodeAsString();
 
     toggleProgressBarVisibility();
 
     Executors.newSingleThreadExecutor().execute(() -> {
       try {
-        // validating user inputs
+        // Validate user input.
         this.validateForm();
+
+        // Create authentication account.
         String uid = authService.createUserAccount(email, password);
+
+        // Send account verification email.
         authService.sendVerificationEmail();
-        databaseService.createUserProfile(uid, new UserProfile(fullName, email, CurrencyCode.valueOf(homeCurrency)));
-        // if everything went without throwing an exception and account has been created successfully
+
+        // Create and store the user's application profile.
+        databaseService.createUserProfile(
+                uid,
+                new UserProfile(
+                        fullName,
+                        email,
+                        CurrencyCode.valueOf(homeCurrency)
+                )
+        );
+
+        // Registration completed successfully.
         runOnUiThread(this::handleSuccess);
-      } catch(ValidationException exception) {
-        runOnUiThread(() -> this.handleException(exception, RegisterActivity.class));
+      } catch (ValidationException exception) {
+        runOnUiThread(() -> this.handleException(
+                        exception,
+                        RegisterActivity.class
+        ));
       } catch (AuthException exception) {
         runOnUiThread(() -> this.handleException(exception));
       } catch (Exception exception) {
-        runOnUiThread(() -> this.handleException(exception, getString(R.string.error_general), RegisterActivity.class));
+        runOnUiThread(() -> this.handleException(
+                        exception,
+                        getString(R.string.error_general),
+                        RegisterActivity.class
+        ));
       }
     });
   }
 
   /**
-   * Handles the successful completion of the registration process.
-   * <p>
-   * This method displays a brief success toast message to the user and
-   * navigates the application from the registration screen to login page.
-   * </p>
+   * Handles successful completion of the registration process.
+   *
+   * <p>A localized success message is displayed to inform the user that
+   * registration has completed successfully. The user is then redirected
+   * to the login screen through {@link #handleLoginLink()}.</p>
    */
   private void handleSuccess() {
-    showToast(getString(R.string.register_success));
+    this.showToast(getString(R.string.register_success));
     this.handleLoginLink();
   }
 
   /**
-   * Handles authentication errors returned by the Firebase backend during registration.
-   * <p>
-   * This method parses the specific Firebase error code to map it to a localized,
-   * user-friendly error message (such as invalid email or email already in use). It then
-   * displays this message in the error text wrapper and a toast notification, hides the
-   * progress bar, and logs the original stack trace.
-   * </p>
+   * Handles authentication-related errors that occur during registration.
    *
-   * @param exception The {@link AuthException} thrown by the authentication service
-   *                  containing the specific error code.
+   * <p>The Firebase authentication error code contained in the supplied
+   * {@link AuthException} is converted into a
+   * {@link FirebaseAuthErrorCodes} value. The value is then used to select
+   * an appropriate localized error message.</p>
+   *
+   * <p>Known errors include invalid email addresses and email addresses
+   * that are already associated with an existing account. Unrecognized
+   * authentication errors are represented using the application's general
+   * error message.</p>
+   *
+   * <p>The exception and corresponding message are finally passed to the
+   * generic exception handler inherited from {@link TemplateActivity}.</p>
+   *
+   * @param exception authentication exception containing the Firebase
+   *                  authentication error code
    */
   private void handleException(@NonNull AuthException exception) {
     String message;
     FirebaseAuthErrorCodes code = FirebaseAuthErrorCodes.parse(exception.getErrorCode());
-    // extracting localized message shown to user
+
+    // Extract localized message shown to the user.
     switch (code) {
-      case ERROR_INVALID_EMAIL: message = getString(R.string.error_invalid_email); break;
-      case ERROR_EMAIL_ALREADY_IN_USE: message = getString(R.string.error_email_already_in_use); break;
-      default: message = getString(R.string.error_general);
+      case ERROR_INVALID_EMAIL:
+        message = getString(R.string.error_invalid_email);
+        break;
+
+      case ERROR_EMAIL_ALREADY_IN_USE:
+        message = getString(R.string.error_email_already_in_use);
+        break;
+
+      default:
+        message = getString(R.string.error_general);
     }
-    // logging and displaying the message
-    this.handleException(exception, message, RegisterActivity.class);
+
+    // Log and display the error.
+    this.handleException(
+            exception,
+            message,
+            RegisterActivity.class
+    );
   }
 
   /**
-   * Navigates the user from the current registration screen to the login screen.
-   * <p>
-   * This method is triggered when the user clicks the login redirection link or button.
-   * It initializes and starts an intent to launch the {@link LoginActivity}.
-   * </p>
+   * Navigates the user from the registration screen to the login screen.
+   *
+   * <p>This method launches {@link LoginActivity} and finishes the current
+   * activity so that the registration screen is removed from the activity
+   * back stack.</p>
    */
   private void handleLoginLink() {
-    startActivity(new Intent(getApplicationContext(), LoginActivity.class));
+    startActivity(new Intent(getApplicationContext(),LoginActivity.class)    );
+
     finish();
   }
 
   /**
-   * Validates the user input fields within the registration form.
-   * This method extracts data from the full name, email, password, and repeat password
-   * input fields, as well as the home currency selection spinner. It performs presence
-   * and integrity constraints checking sequentially. If any field fails its validation rule,
-   * the method immediately stops execution and routes the error message and failing view ID
-   * via a custom exception.
+   * Validates the input fields contained within the registration form.
    *
-   * @throws ValidationException If any input field is empty, if the password is under 6 characters,
-   * or if the confirmation password does not match the chosen password.
-   * */
+   * <p>The method verifies that the user has supplied a full name, email
+   * address, home currency, password, and password confirmation. It also
+   * verifies that the password contains at least six characters and that
+   * the repeated password matches the original password.</p>
+   *
+   * <p>Validation is performed sequentially. As soon as an invalid value
+   * is detected, a {@link ValidationException} is thrown containing a
+   * localized error message and, where applicable, the ID of the
+   * user-interface component responsible for the validation failure.</p>
+   *
+   * @throws ValidationException if a required field is empty, the password
+   *                             contains fewer than six characters, or the
+   *                             repeated password does not match the
+   *                             original password
+   */
   private void validateForm() throws ValidationException {
     String fullName = etFullName.getText().toString().trim();
     String email = etEmail.getText().toString().trim();
     String password = etPassword.getText().toString();
     String repeatPassword = etRepeatPassword.getText().toString();
     String homeCurrency = ((CurrencyOption) spHomeCurrency.getSelectedItem()).getCodeAsString();
-    if(fullName.isEmpty()) throw new ValidationException(getString(R.string.full_name_required), R.id.etFullName);
-    if(email.isEmpty()) throw new ValidationException(getString(R.string.email_required), R.id.etEmail);
-    if(homeCurrency.isEmpty()) throw new ValidationException(getString(R.string.home_currency_required), null);
-    if(password.isEmpty()) throw new ValidationException(getString(R.string.password_required), R.id.etPassword);
-    if(password.length() < 6) throw new ValidationException(getString(R.string.password_too_short), R.id.etPassword);
-    if(repeatPassword.isEmpty()) throw new ValidationException(getString(R.string.repeat_password_required), R.id.etRepeatPassword);
-    if(!repeatPassword.equals(password)) throw new ValidationException(getString(R.string.password_mismatch), R.id.etRepeatPassword);
+
+    if (fullName.isEmpty()) {
+      throw new ValidationException(
+              getString(R.string.full_name_required),
+              R.id.etFullName
+      );
+    }
+
+    if (email.isEmpty()) {
+      throw new ValidationException(
+              getString(R.string.email_required),
+              R.id.etEmail
+      );
+    }
+
+    if (homeCurrency.isEmpty()) {
+      throw new ValidationException(
+              getString(R.string.home_currency_required),
+              null
+      );
+    }
+
+    if (password.isEmpty()) {
+      throw new ValidationException(
+              getString(R.string.password_required),
+              R.id.etPassword
+      );
+    }
+
+    if (password.length() < 6) {
+      throw new ValidationException(
+              getString(R.string.password_too_short),
+              R.id.etPassword
+      );
+    }
+
+    if (repeatPassword.isEmpty()) {
+      throw new ValidationException(
+              getString(R.string.repeat_password_required),
+              R.id.etRepeatPassword
+      );
+    }
+
+    if (!repeatPassword.equals(password)) {
+      throw new ValidationException(
+              getString(R.string.password_mismatch),
+              R.id.etRepeatPassword
+      );
+    }
   }
 }

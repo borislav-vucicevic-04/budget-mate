@@ -20,8 +20,20 @@ import com.borislavvucicevic.budgetmate.enums.Locale;
  * when comparing instances.
  */
 public class LocaleOption {
+
+  /**
+   * User-visible title of the language option.
+   */
   private final String title;
+
+  /**
+   * Locale value associated with this language option.
+   */
   private final Locale localeCode;
+
+  /**
+   * Drawable resource ID representing the language icon or flag.
+   */
   private final int iconResId;
 
   /**

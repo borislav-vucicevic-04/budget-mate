@@ -23,6 +23,7 @@ import com.borislavvucicevic.budgetmate.services.CacheService;
 import com.google.android.material.card.MaterialCardView;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A {@link RecyclerView.Adapter} responsible for displaying a list of
@@ -40,10 +41,35 @@ import java.util.ArrayList;
  * <p>The transaction amount is displayed in green for income transactions
  * and red for expense transactions. The user's home currency is obtained
  * from the cached {@link UserProfile}.</p>
+ *
+ * <p>The adapter also provides callback mechanisms for deleting and editing
+ * transactions. Delete operations are delegated through
+ * {@link DeleteTransactionHandler}, while edit operations store the selected
+ * transaction in {@link CacheService} before invoking the supplied activity
+ * navigation callback.</p>
+ *
+ * @see RecyclerView.Adapter
+ * @see Transaction
+ * @see UserProfile
+ * @see CacheService
  */
 public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCardAdapter.ViewHolder> {
+
+  /**
+   * Functional callback interface used to request deletion of a transaction.
+   *
+   * <p>The adapter itself does not perform the database deletion. Instead,
+   * it forwards the selected transaction identifier to the component that
+   * supplied the handler.</p>
+   */
   @FunctionalInterface
   public interface DeleteTransactionHandler {
+
+    /**
+     * Called when the user requests deletion of a transaction.
+     *
+     * @param id unique identifier of the transaction to delete
+     */
     void onDelete(@NonNull String id);
   }
 
@@ -53,30 +79,49 @@ public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCard
   /** Transactions displayed by this adapter. */
   private final ArrayList<Transaction> transactions;
 
+  /**
+   * Callback invoked when the user selects the delete action on a transaction
+   * card.
+   */
   private final DeleteTransactionHandler deleteTransactionHandler;
 
+  /**
+   * Callback used to open the transaction creation/update activity after the
+   * selected transaction has been stored in {@link CacheService}.
+   */
   private final Runnable openTransactionsUpsertActivity;
 
   /**
    * Creates a new transaction card adapter.
    *
+   * <p>The supplied transaction collection is copied into a new
+   * {@link ArrayList}, which becomes the internal data set used by this
+   * adapter.</p>
+   *
    * @param context the context used to inflate views and access resources
    * @param transactions the transactions to display in the RecyclerView
+   * @param deleteTransactionHandler callback invoked when a transaction
+   *                                 should be deleted
+   * @param openTransactionsUpsertActivity callback used to open the
+   *                                       transaction editing screen
    */
   public TransactionCardAdapter(
           Context context,
-          ArrayList<Transaction> transactions,
+          List<Transaction> transactions,
           DeleteTransactionHandler deleteTransactionHandler,
           Runnable openTransactionsUpsertActivity
   ) {
     this.context = context;
-    this.transactions = transactions;
+    this.transactions = new ArrayList<>(transactions);
     this.deleteTransactionHandler = deleteTransactionHandler;
     this.openTransactionsUpsertActivity = openTransactionsUpsertActivity;
   }
 
   /**
    * Creates a new {@link ViewHolder} by inflating the transaction card layout.
+   *
+   * <p>The {@code transaction_card} layout is inflated using the adapter's
+   * context and wrapped inside a new {@link ViewHolder} instance.</p>
    *
    * @param parent the parent view group into which the new view will be added
    * @param viewType the view type of the new view
@@ -97,6 +142,11 @@ public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCard
   /**
    * Binds the transaction at the specified position to the supplied
    * {@link ViewHolder}.
+   *
+   * <p>The transaction details are displayed through
+   * {@link ViewHolder#setDetails(Transaction, int)}. Delete and edit actions
+   * are also bound to the corresponding buttons for the selected
+   * transaction.</p>
    *
    * @param holder the ViewHolder that should display the transaction
    * @param position the position of the transaction in the adapter
@@ -128,8 +178,12 @@ public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCard
    * <p>The ViewHolder formats and displays transaction information and
    * conditionally shows the notes and modification-date sections when the
    * corresponding data is available.</p>
+   *
+   * <p>It also binds the delete and edit buttons to callbacks supplied by
+   * {@link TransactionCardAdapter}.</p>
    */
-  static class ViewHolder extends RecyclerView.ViewHolder {
+  public static class ViewHolder extends RecyclerView.ViewHolder {
+
     /** Context used to access strings, colours, and other resources. */
     private final Context context;
 
@@ -152,8 +206,15 @@ public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCard
     /** Displays the date on which the transaction was last modified. */
     private final TextView tvTransactionModifiedOn;
 
+    /**
+     * Button used to request deletion of the transaction represented by this
+     * card.
+     */
     private final Button btnDeleteTransaction;
 
+    /**
+     * Button used to open the selected transaction for editing.
+     */
     private final Button btnEditTransaction;
 
     /** Container used to display the transaction notes section. */
@@ -165,6 +226,10 @@ public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCard
     /**
      * Creates a ViewHolder and obtains references to the views in the
      * transaction card layout.
+     *
+     * <p>All UI components required to display transaction information and
+     * provide delete/edit actions are resolved from the supplied root
+     * {@code itemView}.</p>
      *
      * @param itemView the root view of the transaction card
      * @param context the context used to access resources
@@ -199,9 +264,19 @@ public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCard
     /**
      * Formats and displays the details of the supplied transaction.
      *
+     * <p>The current {@link UserProfile} is retrieved from
+     * {@link CacheService} so that the transaction amount can be displayed
+     * using the user's configured home currency. If the profile cannot be
+     * found, the method logs the condition and returns without updating the
+     * card.</p>
+     *
      * <p>The amount is prefixed with a plus sign for income or a minus sign
      * for expenses. Its text colour is also changed according to the
      * transaction type.</p>
+     *
+     * <p>Creation and modification timestamps are formatted using the
+     * {@code dd.MM.yyyy hh:mm:ss} pattern. The date and time are displayed on
+     * separate lines.</p>
      *
      * <p>The modification-date section is displayed only when the transaction
      * has been modified. The notes section is displayed only when notes are
@@ -277,9 +352,35 @@ public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCard
         cardTransactionNotes.setVisibility(View.GONE);
       }
     }
+
+    /**
+     * Binds the delete button to the supplied transaction deletion handler.
+     *
+     * <p>When the delete button is clicked, the transaction identifier is
+     * forwarded to {@link DeleteTransactionHandler#onDelete(String)}. The
+     * actual deletion operation is therefore handled outside the adapter.</p>
+     *
+     * @param deleteTransactionHandler callback responsible for handling the
+     *                                 transaction deletion request
+     * @param ID unique identifier of the transaction represented by this card
+     */
     private void bindDeleteTransactionMethod(DeleteTransactionHandler deleteTransactionHandler, String ID) {
       btnDeleteTransaction.setOnClickListener((v) -> deleteTransactionHandler.onDelete(ID));
     }
+
+    /**
+     * Binds the edit button to the supplied transaction editing action.
+     *
+     * <p>When the edit button is clicked, the selected transaction is first
+     * stored in {@link CacheService} under
+     * {@link CacheKey#TRANSACTION_UPSERT_OBJECT}. The supplied
+     * {@link Runnable} is then executed to open the activity responsible for
+     * editing the transaction.</p>
+     *
+     * @param openTransactionsUpsertActivity callback that opens the transaction
+     *                                       creation/update activity
+     * @param transaction transaction represented by this card
+     */
     private void bindOpenTransactionUpsertActivityMethod(Runnable openTransactionsUpsertActivity, Transaction transaction) {
       btnEditTransaction.setOnClickListener((v) -> {
         CacheService.store(CacheKey.TRANSACTION_UPSERT_OBJECT, transaction);

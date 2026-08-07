@@ -186,7 +186,22 @@ public final class LocalisationService {
     return new LocaleOption("", locale, R.drawable.uk);
   }
 
-  public static void setLocaleSwitch(Spinner localeSwitch, Context context) {
+  /**
+   * Configures the supplied locale-selection spinner and selects the
+   * application's currently active locale.
+   *
+   * <p>The method assigns the locale adapter provided by
+   * {@link LocalisationService#getLocaleAdapter(Context)} to the spinner.
+   * It then determines the position of the currently selected locale option
+   * and updates the spinner selection accordingly.</p>
+   *
+   * <p>If the current locale option cannot be found in the adapter, the
+   * spinner falls back to the first available item.</p>
+   *
+   * @param localeSwitch spinner used to display and select application locales
+   * @param context context used to create the locale adapter
+   */
+  public static void setLocaleSwitch(@NonNull Spinner localeSwitch, @NonNull Context context) {
     localeSwitch.setAdapter(LocalisationService.getLocaleAdapter(context));
     int position = ((LocaleAdapter) localeSwitch.getAdapter()).getPosition(LocalisationService.getCurrentLocaleOption());
     localeSwitch.setSelection(Math.max(position, 0));
