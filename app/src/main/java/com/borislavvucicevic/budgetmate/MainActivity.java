@@ -29,19 +29,16 @@ import com.borislavvucicevic.budgetmate.services.LocalisationService;
 import java.util.List;
 import java.util.concurrent.Executors;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends TemplateActivity {
   public static final String MAIN_ACTIVITY = "MAIN_ACTIVITY";
-  Button btnUserProfile;
-  Button btnGenerateReports;
-  Button btnViewTransactions;
-  Spinner localeSwitch;
-  private final AuthService authService = new AuthService();
-  private final DatabaseService databaseService = new DatabaseService();
+  private Button btnUserProfile;
+  private Button btnGenerateReports;
+  private Button btnViewTransactions;
+  private boolean isLoading = false;
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     EdgeToEdge.enable(this);
-    setContentView(R.layout.activity_main);
     ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.activityLogin), (v, insets) -> {
       Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
       v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -53,24 +50,25 @@ public class MainActivity extends AppCompatActivity {
       setIntent(new Intent(getApplicationContext(), LoginActivity.class));
       finish();
     }
-
-    // otherwise, continue execution
-
-    this.grabWidgets();
-    LocalisationService.setLocaleSwitch(localeSwitch, this);
-
     // Fetch categories and user  profile, and store them in cache
     this.loadCategoriesAndUserProfile();
   }
 
-  private void grabWidgets() {
+  @Override
+  protected int getLayoutID() {
+    return R.layout.activity_main;
+  }
+
+  @Override
+  protected void grabWidgets() {
     btnUserProfile = findViewById(R.id.btnUserProfile);
     btnGenerateReports = findViewById(R.id.btnGenerateReports);
     btnViewTransactions = findViewById(R.id.btnViewTransactions);
     localeSwitch = findViewById(R.id.localeSwitch);
   }
 
-  private void setListeners() {
+  @Override
+  protected void setListeners() {
     btnUserProfile.setOnClickListener(v -> this.openUserProfileActivity());
     btnViewTransactions.setOnClickListener(v -> this.openTransactionsActivity());
     btnGenerateReports.setOnClickListener(v -> this.openReportsActivity());
@@ -78,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
   }
 
   private void loadCategoriesAndUserProfile() {
+    isLoading = true;
     Toast.makeText(
             MainActivity.this,
             getString(R.string.loading_data),
@@ -94,13 +93,13 @@ public class MainActivity extends AppCompatActivity {
         CacheService.store(CacheKey.CATEGORIES, categories);
         CacheService.store(CacheKey.USER_PROFILE, userProfile);
         runOnUiThread(() -> {
+          isLoading = false;
           // displaying toast about the action succeeding
           Toast.makeText(
                   MainActivity.this,
                   getString(R.string.data_loaded),
                   Toast.LENGTH_SHORT
           ).show();
-          this.setListeners();
         });
       } catch (Exception exception) {
         runOnUiThread(() -> {
@@ -120,14 +119,17 @@ public class MainActivity extends AppCompatActivity {
   }
 
   private void openUserProfileActivity() {
+    if (isLoading) return;
     startActivity(new Intent(MainActivity.this, UserProfileActivity.class));
   }
 
   private void openTransactionsActivity() {
+    if (isLoading) return;
     startActivity(new Intent(MainActivity.this, TransactionsActivity.class));
   }
 
   private void openReportsActivity() {
+    if (isLoading) return;
     startActivity(new Intent(MainActivity.this, ReportsActivity.class));
   }
 }

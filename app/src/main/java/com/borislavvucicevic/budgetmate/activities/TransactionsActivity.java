@@ -3,19 +3,15 @@ package com.borislavvucicevic.budgetmate.activities;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
-import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -23,14 +19,13 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.borislavvucicevic.budgetmate.R;
+import com.borislavvucicevic.budgetmate.TemplateActivity;
 import com.borislavvucicevic.budgetmate.models.Category;
 import com.borislavvucicevic.budgetmate.models.Transaction;
 import com.borislavvucicevic.budgetmate.adapters.TransactionCardAdapter;
 import com.borislavvucicevic.budgetmate.models.TransactionPage;
 import com.borislavvucicevic.budgetmate.enums.CacheKey;
-import com.borislavvucicevic.budgetmate.services.AuthService;
 import com.borislavvucicevic.budgetmate.services.CacheService;
-import com.borislavvucicevic.budgetmate.services.DatabaseService;
 import com.borislavvucicevic.budgetmate.services.LocalisationService;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -41,16 +36,13 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Executors;
 
-public class TransactionsActivity extends AppCompatActivity {
-  private final String TRANSACTION_ACTIVITY = "TRANSACTION_ACTIVITY";
+public class TransactionsActivity extends TemplateActivity {
   private final ActivityResultLauncher<Intent> transactionUpsertLauncher = registerForActivityResult(
           new ActivityResultContracts.StartActivityForResult(),
           this::handleUpsertResult
   );
   private final int PAGE_SIZE = 20;
-  private final AuthService authService = new AuthService();
-  private final DatabaseService databaseService = new DatabaseService();
-  private final ArrayList<Transaction> transactionList = new ArrayList<Transaction>(CacheService.readList(CacheKey.TRANSACTIONS));
+  private final ArrayList<Transaction> transactionList = new ArrayList<>(CacheService.readList(CacheKey.TRANSACTIONS));
   private DocumentSnapshot lastVisibleDocument = CacheService.read(CacheKey.LAST_VISIBLE_DOCUMENT, DocumentSnapshot.class);
   private boolean hasNextPage = Boolean.TRUE.equals(CacheService.read(CacheKey.HAS_NEXT_PAGE, Boolean.class));
   private boolean isLoadingTransactions = false;
@@ -58,14 +50,12 @@ public class TransactionsActivity extends AppCompatActivity {
   private RecyclerView recyclerView;
   private LinearLayout processIndicator;
   private TextView tvProcessMessage;
-  private Spinner localeSwitch;
   FloatingActionButton floatingActionButton;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     EdgeToEdge.enable(this);
-    setContentView(R.layout.activity_transactions);
     ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
       Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
       v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
@@ -74,14 +64,6 @@ public class TransactionsActivity extends AppCompatActivity {
 
     // sorting list
     transactionList.sort(Comparator.comparing(Transaction::getCreatedOn).reversed());
-
-    // grabbing widgets
-    this.grabWidgets();
-    // setting listeners
-    this.setListeners();
-
-    // setting up the locale switch
-    LocalisationService.setLocaleSwitch(localeSwitch, this);
 
     // initializing adapter
     adapter = new TransactionCardAdapter(this, transactionList, this::showDeleteConfirmationDialog, this::openTransactionsUpsertActivity);
@@ -102,7 +84,13 @@ public class TransactionsActivity extends AppCompatActivity {
     CacheService.store(CacheKey.LAST_VISIBLE_DOCUMENT, this.lastVisibleDocument);
   }
 
-  private void grabWidgets() {
+  @Override
+  protected int getLayoutID() {
+    return R.layout.activity_transactions;
+  }
+
+  @Override
+  protected void grabWidgets() {
     recyclerView = findViewById(R.id.recyclerView);
     processIndicator = findViewById(R.id.processIndicator);
     tvProcessMessage = findViewById(R.id.tvProcessMessage);
@@ -110,7 +98,8 @@ public class TransactionsActivity extends AppCompatActivity {
     localeSwitch = findViewById(R.id.localeSwitch);
   }
 
-  private void setListeners() {
+  @Override
+  protected void setListeners() {
     floatingActionButton.setOnClickListener(v -> this.openTransactionsUpsertActivity());
     localeSwitch.setOnItemSelectedListener(LocalisationService.getLocaleChangeHandler());
   }
@@ -195,13 +184,10 @@ public class TransactionsActivity extends AppCompatActivity {
     if(this.isLoadingTransactions || !this.hasNextPage) {
       return;
     }
+
     this.isLoadingTransactions = true;
-    // show toast
-    Toast.makeText(
-            TransactionsActivity.this,
-            getString(R.string.transactions_loading),
-            Toast.LENGTH_SHORT
-    ).show();
+    showToast(getString(R.string.transactions_loading));
+
     // fetch transaction in background
     Executors.newSingleThreadExecutor().execute(() -> {
       try {
@@ -221,7 +207,7 @@ public class TransactionsActivity extends AppCompatActivity {
         CacheService.store(CacheKey.TRANSACTIONS, loadedTransactions);
         runOnUiThread(() -> this.loadSuccess(transactionList.size() - loadedTransactions.size(), loadedTransactions.size()));
       } catch (Exception exception) {
-        runOnUiThread(() -> this.handleException(exception));
+        runOnUiThread(() -> this.handleException(exception, getString(R.string.error_general), TransactionsActivity.class));
       } finally {
         // opening the loading gate
         this.isLoadingTransactions = false;
@@ -230,26 +216,9 @@ public class TransactionsActivity extends AppCompatActivity {
   }
 
   private void loadSuccess(int positionStart, int itemCount) {
-    Toast.makeText(
-            TransactionsActivity.this,
-            getString(R.string.transactions_loaded),
-            Toast.LENGTH_SHORT
-    ).show();
+    showToast(getString(R.string.transactions_loaded));
     // refreshing data
     adapter.notifyItemRangeInserted(positionStart, itemCount);
-  }
-
-  private void handleException(Exception exception) {
-    Toast.makeText(
-            TransactionsActivity.this,
-            getString(R.string.error_general),
-            Toast.LENGTH_SHORT
-    ).show();
-    Log.e(
-            TRANSACTION_ACTIVITY,
-            exception.getMessage(),
-            exception
-    );
   }
 
   private void showDeleteConfirmationDialog(@NonNull String ID) {
@@ -283,20 +252,15 @@ public class TransactionsActivity extends AppCompatActivity {
         Thread.sleep(2000);
         runOnUiThread(() -> {
           toggleProcessIndicator(null);
+          showToast(getString(R.string.transaction_deleted));
           adapter.notifyItemRemoved(finalPosition);
-          Toast.makeText(
-                  TransactionsActivity.this,
-                  getString(R.string.transaction_deleted),
-                  Toast.LENGTH_SHORT
-          ).show();
         });
       } catch(Exception exception) {
         runOnUiThread(() -> {
           toggleProcessIndicator(null);
-          handleException(exception);
+          handleException(exception, getString(R.string.error_general), TransactionsActivity.class);
         });
       }
-
     });
   }
 }

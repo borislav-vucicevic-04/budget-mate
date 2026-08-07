@@ -2,51 +2,41 @@ package com.borislavvucicevic.budgetmate.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.annotation.NonNull;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.borislavvucicevic.budgetmate.R;
+import com.borislavvucicevic.budgetmate.TemplateActivity;
 import com.borislavvucicevic.budgetmate.models.UserProfile;
 import com.borislavvucicevic.budgetmate.exceptions.AuthException;
 import com.borislavvucicevic.budgetmate.enums.CurrencyCode;
 import com.borislavvucicevic.budgetmate.options.CurrencyOption;
 import com.borislavvucicevic.budgetmate.enums.FirebaseAuthErrorCodes;
 import com.borislavvucicevic.budgetmate.exceptions.ValidationException;
-import com.borislavvucicevic.budgetmate.services.AuthService;
-import com.borislavvucicevic.budgetmate.services.DatabaseService;
 import com.borislavvucicevic.budgetmate.services.LocalisationService;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
 
-public class RegisterActivity extends AppCompatActivity {
-  public static final String REGISTER_ACTIVITY = "REGISTER_ACTIVITY";
+public class RegisterActivity extends TemplateActivity {
   private EditText etFullName, etEmail, etPassword, etRepeatPassword;
-  private TextView tvErrorWrapper, tvLoginLink;
-  private Spinner spHomeCurrency, localeSwitch;
+  private TextView tvLoginLink;
+  private Spinner spHomeCurrency;
   private Button btnRegister;
-  private ProgressBar progressBar;
-  private AuthService authService;
-  private DatabaseService databaseService;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     EdgeToEdge.enable(this);
-    setContentView(R.layout.activity_register);
     ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.activity_register), (v, insets) -> {
       int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
       v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), imeBottom);
@@ -54,18 +44,15 @@ public class RegisterActivity extends AppCompatActivity {
     });
     // Setting up the currency spinner
     this.setupCurrencySpinner();
-    // creating an instance of AuthService
-    authService = new AuthService();
-    databaseService = new DatabaseService();
-    // getting widgets
-    this.grabWidgets();
-    // setting event handlers
-    this.setListeners();
-    // setting locale switcher
-    LocalisationService.setLocaleSwitch(localeSwitch, this);
   }
 
-  private void grabWidgets() {
+  @Override
+  protected int getLayoutID() {
+    return R.layout.activity_register;
+  }
+
+  @Override
+  protected void grabWidgets() {
     etFullName = findViewById(R.id.etFullName);
     etEmail = findViewById(R.id.etEmail);
     etPassword = findViewById(R.id.etPassword);
@@ -78,7 +65,8 @@ public class RegisterActivity extends AppCompatActivity {
     localeSwitch = findViewById(R.id.localeSwitch);
   }
 
-  private void setListeners() {
+  @Override
+  protected void setListeners() {
     btnRegister.setOnClickListener(v -> this.handleRegistration());
     tvLoginLink.setOnClickListener(v -> this.handleLoginLink());
     localeSwitch.setOnItemSelectedListener(LocalisationService.getLocaleChangeHandler());
@@ -127,7 +115,8 @@ public class RegisterActivity extends AppCompatActivity {
     String email = etEmail.getText().toString().trim();
     String password = etPassword.getText().toString().trim();
     String homeCurrency = ((CurrencyOption) spHomeCurrency.getSelectedItem()).getCodeAsString();
-    progressBar.setVisibility(View.VISIBLE);
+
+    toggleProgressBarVisibility();
 
     Executors.newSingleThreadExecutor().execute(() -> {
       try {
@@ -139,11 +128,11 @@ public class RegisterActivity extends AppCompatActivity {
         // if everything went without throwing an exception and account has been created successfully
         runOnUiThread(this::handleSuccess);
       } catch(ValidationException exception) {
-        runOnUiThread(() -> this.handleException(exception));
+        runOnUiThread(() -> this.handleException(exception, RegisterActivity.class));
       } catch (AuthException exception) {
         runOnUiThread(() -> this.handleException(exception));
       } catch (Exception exception) {
-        runOnUiThread(() -> this.handleException(exception));
+        runOnUiThread(() -> this.handleException(exception, getString(R.string.error_general), RegisterActivity.class));
       }
     });
   }
@@ -156,39 +145,8 @@ public class RegisterActivity extends AppCompatActivity {
    * </p>
    */
   private void handleSuccess() {
-    Toast.makeText(
-            RegisterActivity.this,
-            getString(R.string.register_success),
-            Toast.LENGTH_SHORT
-    ).show();
+    showToast(getString(R.string.register_success));
     this.handleLoginLink();
-  }
-
-  /**
-   * Handles validation failures triggered during the registration input check.
-   * <p>
-   * This method updates the UI by attaching an error message directly to the invalid
-   * input field (if a view ID is provided), displaying a general error text wrapper,
-   * showing a toast notification, and hiding the active progress bar. It also logs
-   * the exception details for debugging.
-   * </p>
-   *
-   * @param exception The {@link ValidationException} containing the validation failure
-   *                  details, the error message, and the target view ID.
-   */
-  private void handleException(ValidationException exception) {
-    if(exception.getViewID() != null) {
-      ((EditText) findViewById(exception.getViewID())).setError(exception.getMessage());
-    }
-    Log.e(REGISTER_ACTIVITY, exception.getMessage(), exception);
-    tvErrorWrapper.setVisibility(TextView.VISIBLE);
-    tvErrorWrapper.setText(exception.getMessage());
-    Toast.makeText(
-            RegisterActivity.this,
-            exception.getMessage(),
-            Toast.LENGTH_SHORT
-    ).show();
-    progressBar.setVisibility(View.INVISIBLE);
   }
 
   /**
@@ -203,48 +161,17 @@ public class RegisterActivity extends AppCompatActivity {
    * @param exception The {@link AuthException} thrown by the authentication service
    *                  containing the specific error code.
    */
-  private void handleException(AuthException exception) {
-    String message = "";
+  private void handleException(@NonNull AuthException exception) {
+    String message;
     FirebaseAuthErrorCodes code = FirebaseAuthErrorCodes.parse(exception.getErrorCode());
     // extracting localized message shown to user
     switch (code) {
       case ERROR_INVALID_EMAIL: message = getString(R.string.error_invalid_email); break;
       case ERROR_EMAIL_ALREADY_IN_USE: message = getString(R.string.error_email_already_in_use); break;
-      default: message = exception.getMessage();
+      default: message = getString(R.string.error_general);
     }
     // logging and displaying the message
-    Log.e(REGISTER_ACTIVITY, exception.getMessage(), exception);
-    tvErrorWrapper.setVisibility(TextView.VISIBLE);
-    tvErrorWrapper.setText(message);
-    Toast.makeText(
-            RegisterActivity.this,
-            message,
-            Toast.LENGTH_SHORT
-    ).show();
-    progressBar.setVisibility(View.INVISIBLE);
-  }
-
-  /**
-   * Serves as a fallback handler for any generic or unhandled exceptions during registration.
-   * <p>
-   * This method catches any standard exceptions and logs the specific error details.
-   * It surfaces the explicit exception message via the error text wrapper, but displays
-   * a generic, localized error message to the user via a toast notification. It also
-   * ensures the loading progress bar is hidden.
-   * </p>
-   *
-   * @param exception The generic {@link Exception} encountered during execution.
-   */
-  private void handleException(Exception exception) {
-    Log.e(REGISTER_ACTIVITY, exception.getMessage(), exception);
-    tvErrorWrapper.setVisibility(TextView.VISIBLE);
-    tvErrorWrapper.setText(exception.getMessage());
-    Toast.makeText(
-            RegisterActivity.this,
-            getString(R.string.error_general),
-            Toast.LENGTH_SHORT
-    ).show();
-    progressBar.setVisibility(View.INVISIBLE);
+    this.handleException(exception, message, RegisterActivity.class);
   }
 
   /**

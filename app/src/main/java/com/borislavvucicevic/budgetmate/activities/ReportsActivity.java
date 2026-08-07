@@ -13,18 +13,15 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ProgressBar;
 import android.widget.Spinner;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatTextView;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.borislavvucicevic.budgetmate.R;
+import com.borislavvucicevic.budgetmate.TemplateActivity;
 import com.borislavvucicevic.budgetmate.enums.CacheKey;
 import com.borislavvucicevic.budgetmate.enums.CurrencyCode;
 import com.borislavvucicevic.budgetmate.exceptions.ValidationException;
@@ -42,9 +39,7 @@ import com.borislavvucicevic.budgetmate.options.ReportTypeOption;
 import com.borislavvucicevic.budgetmate.enums.Month;
 import com.borislavvucicevic.budgetmate.enums.Quarter;
 import com.borislavvucicevic.budgetmate.enums.ReportType;
-import com.borislavvucicevic.budgetmate.services.AuthService;
 import com.borislavvucicevic.budgetmate.services.CacheService;
-import com.borislavvucicevic.budgetmate.services.DatabaseService;
 import com.borislavvucicevic.budgetmate.services.LocalisationService;
 import com.borislavvucicevic.budgetmate.services.ReportHtmlService;
 import com.google.android.material.datepicker.MaterialDatePicker;
@@ -60,15 +55,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Executors;
-import java.util.function.Consumer;
 
-public class ReportsActivity extends AppCompatActivity {
+public class ReportsActivity extends TemplateActivity {
   public static final String REPORTS_ACTIVITY = "REPORTS_ACTIVITY";
-  private Spinner spReportType, spMonth, spQuarter, localeSwitch;
+  private Spinner spReportType, spMonth, spQuarter;
   private EditText etYear;
   private AppCompatTextView dpDate, dpCustomRangeFrom, dpCustomRangeTo;
-  private TextView tvErrorWrapper;
-  private ProgressBar progressBar;
   private Button btnGenerate;
   private WebView webView;
   private LocalDate dpDateValue, dpCustomRangeFromValue, dpCustomRangeToValue;
@@ -78,38 +70,30 @@ public class ReportsActivity extends AppCompatActivity {
   private Quarter spQuarterValue = Quarter.I;
   private Timestamp from, to;
   private String reportHtml;
-  private final AuthService authService = new AuthService();
-  private final DatabaseService databaseService = new DatabaseService();
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     EdgeToEdge.enable(this);
-    setContentView(R.layout.activity_reports);
     ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.reportsMain), (v, insets) -> {
       int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
       v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), imeBottom);
       return insets;
     });
 
-    // grabbing widgets
-    this.grabWidgets();
     // setting up spinners
     this.setSpReportType();
     this.setSpQuarter();
     this.setSpMonth();
-    LocalisationService.setLocaleSwitch(localeSwitch, this);
-    // setting event listeners
-    this.setListeners();
   }
 
-  /**
-   * Retrieves and stores references to the report-related UI components.
-   *
-   * <p>Each view is located in the current activity layout using
-   * {@link #findViewById(int)} and assigned to its corresponding instance
-   * variable for later use.</p>
-   */
-  private void grabWidgets() {
+  @Override
+  protected int getLayoutID() {
+    return R.layout.activity_reports;
+  }
+
+
+  @Override
+  protected void grabWidgets() {
     spReportType = findViewById(R.id.spReportType);
     spMonth = findViewById(R.id.spMonth);
     spQuarter = findViewById(R.id.spQuarter);
@@ -124,18 +108,7 @@ public class ReportsActivity extends AppCompatActivity {
     webView = findViewById(R.id.webView);
   }
 
-  /**
-   * Configures the event listeners for the activity's user-interface components.
-   *
-   * <p>This method serves as the central location for registering all listeners
-   * required by the activity. Currently, it configures the report-type spinner
-   * to display the appropriate input fields whenever the selected report type
-   * changes.</p>
-   *
-   * <p>Additional listeners should be registered here as the activity's
-   * functionality is expanded.</p>
-   */
-  private void setListeners() {
+  protected void setListeners() {
     spReportType.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
       @Override
       public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
@@ -175,9 +148,9 @@ public class ReportsActivity extends AppCompatActivity {
       }
     });
     localeSwitch.setOnItemSelectedListener(LocalisationService.getLocaleChangeHandler());
-    dpDate.setOnClickListener(v -> showDatePicker(dpDateValue, this::handleDpDateChange));
-    dpCustomRangeFrom.setOnClickListener(v -> showDatePicker(dpCustomRangeFromValue, this::handleDpCustomRangeFromChange));
-    dpCustomRangeTo.setOnClickListener(v -> showDatePicker(dpCustomRangeToValue, this::handleDpCustomRangeToChange));
+    dpDate.setOnClickListener(v -> showDatePicker(dpDateValue, v.getId()));
+    dpCustomRangeFrom.setOnClickListener(v -> showDatePicker(dpCustomRangeFromValue, v.getId()));
+    dpCustomRangeTo.setOnClickListener(v -> showDatePicker(dpCustomRangeToValue, v.getId()));
     btnGenerate.setOnClickListener(v -> handleGenerateReport());
     webView.setWebViewClient(new WebViewClient() {
       @Override
@@ -306,8 +279,6 @@ public class ReportsActivity extends AppCompatActivity {
    */
   private void displayFields() {
     this.hideFields();
-    Log.d(REPORTS_ACTIVITY, "Displaying fields for report type: " + reportType);
-
     switch (reportType) {
       case DAILY:
         dpDate.setVisibility(View.VISIBLE);
@@ -339,7 +310,6 @@ public class ReportsActivity extends AppCompatActivity {
    * and both custom date-range fields.</p>
    */
   private void hideFields() {
-    Log.d(REPORTS_ACTIVITY, "Fields are now hidden.");
     spMonth.setVisibility(View.GONE);
     spQuarter.setVisibility(View.GONE);
     dpDate.setVisibility(View.GONE);
@@ -364,8 +334,6 @@ public class ReportsActivity extends AppCompatActivity {
     etYear.setEnabled(true);
     dpCustomRangeFrom.setEnabled(true);
     dpCustomRangeTo.setEnabled(true);
-    tvErrorWrapper.setEnabled(true);
-    progressBar.setEnabled(true);
     btnGenerate.setEnabled(true);
   }
 
@@ -388,8 +356,6 @@ public class ReportsActivity extends AppCompatActivity {
     etYear.setEnabled(false);
     dpCustomRangeFrom.setEnabled(false);
     dpCustomRangeTo.setEnabled(false);
-    tvErrorWrapper.setEnabled(false);
-    progressBar.setEnabled(false);
     btnGenerate.setEnabled(false);
   }
 
@@ -404,9 +370,9 @@ public class ReportsActivity extends AppCompatActivity {
    *
    * @param date         the currently selected date to display initially,
    *                          or {@code null} when no date has been selected
-   * @param dateChangeHandler callback invoked with the newly selected date
+   * @param spinnerID id of the spinner calling the method
    */
-  private void showDatePicker(LocalDate date, Consumer<LocalDate> dateChangeHandler) {
+  private void showDatePicker(LocalDate date, int spinnerID) {
     MaterialDatePicker.Builder<Long> builder =
             MaterialDatePicker.Builder
                     .datePicker()
@@ -434,61 +400,30 @@ public class ReportsActivity extends AppCompatActivity {
         return;
       }
 
-      dateChangeHandler.accept(
-              Instant.ofEpochMilli(selection)
-                      .atZone(ZoneOffset.UTC)
-                      .toLocalDate()
-      );
+
+      DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+      LocalDate selected = Instant.ofEpochMilli(selection)
+              .atZone(ZoneOffset.UTC)
+              .toLocalDate();
+
+      if(spinnerID == R.id.dpDate) {
+        dpDate.setText(formatter.format(selected));
+        dpDateValue = selected;
+      }
+      else if (spinnerID == R.id.dpCustomRangeFrom) {
+        dpCustomRangeFrom.setText(formatter.format(selected));
+        dpCustomRangeFromValue = selected;
+      }
+      else if (spinnerID == R.id.dpCustomRangeTo) {
+        dpCustomRangeTo.setText(formatter.format(selected));
+        dpCustomRangeToValue = selected;
+      }
     });
 
     datePicker.show(
             getSupportFragmentManager(),
             "reports_activity_date_picker"
     );
-  }
-
-  /**
-   * Handles a change to the daily report date.
-   *
-   * <p>The selected date is formatted as {@code dd.MM.yyyy}, displayed
-   * in the main date picker view, and stored in {@code dpDateValue}.</p>
-   *
-   * @param selection the newly selected date
-   */
-  private void handleDpDateChange(LocalDate selection) {
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
-    dpDate.setText(formatter.format(selection));
-    dpDateValue = selection;
-  }
-
-  /**
-   * Handles a change to the starting date of the custom report range.
-   *
-   * <p>The selected date is formatted as {@code dd.MM.yyyy}, displayed
-   * in the custom-range start-date view, and stored in
-   * {@code dpCustomRangeFromValue}.</p>
-   *
-   * @param selection the newly selected starting date
-   */
-  private void handleDpCustomRangeFromChange(LocalDate selection) {
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
-    dpCustomRangeFrom.setText(formatter.format(selection));
-    dpCustomRangeFromValue = selection;
-  }
-
-  /**
-   * Handles a change to the ending date of the custom report range.
-   *
-   * <p>The selected date is formatted as {@code dd.MM.yyyy}, displayed
-   * in the custom-range end-date view, and stored in
-   * {@code dpCustomRangeToValue}.</p>
-   *
-   * @param selection the newly selected ending date
-   */
-  private void handleDpCustomRangeToChange(LocalDate selection) {
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
-    dpCustomRangeTo.setText(formatter.format(selection));
-    dpCustomRangeToValue = selection;
   }
 
   /**
@@ -520,21 +455,16 @@ public class ReportsActivity extends AppCompatActivity {
    */
   private void handleGenerateReport() {
     etYearValue = etYear.getText().toString().trim();
-    progressBar.setVisibility(View.VISIBLE);
 
-    Toast.makeText(
-            ReportsActivity.this,
-            getString(R.string.report_generating_message),
-            Toast.LENGTH_SHORT
-    ).show();
-    this.disableFields();
+    toggleProgressBarVisibility();
+    showToast(getString(R.string.report_generating_message));
+    disableFields();
 
     Executors.newSingleThreadExecutor().execute(() -> {
       try {
         handleValidation();
         handleReportTimeRange();
         String uid = authService.getUserID();
-        Log.d(REPORTS_ACTIVITY, "Retrieving transactions...");
         List<Transaction> transactionList = databaseService.getTransactions(uid, from, to);
 
         Report report;
@@ -565,7 +495,7 @@ public class ReportsActivity extends AppCompatActivity {
         reportHtml = reportHtmlService.generateHtml();
         runOnUiThread(() -> {
           enableFields();
-          progressBar.setVisibility(View.GONE);
+          toggleProgressBarVisibility();
           webView.loadDataWithBaseURL(
                   null,
                   reportHtml,       // Your HTML string variable
@@ -575,9 +505,12 @@ public class ReportsActivity extends AppCompatActivity {
           );
         });
       } catch(ValidationException exception) {
-        runOnUiThread(() -> handleException(exception));
+        runOnUiThread(() -> {
+          enableFields();
+          handleException(exception, ReportsActivity.class);
+        });
       } catch(Exception exception) {
-        runOnUiThread(() -> handleException(exception));
+        runOnUiThread(() -> handleException(exception, getString(R.string.error_general), ReportsActivity.class));
       }
     });
   }
@@ -674,56 +607,6 @@ public class ReportsActivity extends AppCompatActivity {
 
     from = new Timestamp(Date.from(fromInstant));
     to = new Timestamp(Date.from(toInstant));
-  }
-
-  /**
-   * Handles validation failures triggered during the registration input check.
-   * <p>
-   * This method updates the UI by attaching an error message directly to the invalid
-   * input field (if a view ID is provided), displaying a general error text wrapper,
-   * showing a toast notification, and hiding the active progress bar. It also logs
-   * the exception details for debugging.
-   * </p>
-   *
-   * @param exception The {@link ValidationException} containing the validation failure
-   *                  details, the error message, and the target view ID.
-   */
-  private void handleException(ValidationException exception) {
-    if(exception.getViewID() != null) {
-      ((EditText) findViewById(exception.getViewID())).setError(exception.getMessage());
-    }
-    Log.e(REPORTS_ACTIVITY, exception.getMessage(), exception);
-    tvErrorWrapper.setVisibility(TextView.VISIBLE);
-    tvErrorWrapper.setText(exception.getMessage());
-    Toast.makeText(
-            ReportsActivity.this,
-            exception.getMessage(),
-            Toast.LENGTH_SHORT
-    ).show();
-    progressBar.setVisibility(View.INVISIBLE);
-  }
-
-  /**
-   * Serves as a fallback handler for any generic or unhandled exceptions during registration.
-   * <p>
-   * This method catches any standard exceptions and logs the specific error details.
-   * It surfaces the explicit exception message via the error text wrapper, but displays
-   * a generic, localized error message to the user via a toast notification. It also
-   * ensures the loading progress bar is hidden.
-   * </p>
-   *
-   * @param exception The generic {@link Exception} encountered during execution.
-   */
-  private void handleException(Exception exception) {
-    Log.e(REPORTS_ACTIVITY, exception.getMessage(), exception);
-    tvErrorWrapper.setVisibility(TextView.VISIBLE);
-    tvErrorWrapper.setText(exception.getMessage());
-    Toast.makeText(
-            ReportsActivity.this,
-            getString(R.string.error_general),
-            Toast.LENGTH_SHORT
-    ).show();
-    progressBar.setVisibility(View.INVISIBLE);
   }
 
   /**

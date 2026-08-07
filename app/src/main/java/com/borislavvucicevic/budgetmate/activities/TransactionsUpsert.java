@@ -2,15 +2,11 @@ package com.borislavvucicevic.budgetmate.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ProgressBar;
 import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -20,13 +16,13 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.borislavvucicevic.budgetmate.R;
+import com.borislavvucicevic.budgetmate.TemplateActivity;
 import com.borislavvucicevic.budgetmate.models.Category;
 import com.borislavvucicevic.budgetmate.models.Transaction;
 import com.borislavvucicevic.budgetmate.options.TransactionTypeOption;
 import com.borislavvucicevic.budgetmate.enums.CacheKey;
 import com.borislavvucicevic.budgetmate.enums.TransactionType;
 import com.borislavvucicevic.budgetmate.exceptions.ValidationException;
-import com.borislavvucicevic.budgetmate.services.AuthService;
 import com.borislavvucicevic.budgetmate.services.CacheService;
 import com.borislavvucicevic.budgetmate.services.DatabaseService;
 import com.borislavvucicevic.budgetmate.services.LocalisationService;
@@ -38,40 +34,22 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
-public class TransactionsUpsert extends AppCompatActivity {
-  public static final String TRANSACTION_ADD_NEW_ACTIVITY = "TRANSACTION_ADD_NEW_ACTIVITY";
-  private AuthService authService;
-  private DatabaseService databaseService;
+public class TransactionsUpsert extends TemplateActivity {
   private AutoCompleteTextView etCategory;
-  private TextView tvErrorWrapper;
   private EditText etAmount;
   private EditText etNotes;
   private Spinner spTransactionType;
-  private ProgressBar progressBar;
   private Button btnUpsertTransaction;
-  private Spinner localeSwitch;
   private Transaction transactionUpsertObject = CacheService.read(CacheKey.TRANSACTION_UPSERT_OBJECT, Transaction.class);
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     EdgeToEdge.enable(this);
-    setContentView(R.layout.activity_transactions_upsert);
     ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
       int imeBottom = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom;
       v.setPadding(v.getPaddingLeft(), v.getPaddingTop(), v.getPaddingRight(), imeBottom);
       return insets;
     });
-
-    // setting up services
-    authService = new AuthService();
-    databaseService = new DatabaseService();
-
-    // grabbing widgets
-    this.grabWidgets();
-    // setting listeners
-    this.setListeners();
-    // setting locale switch
-    LocalisationService.setLocaleSwitch(localeSwitch, this);
 
     // setting the autocomplete textview
     this.setEtCategory();
@@ -94,7 +72,13 @@ public class TransactionsUpsert extends AppCompatActivity {
     });
   }
 
-  private void grabWidgets() {
+  @Override
+  protected int getLayoutID() {
+    return R.layout.activity_transactions_upsert;
+  }
+
+  @Override
+  protected void grabWidgets() {
     btnUpsertTransaction = findViewById(R.id.btnUpsertTransaction);
     etCategory = findViewById(R.id.etCategory);
     tvErrorWrapper = findViewById(R.id.tvErrorWrapper);
@@ -105,7 +89,8 @@ public class TransactionsUpsert extends AppCompatActivity {
     localeSwitch = findViewById(R.id.localeSwitch);
   }
 
-  private void setListeners() {
+  @Override
+  protected void setListeners() {
     btnUpsertTransaction.setOnClickListener(v -> this.handleUpsertTransaction());
     etCategory.setOnFocusChangeListener((v, hasFocus) -> {
       if (hasFocus) {
@@ -127,7 +112,7 @@ public class TransactionsUpsert extends AppCompatActivity {
    * </p>
    * <p>
    * Any exceptions caught during the background execution or UI update are routed
-   * back to the main thread via {@link #handleException(Exception)}.
+   * back to the main thread via handleException(Exception).
    * </p>
    */
   private void setEtCategory() {
@@ -143,14 +128,10 @@ public class TransactionsUpsert extends AppCompatActivity {
                   categoryNames
           );
           etCategory.setAdapter(adapter);
-          Toast.makeText(
-                  TransactionsUpsert.this,
-                  getString(R.string.transactions_categories_loaded),
-                  Toast.LENGTH_SHORT
-          ).show();
+          this.showToast(getString(R.string.transactions_categories_loaded));
         });
       } catch (Exception exception) {
-        runOnUiThread(() -> this.handleException(exception));
+        runOnUiThread(() -> this.handleException(exception, getString(R.string.error_general), TransactionsUpsert.class));
       }
     });
   }
@@ -180,7 +161,7 @@ public class TransactionsUpsert extends AppCompatActivity {
     String categoryName = category != null ? category.getName() : "";
     int selected = transactionUpsertObject.getType() == TransactionType.INCOME ? 1 : 2;
 
-    etAmount.setText(transactionUpsertObject.getAmount().toString());
+    etAmount.setText(String.format("%.2f", transactionUpsertObject.getAmount()));
     spTransactionType.setSelection(selected);
     etCategory.setText(categoryName);
     etNotes.setText(transactionUpsertObject.getNotes());
@@ -210,7 +191,9 @@ public class TransactionsUpsert extends AppCompatActivity {
     String notes = etNotes.getText().toString().trim();
     String categoryName = etCategory.getText().toString().trim();
     TransactionType transactionType = ((TransactionTypeOption) spTransactionType.getSelectedItem()).getType();
-    progressBar.setVisibility(View.VISIBLE);
+
+    toggleProgressBarVisibility();
+
     Executors.newSingleThreadExecutor().execute(() -> {
       try {
         this.handleValidation();
@@ -234,9 +217,9 @@ public class TransactionsUpsert extends AppCompatActivity {
         transactionUpsertObject =  databaseService.insertTransaction(transaction);
         runOnUiThread(() -> this.handleSuccess(getString(R.string.transaction_insert_success)));
       } catch (ValidationException exception) {
-        runOnUiThread(() -> this.handleException(exception));
+        runOnUiThread(() -> this.handleException(exception, TransactionsActivity.class));
       } catch (Exception exception) {
-        runOnUiThread(() -> this.handleException(exception));
+        runOnUiThread(() -> this.handleException(exception, getString(R.string.error_general), TransactionsUpsert.class));
       }
     });
   }
@@ -246,7 +229,9 @@ public class TransactionsUpsert extends AppCompatActivity {
     String notes = etNotes.getText().toString().trim();
     String categoryName = etCategory.getText().toString().trim();
     TransactionType transactionType = ((TransactionTypeOption) spTransactionType.getSelectedItem()).getType();
-    progressBar.setVisibility(View.VISIBLE);
+
+    toggleProgressBarVisibility();
+
     Executors.newSingleThreadExecutor().execute(() -> {
       try {
         this.handleValidation();
@@ -268,9 +253,9 @@ public class TransactionsUpsert extends AppCompatActivity {
         transactionUpsertObject =  databaseService.updateTransaction(transactionUpsertObject);
         runOnUiThread(() -> this.handleSuccess(getString(R.string.transaction_update_success)));
       } catch (ValidationException exception) {
-        runOnUiThread(() -> this.handleException(exception));
+        runOnUiThread(() -> this.handleException(exception, TransactionsUpsert.class));
       } catch (Exception exception) {
-        runOnUiThread(() -> this.handleException(exception));
+        runOnUiThread(() -> this.handleException(exception, getString(R.string.error_general), TransactionsUpsert.class));
       }
     });
   }
@@ -294,12 +279,8 @@ public class TransactionsUpsert extends AppCompatActivity {
    * @see #finish()
    */
   private void handleSuccess(String toastMessage) {
-    Toast.makeText(
-            TransactionsUpsert.this,
-            toastMessage,
-            Toast.LENGTH_SHORT
-    ).show();
-    progressBar.setVisibility(View.GONE);
+    this.showToast(toastMessage);
+    this.toggleProgressBarVisibility();
     this.destroyActivity(AppCompatActivity.RESULT_OK);
   }
 
@@ -343,59 +324,6 @@ public class TransactionsUpsert extends AppCompatActivity {
     if(transactionType.isEmpty()) throw new ValidationException(getString(R.string.transaction_type_required), null);
     if(category.isEmpty()) throw new ValidationException(getString(R.string.category_required), R.id.etCategory);
     if(notes.length() > 256) throw new ValidationException(getString(R.string.notes_too_long), R.id.etNotes);
-  }
-
-  /**
-   * Processes targeted business logic validation errors to update the user interface and provide feedback.
-   * <p>
-   * This handler maps the details inside a {@link ValidationException} back to the specific input field
-   * that failed validation. It highlights the target component, logs the error stack trace, reveals
-   * a localized error label, pops up a short Toast notification, and hides the loading spinner.
-   * </p>
-   *
-   * @param exception the structural data payload tracking the invalid field ID and localized error text.
-   *
-   * @see ValidationException
-   */
-  private void handleException(ValidationException exception) {
-    if(exception.getViewID() != null) {
-      ((EditText) findViewById(exception.getViewID())).setError(exception.getMessage());
-    }
-    Log.e(TRANSACTION_ADD_NEW_ACTIVITY, exception.getMessage(), exception);
-    tvErrorWrapper.setVisibility(TextView.VISIBLE);
-    tvErrorWrapper.setText(exception.getMessage());
-    Toast.makeText(
-            TransactionsUpsert.this,
-            exception.getMessage(),
-            Toast.LENGTH_SHORT
-    ).show();
-    progressBar.setVisibility(View.GONE);
-  }
-
-  /**
-   * Handles exceptions by logging the error stack trace and displaying a generic
-   * error message to the user via both a Toast notification and a UI text wrapper.
-   * <p>
-   * This method ensures that failures (such as database or network errors during
-   * asynchronous operations) are gracefully reported visually to the user while
-   * capturing full diagnostic details in the system logs.
-   * </p>
-   * <p>
-   * <strong>Note:</strong> This method must be called on the UI thread because it
-   * directly modifies the visibility/text of {@code tvErrorWrapper} and displays a Toast.
-   * </p>
-   *
-   * @param exception The {@link Exception} caught during the operation, used to log
-   *                  the error message and stack trace.
-   */
-  private void handleException(Exception exception) {
-    Toast.makeText(
-            TransactionsUpsert.this,
-            getString(R.string.error_general),
-            Toast.LENGTH_SHORT
-    ).show();
-    tvErrorWrapper.setText(getString(R.string.error_general));
-    Log.e(TRANSACTION_ADD_NEW_ACTIVITY, exception.getMessage(), exception);
   }
 
   private void showDiscardChangesDialog() {
