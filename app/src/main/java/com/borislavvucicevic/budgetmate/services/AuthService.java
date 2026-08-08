@@ -2,9 +2,13 @@ package com.borislavvucicevic.budgetmate.services;
 
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import com.borislavvucicevic.budgetmate.exceptions.AuthException;
 import com.google.android.gms.tasks.Tasks;
+import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseUser;
@@ -97,6 +101,117 @@ public class AuthService {
       Log.e(AUTH_SERVICE, e.getMessage(), e);
       Thread.currentThread().interrupt(); // Restore interrupted status
       throw new AuthException("INTERRUPTED_ERROR", "Authentication process was interrupted.", e);
+    }
+  }
+
+  /**
+   * Deletes the currently authenticated Firebase user account.
+   *
+   * <p>The user is first reauthenticated using the supplied email address and
+   * password because deleting a Firebase Authentication account is a
+   * security-sensitive operation that requires recent authentication.</p>
+   *
+   * <p>This method blocks until both the reauthentication and account deletion
+   * operations have completed.</p>
+   *
+   * @param email    the email address of the currently authenticated user
+   * @param password the user's current password
+   * @throws AuthException if no user is signed in, reauthentication fails,
+   *                       account deletion fails, or the operation is interrupted
+   */
+  private void deleteUserAccount(@NonNull String email, @NonNull String password) {
+    FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
+
+    if (firebaseUser == null) {
+      throw new AuthException(
+              "ERROR_NO_SIGNED_IN_USER",
+              "No user is currently signed in."
+      );
+    }
+
+    if (email.trim().isEmpty()) {
+      throw new AuthException(
+              "ERROR_INVALID_EMAIL",
+              "Email cannot be null or empty."
+      );
+    }
+
+    if (password.isEmpty()) {
+      throw new AuthException(
+              "ERROR_INVALID_PASSWORD",
+              "Password cannot be null or empty."
+      );
+    }
+
+    try {
+      /*
+       * Create fresh credentials from the user's email and password.
+       * These credentials are used to prove that the user requesting
+       * account deletion is actually the account owner.
+       */
+      AuthCredential credential = EmailAuthProvider.getCredential(email, password);
+
+      /*
+       * Deleting an account is a security-sensitive operation.
+       * Reauthenticate the user first so that Firebase considers
+       * the authentication session recent.
+       */
+      Tasks.await(firebaseUser.reauthenticate(credential));
+
+      /*
+       * Reauthentication succeeded, so the Firebase Authentication
+       * account can now be deleted.
+       */
+      Tasks.await(firebaseUser.delete());
+
+      Log.d(
+              AUTH_SERVICE,
+              "Firebase user profile successfully deleted."
+      );
+
+    } catch (ExecutionException exception) {
+      Throwable cause = exception.getCause();
+
+      /*
+       * Map Firebase Authentication exceptions to the application's
+       * custom AuthException architecture.
+       */
+      if (cause instanceof FirebaseAuthException) {
+        FirebaseAuthException firebaseEx = (FirebaseAuthException) cause;
+
+        String firebaseErrorCode = firebaseEx.getErrorCode();
+
+        throw new AuthException(
+                firebaseErrorCode,
+                firebaseEx.getMessage(),
+                firebaseEx
+        );
+      }
+
+      /*
+       * Handle unexpected failures originating from the asynchronous
+       * Firebase task execution.
+       */
+      throw new AuthException(
+              "EXECUTION_ERROR",
+              "Execution failed while deleting the user profile.",
+              exception
+      );
+
+    } catch (InterruptedException exception) {
+      Log.e(
+              AUTH_SERVICE,
+              "User profile deletion was interrupted.",
+              exception
+      );
+
+      Thread.currentThread().interrupt();
+
+      throw new AuthException(
+              "INTERRUPTED_ERROR",
+              "User profile deletion process was interrupted.",
+              exception
+      );
     }
   }
 
