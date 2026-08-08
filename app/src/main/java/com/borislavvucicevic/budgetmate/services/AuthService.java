@@ -37,11 +37,11 @@ public class AuthService {
   }
 
   /**
-   * Checks if user is logged in.
+   * Checks if user is signed in.
    *
    * @return {@code true} if the user is logged in, otherwise {@code false}
    * */
-  public boolean isLoggedIn() {
+  public boolean isSignedIn() {
     return firebaseAuth.getCurrentUser() != null;
   }
 
@@ -194,7 +194,7 @@ public class AuthService {
    *                       thread interruption, if the server returns an empty profile,
    *                       or if the user's email address is not verified
    */
-  public String signInUser(String email, String password) throws AuthException {
+  public String signIn(String email, String password) throws AuthException {
     try {
       AuthResult result = Tasks.await(firebaseAuth.signInWithEmailAndPassword(email, password));
       FirebaseUser firebaseUser = result.getUser();
@@ -229,5 +229,15 @@ public class AuthService {
       Thread.currentThread().interrupt(); // Restore interrupted status
       throw new AuthException("INTERRUPTED_ERROR", "Authentication process was interrupted.", e);
     }
+  }
+
+  /**
+   * Signs out the currently authenticated user from Firebase.
+   *
+   * <p>This method ends the current Firebase Authentication session by calling
+   * {@link FirebaseAuth#signOut()}.</p>
+   */
+  public void signOut() {
+    firebaseAuth.signOut();
   }
 }
