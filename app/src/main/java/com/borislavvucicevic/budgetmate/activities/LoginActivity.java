@@ -21,8 +21,6 @@ import com.borislavvucicevic.budgetmate.enums.FirebaseAuthErrorCodes;
 import com.borislavvucicevic.budgetmate.exceptions.ValidationException;
 import com.borislavvucicevic.budgetmate.services.LocalisationService;
 
-import java.util.concurrent.Executors;
-
 /**
  * Activity responsible for authenticating users in the BudgetMate application.
  *
@@ -82,6 +80,10 @@ public class LoginActivity extends TemplateActivity {
    */
   private Button btnLogin;
 
+  private String email;
+
+  private String password;
+
   /**
    * Called when the login activity is first created.
    *
@@ -120,7 +122,7 @@ public class LoginActivity extends TemplateActivity {
 
     // Check if the user is already logged in.
     // If true, redirect directly to the main activity.
-    if (authService.isLoggedIn()) {
+    if (authService.isSignedIn()) {
       startActivity(
               new Intent(getApplicationContext(), MainActivity.class)
       );
@@ -171,67 +173,79 @@ public class LoginActivity extends TemplateActivity {
    */
   @Override
   protected void setListeners() {
-    btnLogin.setOnClickListener(v -> this.handleLogin());
+    btnLogin.setOnClickListener(v -> this.btnLoginClickHandler());
+    tvRegisterLink.setOnClickListener(v -> this.openActivity(
+            RegisterActivity.class,
+            true,
+            true
+    ));
+    tvVerifyEmailLink.setOnClickListener(v -> this.handleVerifyEmailLink());
+    tvPasswordResetLink.setOnClickListener(this::handleResetPasswordLink);
+    localeSwitch.setOnItemSelectedListener(LocalisationService.getLocaleChangeHandler());
+  }
 
-    tvRegisterLink.setOnClickListener(
-            v -> this.handleRegisterLink()
-    );
-
-    tvVerifyEmailLink.setOnClickListener(
-            v -> this.handleVerifyEmailLink()
-    );
-
-    tvPasswordResetLink.setOnClickListener(
-            this::handleResetPasswordLink
-    );
-
-    localeSwitch.setOnItemSelectedListener(
-            LocalisationService.getLocaleChangeHandler()
-    );
+  @Override
+  protected void grabValues() {
+    email = etEmail.getText().toString().trim();
+    password = etPassword.getText().toString();
   }
 
   /**
    * Initiates the asynchronous user login process.
    *
-   * <p>The email address and password are extracted from their corresponding
-   * form fields before the loading indicator is displayed. Authentication
-   * is then performed using a single-thread background executor so that the
-   * operation does not block the Android UI thread.</p>
+   * <p>The current values are retrieved from the login form before the loading
+   * indicator is displayed. The login operation is then delegated to a
+   * background thread to avoid blocking the Android UI thread.</p>
    *
-   * <p>Before authentication is attempted, {@link #validateForm()} verifies
-   * that the required login fields contain values. After successful
-   * validation, the authentication service attempts to sign in the user.</p>
+   * <p>The actual validation and authentication logic is handled by
+   * {@link #handleLogin()}.</p>
+   */
+  private void btnLoginClickHandler() {
+    this.grabValues();
+    this.toggleProgressBarVisibility();
+    this.doInBackground(this::handleLogin);
+  }
+
+  /**
+   * Validates the login form and attempts to authenticate the user.
    *
-   * <p>A successful login is forwarded to {@link #handleSuccess()}.
-   * Validation, authentication, and unexpected errors are forwarded to
-   * the appropriate exception handlers on the main UI thread.</p>
+   * <p>The entered form values are first validated. If validation succeeds,
+   * the authentication service attempts to sign in the user using the supplied
+   * email address and password.</p>
+   *
+   * <p>After successful authentication, {@link #handleSuccess()} is invoked on
+   * the main UI thread.</p>
+   *
+   * <p>If an error occurs, the corresponding exception handler is invoked on
+   * the main UI thread:</p>
+   *
+   * <ul>
+   *   <li>{@link ValidationException} is handled as a form validation error.</li>
+   *   <li>{@link AuthException} is handled as an authentication error.</li>
+   *   <li>Any other {@link Exception} is handled as a general application error.</li>
+   * </ul>
+   *
+   * <p>This method is intended to be executed on a background thread.</p>
    */
   private void handleLogin() {
-    String email = etEmail.getText().toString().trim();
-    String password = etPassword.getText().toString();
-
-    toggleProgressBarVisibility();
-
-    Executors.newSingleThreadExecutor().execute(() -> {
-      try {
-        this.validateForm();
-        authService.signInUser(email, password);
-        runOnUiThread(this::handleSuccess);
-      } catch (ValidationException exception) {
-        runOnUiThread(() -> this.handleException(
-                        exception,
-                        LoginActivity.class
-        ));
-      } catch (AuthException exception) {
-        runOnUiThread(() -> this.handleException(exception));
-      } catch (Exception exception) {
-        runOnUiThread(() -> this.handleException(
-                        exception,
-                        getString(R.string.error_general),
-                        LoginActivity.class
-        ));
-      }
-    });
+    try {
+      this.validateForm();
+      authService.signIn(email, password);
+      runOnUiThread(this::handleSuccess);
+    } catch (ValidationException exception) {
+      runOnUiThread(() -> this.handleException(
+              exception,
+              LoginActivity.class
+      ));
+    } catch (AuthException exception) {
+      runOnUiThread(() -> this.handleException(exception));
+    } catch (Exception exception) {
+      runOnUiThread(() -> this.handleException(
+              exception,
+              getString(R.string.error_general),
+              LoginActivity.class
+      ));
+    }
   }
 
   /**
@@ -307,21 +321,6 @@ public class LoginActivity extends TemplateActivity {
   }
 
   /**
-   * Navigates the user from the login screen to the registration screen.
-   *
-   * <p>This method is triggered when the user selects the registration
-   * link. It launches {@link RegisterActivity} and closes the current
-   * login activity.</p>
-   */
-  private void handleRegisterLink() {
-    startActivity(new Intent(
-                    getApplicationContext(),
-                    RegisterActivity.class
-    ));
-    finish();
-  }
-
-  /**
    * Initiates the asynchronous email verification process.
    *
    * <p>The progress indicator is displayed before the authentication
@@ -337,7 +336,7 @@ public class LoginActivity extends TemplateActivity {
   private void handleVerifyEmailLink() {
     toggleProgressBarVisibility();
 
-    Executors.newSingleThreadExecutor().execute(() -> {
+    this.doInBackground(() -> {
       try {
         authService.sendVerificationEmail();
         runOnUiThread(() -> {
@@ -418,7 +417,7 @@ public class LoginActivity extends TemplateActivity {
    *              should be sent
    */
   private void handleResetPassword(String email) {
-    Executors.newSingleThreadExecutor().execute(() -> {
+    this.doInBackground(() -> {
       try {
         authService.sendPasswordResetEmail(email);
         runOnUiThread(() -> showToast(getString(R.string.password_reset_dialog_success)));
@@ -449,15 +448,11 @@ public class LoginActivity extends TemplateActivity {
    * @throws ValidationException if the email or password field is empty
    */
   private void validateForm() throws ValidationException {
-    String email = etEmail.getText().toString().trim();
-    String password = etPassword.getText().toString();
-
     if (email.isEmpty()) {throw new ValidationException(
               getString(R.string.email_required),
               R.id.etEmail
       );
     }
-
     if (password.isEmpty()) {
       throw new ValidationException(
               getString(R.string.password_required),
