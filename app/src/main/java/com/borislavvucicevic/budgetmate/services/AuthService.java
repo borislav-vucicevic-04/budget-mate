@@ -116,10 +116,16 @@ public class AuthService {
    *
    * @param email    the email address of the currently authenticated user
    * @param password the user's current password
+   * @param databaseService the service object used to delete all user data before
+   *                        the account itself is deleted
    * @throws AuthException if no user is signed in, reauthentication fails,
    *                       account deletion fails, or the operation is interrupted
    */
-  private void deleteUserAccount(@NonNull String email, @NonNull String password) {
+  public void deleteUserAccount(
+          @NonNull String email,
+          @NonNull String password,
+          @NonNull DatabaseService databaseService
+  ) {
     FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
 
     if (firebaseUser == null) {
@@ -157,6 +163,11 @@ public class AuthService {
        * the authentication session recent.
        */
       Tasks.await(firebaseUser.reauthenticate(credential));
+
+      /*
+       * Deleting all user data before deleting their account
+       */
+      databaseService.deleteUserProfile(this.getUserID());
 
       /*
        * Reauthentication succeeded, so the Firebase Authentication
