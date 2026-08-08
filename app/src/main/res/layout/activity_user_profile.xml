@@ -129,6 +129,20 @@
                 android:textSize="16sp"
                 android:textStyle="bold"
                 tools:drawableTint="@null" />
+
+            <Button
+                android:id="@+id/btnLogOut"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_margin="8dp"
+                android:background="@drawable/bg_button"
+                android:backgroundTint="@null"
+                android:text="@string/log_out"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                app:backgroundTint="@null" />
         </LinearLayout>
 
     </ScrollView>

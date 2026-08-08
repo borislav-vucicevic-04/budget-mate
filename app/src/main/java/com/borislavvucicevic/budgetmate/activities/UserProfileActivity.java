@@ -1,7 +1,9 @@
 package com.borislavvucicevic.budgetmate.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
@@ -14,6 +16,7 @@ import com.borislavvucicevic.budgetmate.R;
 import com.borislavvucicevic.budgetmate.TemplateActivity;
 import com.borislavvucicevic.budgetmate.models.UserProfile;
 import com.borislavvucicevic.budgetmate.enums.CurrencyCode;
+import com.borislavvucicevic.budgetmate.services.CacheService;
 import com.borislavvucicevic.budgetmate.services.LocalisationService;
 
 import java.util.concurrent.Executors;
@@ -67,6 +70,8 @@ public class UserProfileActivity extends TemplateActivity {
    */
   private ScrollView formWrapper;
 
+  private Button btnLogOut;
+
   /**
    * Called when the user profile activity is first created.
    *
@@ -119,6 +124,7 @@ public class UserProfileActivity extends TemplateActivity {
     tvEmail = findViewById(R.id.tvEmail);
     tvHomeCurrency = findViewById(R.id.tvHomeCurrency);
     formWrapper = findViewById(R.id.formWrapper);
+    btnLogOut = findViewById(R.id.btnLogOut);
     progressBar = findViewById(R.id.progressBar);
     localeSwitch = findViewById(R.id.localeSwitch);
   }
@@ -133,6 +139,7 @@ public class UserProfileActivity extends TemplateActivity {
    */
   @Override
   protected void setListeners() {
+    btnLogOut.setOnClickListener(v -> this.handleSignOut());
     localeSwitch.setOnItemSelectedListener(LocalisationService.getLocaleChangeHandler());
   }
 
@@ -192,5 +199,20 @@ public class UserProfileActivity extends TemplateActivity {
     } catch (Exception exception) {
       runOnUiThread(() -> this.handleException(exception, getString(R.string.error_general), UserProfileActivity.class));
     }
+  }
+
+  /**
+   * Handles the user sign-out process.
+   *
+   * <p>Signs the current user out, clears all locally cached data, and navigates
+   * to {@link LoginActivity}. The activity task is cleared so the user cannot
+   * return to previously opened authenticated activities by pressing the Back button.</p>
+   */
+  private void handleSignOut() {
+    this.authService.signOut();
+    CacheService.clearAll();
+    Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+    startActivity(intent);
   }
 }
