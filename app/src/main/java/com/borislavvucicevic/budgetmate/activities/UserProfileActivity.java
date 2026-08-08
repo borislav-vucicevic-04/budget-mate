@@ -2,22 +2,33 @@ package com.borislavvucicevic.budgetmate.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.borislavvucicevic.budgetmate.R;
 import com.borislavvucicevic.budgetmate.TemplateActivity;
+import com.borislavvucicevic.budgetmate.enums.CacheKey;
 import com.borislavvucicevic.budgetmate.models.UserProfile;
 import com.borislavvucicevic.budgetmate.enums.CurrencyCode;
 import com.borislavvucicevic.budgetmate.services.CacheService;
 import com.borislavvucicevic.budgetmate.services.LocalisationService;
+import com.google.android.gms.tasks.Tasks;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.EmailAuthProvider;
 
 import java.util.concurrent.Executors;
 
@@ -72,6 +83,8 @@ public class UserProfileActivity extends TemplateActivity {
 
   private Button btnLogOut;
 
+  private Button btnDeleteAccount;
+
   /**
    * Called when the user profile activity is first created.
    *
@@ -125,6 +138,7 @@ public class UserProfileActivity extends TemplateActivity {
     tvHomeCurrency = findViewById(R.id.tvHomeCurrency);
     formWrapper = findViewById(R.id.formWrapper);
     btnLogOut = findViewById(R.id.btnLogOut);
+    btnDeleteAccount = findViewById(R.id.btnDeleteAccount);
     progressBar = findViewById(R.id.progressBar);
     localeSwitch = findViewById(R.id.localeSwitch);
   }
@@ -140,6 +154,7 @@ public class UserProfileActivity extends TemplateActivity {
   @Override
   protected void setListeners() {
     btnLogOut.setOnClickListener(v -> this.handleSignOut());
+    btnDeleteAccount.setOnClickListener(this::showDeleteAccountConfirmation);
     localeSwitch.setOnItemSelectedListener(LocalisationService.getLocaleChangeHandler());
   }
 
@@ -202,6 +217,75 @@ public class UserProfileActivity extends TemplateActivity {
   }
 
   /**
+   * Displays a confirmation dialog before deleting the currently authenticated
+   * user's account.
+   *
+   * <p>The dialog prompts the user to enter their password and provides options
+   * to either confirm or cancel the account deletion. If the user confirms,
+   * the entered password is retrieved, trimmed, and passed to
+   * {@link #handleDeleteAccount(String)} to perform the account deletion.</p>
+   *
+   * <p>If the user cancels the operation, the dialog is dismissed without
+   * making any changes to the account.</p>
+   *
+   * @param v the view used to obtain the context for the password input field;
+   *          must not be {@code null}
+   */
+  private void showDeleteAccountConfirmation(@NonNull View v) {
+    EditText etPassword = new EditText(v.getContext());
+
+    int margin = getResources().getDimensionPixelSize(R.dimen.dialog_input_margin);
+    int minHeight = getResources().getDimensionPixelSize(R.dimen.dialog_input_min_height);
+
+    // Background
+    etPassword.setBackgroundResource(R.drawable.bg_input_field);
+
+    // Text color
+    etPassword.setTextColor(ContextCompat.getColor(v.getContext(), R.color.black));
+
+    etPassword.setHintTextColor(ContextCompat.getColor(v.getContext(), R.color.gray));
+
+    // Minimum height: 48dp
+    etPassword.setMinHeight(minHeight);
+
+    // Password input
+    etPassword.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+
+    etPassword.setHint(getString(R.string.password));
+
+    // Container gives the EditText an 8dp margin around it
+    FrameLayout container = new FrameLayout(v.getContext());
+    container.setPadding(margin, margin, margin, margin);
+
+    FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
+    );
+
+    container.addView(etPassword, params);
+
+    MaterialAlertDialogBuilder dialog =
+            new MaterialAlertDialogBuilder(this, R.style.CustomAlertDialogTheme);
+
+    dialog.setTitle(getString(R.string.delete_account_dialog_title));
+    dialog.setMessage(getString(R.string.delete_account_dialog_message));
+    dialog.setView(container);
+    dialog.setPositiveButton(
+            getString(R.string.delete_account_dialog_yes),
+            (d, which) -> {
+              String password = etPassword.getText().toString().trim();
+              handleDeleteAccount(password);
+            }
+    );
+    dialog.setNegativeButton(
+            getString(R.string.delete_account_dialog_no),
+            (d, which) -> d.dismiss()
+    );
+
+    dialog.show();
+  }
+
+  /**
    * Handles the user sign-out process.
    *
    * <p>Signs the current user out, clears all locally cached data, and navigates
@@ -214,5 +298,56 @@ public class UserProfileActivity extends TemplateActivity {
     Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
     startActivity(intent);
+  }
+
+  /**
+   * Deletes the currently authenticated user's account using the provided password.
+   *
+   * <p>This method hides the account deletion form, displays a progress indicator,
+   * and performs the deletion operation asynchronously on a background thread.
+   * It removes the user's profile from the database and then deletes the
+   * authentication account.</p>
+   *
+   * <p>If the deletion succeeds, the user is redirected to {@link LoginActivity}
+   * and the existing activity task is cleared. If an error occurs, the form is
+   * shown again and the exception is passed to the application's exception
+   * handler.</p>
+   *
+   * @param password the current user's password used to authenticate the account
+   *                 deletion request; must not be {@code null}
+   */
+  private void handleDeleteAccount(@NonNull String password) {
+    formWrapper.setVisibility(View.GONE);
+    toggleProgressBarVisibility();
+    showToast(getString(R.string.deleting_account));
+    Executors.newSingleThreadExecutor().execute(() -> {
+      try {
+        UserProfile userProfile = CacheService.read(CacheKey.USER_PROFILE, UserProfile.class);
+        String uid = authService.getUserID();
+        String email = userProfile.getEmail();
+        databaseService.deleteUserProfile(uid);
+        authService.deleteUserAccount(
+                email,
+                password,
+                this.databaseService
+        );
+        Thread.sleep(2000);
+        runOnUiThread(() -> {
+          showToast(getString(R.string.delete_account_success));
+          Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+          intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+          startActivity(intent);
+        });
+      } catch (Exception exception) {
+        runOnUiThread(() -> {
+          formWrapper.setVisibility(View.VISIBLE);
+          handleException(
+                  exception,
+                  getString(R.string.error_general),
+                  UserProfileActivity.class
+          );
+        });
+      }
+    });
   }
 }
