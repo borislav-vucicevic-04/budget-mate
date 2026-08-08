@@ -127,6 +127,87 @@ public class DatabaseService {
   }
 
   /**
+   * Deletes all Firestore data belonging to the specified user.
+   *
+   * <p>The deletion is performed in the following order:</p>
+   * <ol>
+   *   <li>All transactions belonging to the user are deleted.</li>
+   *   <li>All categories belonging to the user are deleted.</li>
+   *   <li>The user's profile document is deleted.</li>
+   * </ol>
+   *
+   * <p>The user document is deleted only after the transactions and categories
+   * have been successfully removed.</p>
+   *
+   * <p>This method blocks while waiting for Firestore and must therefore be
+   * called from a background thread.</p>
+   *
+   * @param uid the unique identifier of the user whose data should be deleted
+   * @throws DatabaseException if the deletion fails or is interrupted
+   */
+  public void deleteUserProfile(@NonNull String uid) {
+    if (uid.trim().isEmpty()) {
+      throw new DatabaseException("User ID cannot be empty.", null);
+    }
+
+    try {
+      // Deleting transactions collections
+      Query transactionQuery = firestore
+              .collection("transactions")
+              .whereEqualTo("userID", uid);
+
+      QuerySnapshot transactionSnapshot = Tasks.await(transactionQuery.get());
+
+      this.deleteDocuments(transactionSnapshot);
+
+      // Deleting categories
+      Query categoryQuery = firestore
+              .collection("categories")
+              .whereEqualTo("userID", uid);
+
+      QuerySnapshot categorySnapshot = Tasks.await(categoryQuery.get());
+
+      this.deleteDocuments(categorySnapshot);
+
+      // Deleting user profile
+      DocumentReference userReference = firestore
+              .collection("users")
+              .document(uid);
+
+      Tasks.await(userReference.delete());
+    } catch (ExecutionException exception) {
+      Throwable cause = exception.getCause();
+
+      String errorMessage =
+              cause != null && cause.getMessage() != null
+                      ? cause.getMessage()
+                      : "Unknown Firestore user data deletion error occurred.";
+
+      Log.e(
+              DATABASE,
+              "User data deletion failed: " + errorMessage,
+              cause
+      );
+
+      throw new DatabaseException(errorMessage, cause);
+
+    } catch (InterruptedException exception) {
+      Log.e(
+              DATABASE,
+              "The user data deletion operation was interrupted.",
+              exception
+      );
+
+      Thread.currentThread().interrupt();
+
+      throw new DatabaseException(
+              "Database operation was interrupted before completion.",
+              exception
+      );
+    }
+  }
+
+  /**
    * Retrieves the user profile for the specified user ID, prioritizing the local memory cache.
    * <p>
    * This method first checks the {@link CacheService} to see if the profile is already available
@@ -693,6 +774,31 @@ public class DatabaseService {
       Log.e(DATABASE, "The transaction update operation thread was interrupted.", exception);
       Thread.currentThread().interrupt();
       throw new DatabaseException("Database operation was interrupted before completion.", exception);
+    }
+  }
+  /**
+   * Deletes all documents contained in the supplied query snapshot.
+   *
+   * <p>Documents are deleted in batches to avoid creating one excessively
+   * large Firestore write batch.</p>
+   *
+   * @param snapshot query result containing documents that should be deleted
+   * @throws ExecutionException if Firestore fails to commit a batch
+   * @throws InterruptedException if the current thread is interrupted
+   */
+  private void deleteDocuments(@NonNull QuerySnapshot snapshot) throws ExecutionException, InterruptedException {
+    final int BATCH_SIZE = 450;
+    List<DocumentSnapshot> documents = snapshot.getDocuments();
+
+    for (int start = 0; start < documents.size(); start += BATCH_SIZE) {
+      int end = Math.min(start + BATCH_SIZE, documents.size());
+      WriteBatch batch = firestore.batch();
+
+      for (int i = start; i < end; i++) {
+        batch.delete(documents.get(i).getReference());
+      }
+
+      Tasks.await(batch.commit());
     }
   }
 }
