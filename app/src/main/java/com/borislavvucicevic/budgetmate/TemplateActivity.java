@@ -20,6 +20,9 @@ import com.borislavvucicevic.budgetmate.services.AuthService;
 import com.borislavvucicevic.budgetmate.services.DatabaseService;
 import com.borislavvucicevic.budgetmate.services.LocalisationService;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 /**
  * Base activity that defines common functionality and initialization logic
  * shared by the application's activities.
@@ -92,6 +95,13 @@ public abstract class TemplateActivity extends AppCompatActivity {
    * Registers listeners for the activity's UI widgets.
    */
   protected abstract void setListeners();
+
+  /**
+   * Grabs values from the widgets and stores them in the activity fields
+   * */
+  protected void grabValues() {
+    // Do nothing
+  }
 
   /**
    * Toggles the visibility of the activity's progress bar.
@@ -300,6 +310,25 @@ public abstract class TemplateActivity extends AppCompatActivity {
 
     if (shouldFinish) {
       this.finish();
+    }
+  }
+
+  @SuppressWarnings("java:S2095")
+  protected final void doInBackground(Runnable heavyTask) {
+    if (heavyTask == null) return;
+
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    try {
+      executor.submit(heavyTask);
+    } catch (Exception exception) {
+      Log.e(
+              this.getClass().getName(),
+              exception.getMessage(),
+              exception
+      );
+    } finally {
+      executor.shutdown();
     }
   }
 
