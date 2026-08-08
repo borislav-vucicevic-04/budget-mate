@@ -2,6 +2,7 @@ package com.borislavvucicevic.budgetmate;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 
 import androidx.activity.EdgeToEdge;
@@ -45,12 +46,6 @@ import java.util.concurrent.Executors;
  * @see ReportsActivity
  */
 public class MainActivity extends TemplateActivity {
-
-  /**
-   * Tag used when writing log messages associated with this activity.
-   */
-  public static final String MAIN_ACTIVITY = "MAIN_ACTIVITY";
-
   /**
    * Button used to navigate to the user profile screen.
    */
@@ -65,14 +60,6 @@ public class MainActivity extends TemplateActivity {
    * Button used to navigate to the transactions screen.
    */
   private Button btnViewTransactions;
-
-  /**
-   * Indicates whether user-related data is currently being loaded.
-   *
-   * <p>Navigation to other activities is temporarily disabled while
-   * this value is {@code true}.</p>
-   */
-  private boolean isLoading = false;
 
   /**
    * Called when the activity is first created.
@@ -113,8 +100,8 @@ public class MainActivity extends TemplateActivity {
 
     // Checking if user is logged in.
     // If not, redirect them to LoginActivity.
-    if (!authService.isLoggedIn()) {
-      setIntent(new Intent(getApplicationContext(), LoginActivity.class));
+    if (!authService.isSignedIn()) {
+      startActivity(new Intent(getApplicationContext(), LoginActivity.class));
       finish();
     }
 
@@ -160,10 +147,16 @@ public class MainActivity extends TemplateActivity {
    */
   @Override
   protected void setListeners() {
-    btnUserProfile.setOnClickListener(v -> this.openUserProfileActivity());
-    btnViewTransactions.setOnClickListener(v -> this.openTransactionsActivity());
-    btnGenerateReports.setOnClickListener(v -> this.openReportsActivity());
+    btnUserProfile.setOnClickListener(v -> this.openActivity(UserProfileActivity.class));
+    btnViewTransactions.setOnClickListener(v -> this.openActivity(TransactionsActivity.class));
+    btnGenerateReports.setOnClickListener(v -> this.openActivity(ReportsActivity.class));
     localeSwitch.setOnItemSelectedListener(LocalisationService.getLocaleChangeHandler());
+  }
+
+  private void toggleButtonsInteractivity() {
+    btnUserProfile.setEnabled(!btnUserProfile.isEnabled());
+    btnGenerateReports.setEnabled(!btnGenerateReports.isEnabled());
+    btnViewTransactions.setEnabled(!btnViewTransactions.isEnabled());
   }
 
   /**
@@ -171,8 +164,8 @@ public class MainActivity extends TemplateActivity {
    * from the database.
    *
    * <p>The operation is performed on a background thread to avoid
-   * blocking the Android UI thread. Before loading starts,
-   * {@link #isLoading} is set to {@code true}, preventing navigation
+   * blocking the Android UI thread. Before loading starts, all buttons
+   * are disabled, preventing navigation
    * to other application screens while the required data is being
    * retrieved.</p>
    *
@@ -180,14 +173,9 @@ public class MainActivity extends TemplateActivity {
    * stored in {@link CacheService} using {@link CacheKey#CATEGORIES}
    * and {@link CacheKey#USER_PROFILE}. A success message is then shown
    * to the user.</p>
-   *
-   * <p>If an exception occurs, an error message is displayed and the
-   * exception is written to the Android log using
-   * {@link #MAIN_ACTIVITY} as the log tag.</p>
    */
   private void loadCategoriesAndUserProfile() {
-    isLoading = true;
-
+    this.toggleButtonsInteractivity();
     this.showToast(getString(R.string.loading_data));
 
     Executors.newSingleThreadExecutor().execute(() -> {
@@ -202,64 +190,27 @@ public class MainActivity extends TemplateActivity {
         // Store retrieved data in cache.
         CacheService.store(CacheKey.CATEGORIES, categories);
         CacheService.store(CacheKey.USER_PROFILE, userProfile);
-
+        Log.d("MainActivity-DEBUG", "UserProfile: " + userProfile);
+        Log.d("MainActivity-DEBUG", "Categories: " + categories);
+        Thread.sleep(2000);
         runOnUiThread(() -> {
-          isLoading = false;
-
+          this.toggleButtonsInteractivity();
           // Display success message.
           this.showToast(getString(R.string.data_loaded));
         });
 
       }
+      catch (InterruptedException exception) {
+        Thread.currentThread().interrupt();
+        throw new RuntimeException("Thread was interrupted", exception);
+      }
       catch (Exception exception) {
         runOnUiThread(() -> this.handleException(
-                exception,
-                getString(R.string.error_general),
-                MainActivity.class
+                  exception,
+                  getString(R.string.error_general),
+                  MainActivity.class
         ));
       }
     });
-  }
-
-  /**
-   * Opens the {@link UserProfileActivity}.
-   *
-   * <p>The navigation request is ignored while application data is
-   * still being loaded.</p>
-   */
-  private void openUserProfileActivity() {
-    if (isLoading) {
-      return;
-    }
-
-    startActivity(new Intent(MainActivity.this, UserProfileActivity.class));
-  }
-
-  /**
-   * Opens the {@link TransactionsActivity}.
-   *
-   * <p>The navigation request is ignored while application data is
-   * still being loaded.</p>
-   */
-  private void openTransactionsActivity() {
-    if (isLoading) {
-      return;
-    }
-
-    startActivity(new Intent(MainActivity.this, TransactionsActivity.class));
-  }
-
-  /**
-   * Opens the {@link ReportsActivity}.
-   *
-   * <p>The navigation request is ignored while application data is
-   * still being loaded.</p>
-   */
-  private void openReportsActivity() {
-    if (isLoading) {
-      return;
-    }
-
-    startActivity(new Intent(MainActivity.this, ReportsActivity.class));
   }
 }
