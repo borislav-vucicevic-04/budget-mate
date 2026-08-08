@@ -1,5 +1,7 @@
 package com.borislavvucicevic.budgetmate;
 
+import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -192,6 +194,112 @@ public abstract class TemplateActivity extends AppCompatActivity {
 
     if (progressBar != null) {
       progressBar.setVisibility(View.GONE);
+    }
+  }
+
+  /**
+   * Opens the specified activity using the current activity as the context.
+   *
+   * <p>This overload uses the default behavior of keeping the current activity
+   * active and preserving the existing activity task.</p>
+   *
+   * @param activityClass the activity class to open; must not be {@code null}
+   */
+  protected final void openActivity(
+          Class<? extends AppCompatActivity> activityClass
+  ) {
+    this.openActivity(
+            activityClass,
+            false,
+            false,
+            false
+    );
+  }
+
+  /**
+   * Opens the specified activity using either the application context or the
+   * current activity as the context.
+   *
+   * <p>The current activity remains active and the existing activity task is
+   * preserved.</p>
+   *
+   * @param activityClass the activity class to open; must not be {@code null}
+   * @param shouldOpenInAppContext {@code true} to use the application context;
+   *                               {@code false} to use the current activity
+   */
+  protected final void openActivity(
+          Class<? extends AppCompatActivity> activityClass,
+          boolean shouldOpenInAppContext
+  ) {
+    this.openActivity(
+            activityClass,
+            shouldOpenInAppContext,
+            false,
+            false
+    );
+  }
+
+  /**
+   * Opens the specified activity and optionally finishes the current activity.
+   *
+   * <p>The activity can be launched using either the application context or the
+   * current activity. The existing activity task is preserved.</p>
+   *
+   * @param activityClass the activity class to open; must not be {@code null}
+   * @param shouldOpenInAppContext {@code true} to use the application context;
+   *                               {@code false} to use the current activity
+   * @param shouldFinish {@code true} to finish the current activity after
+   *                     starting the new activity; {@code false} otherwise
+   */
+  protected final void openActivity(
+          Class<? extends AppCompatActivity> activityClass,
+          boolean shouldOpenInAppContext,
+          boolean shouldFinish
+  ) {
+    this.openActivity(
+            activityClass,
+            shouldOpenInAppContext,
+            shouldFinish,
+            false
+    );
+  }
+
+  /**
+   * Opens the specified activity with configurable context, activity finishing,
+   * and task-clearing behavior.
+   *
+   * @param activityClass the activity class to open; must not be {@code null}
+   * @param shouldOpenInAppContext {@code true} to use the application context;
+   *                               {@code false} to use the current activity
+   * @param shouldFinish {@code true} to finish the current activity after
+   *                     starting the target activity; {@code false} otherwise
+   * @param shouldClearActivityTask {@code true} to clear the existing activity
+   *                                task and start the target activity in a new
+   *                                task; {@code false} to preserve the task
+   */
+  protected final void openActivity(
+          Class<? extends AppCompatActivity> activityClass,
+          boolean shouldOpenInAppContext,
+          boolean shouldFinish,
+          boolean shouldClearActivityTask
+  ) {
+    Context context = shouldOpenInAppContext
+            ? getApplicationContext()
+            : this;
+
+    Intent intent = new Intent(context, activityClass);
+
+    if (shouldClearActivityTask) {
+      intent.setFlags(
+              Intent.FLAG_ACTIVITY_NEW_TASK |
+                      Intent.FLAG_ACTIVITY_CLEAR_TASK
+      );
+    }
+
+    startActivity(intent);
+
+    if (shouldFinish) {
+      this.finish();
     }
   }
 
