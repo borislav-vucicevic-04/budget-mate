@@ -153,4 +153,12 @@
     <string name="report_period_section_title">Berichtszeitraum</string>
     <string name="report_generic_document_name">Bericht</string>
     <string name="report_generating_message">Bericht wird erstellt…</string>
+    <string name="btn_log_out">Abmelden</string>
+    <string name="btn_delete_account">Löschen Sie Ihr Konto</string>
+    <string name="delete_account_dialog_title">Löschen Sie Ihr Konto</string>
+    <string name="delete_account_dialog_message">Sie sind im Begriff, Ihre Transaktionshistorie, Kategorien und persönlichen Daten zu löschen, wodurch Ihr Konto endgültig geschlossen wird. Bitte beachten Sie, dass dieser Vorgang nicht rückgängig gemacht werden kann. \\n\\nAus Sicherheitsgründen geben Sie bitte Ihr Passwort ein, um fortzufahren.</string>
+    <string name="delete_account_success">Sie haben Ihr Konto erfolgreich gelöscht.</string>
+    <string name="delete_account_dialog_yes">Löschen</string>
+    <string name="delete_account_dialog_no">Abrechen</string>
+    <string name="deleting_account">Ihr Konto wird gelöscht...</string>
 </resources>

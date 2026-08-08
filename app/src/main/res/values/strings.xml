@@ -152,4 +152,12 @@
     <string name="report_period_section_title">Reporting period</string>
     <string name="report_generic_document_name">Report</string>
     <string name="report_generating_message">Generating the report…</string>
+    <string name="btn_log_out">Log out</string>
+    <string name="btn_delete_account">Delete your account</string>
+    <string name="delete_account_dialog_title">Delete your account</string>
+    <string name="delete_account_dialog_message">You are about to delete your transaction history, categories, and personal data, which will permanently close your account. Please note that this action cannot be undone. \\n\\nFor security reasons, please enter your password to continue.</string>
+    <string name="delete_account_success">You have successfully deleted your account.</string>
+    <string name="delete_account_dialog_yes">Delete</string>
+    <string name="delete_account_dialog_no">Cancel</string>
+    <string name="deleting_account">Your account is being deleted...</string>
 </resources>

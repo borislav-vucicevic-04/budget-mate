@@ -150,4 +150,12 @@
     <string name="report_period_section_title">Period izveštavanja</string>
     <string name="report_generic_document_name">Izveštaj</string>
     <string name="report_generating_message">Izveštaj se priprema…</string>
+    <string name="btn_log_out">Odjavite se</string>
+    <string name="btn_delete_account">Obrišite Vaš nalog</string>
+    <string name="delete_account_dialog_title">Obrišite Vaš nalog</string>
+    <string name="delete_account_dialog_message">Upravo ćete obrisati istoriju transakcija, kategorije i lične podatke, što će trajno zatvoriti vaš nalog. Imajte u vidu da je ova radnja neopoziva. \\n\\nIz bezbednosnih razloga, unesite lozinku da biste nastavili.</string>
+    <string name="delete_account_success">Uspešno ste obrisali svoj nalog.</string>
+    <string name="delete_account_dialog_yes">Obriši</string>
+    <string name="delete_account_dialog_no">Odustani</string>
+    <string name="deleting_account">Vaš nalog se briše...</string>
 </resources>

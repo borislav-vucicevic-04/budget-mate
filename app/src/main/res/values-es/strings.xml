@@ -153,4 +153,12 @@
     <string name="report_period_section_title">Periodo del informe</string>
     <string name="report_generic_document_name">Informe</string>
     <string name="report_generating_message">Generando el informe…</string>
+    <string name="btn_log_out">Finalizar la sesión</string>
+    <string name="btn_delete_account">Elimina tu cuenta</string>
+    <string name="delete_account_dialog_title">Elimina tu cuenta</string>
+    <string name="delete_account_dialog_message">Estás a punto de eliminar tu historial de transacciones, categorías y datos personales, lo que cerrará tu cuenta de forma permanente. Ten en cuenta que esta acción no se puede deshacer. \\n\\nPor motivos de seguridad, introduce tu contraseña para continuar.</string>
+    <string name="delete_account_success">Has eliminado tu cuenta correctamente.</string>
+    <string name="delete_account_dialog_yes">Eliminar</string>
+    <string name="delete_account_dialog_no">Cancelar</string>
+    <string name="deleting_account">Tu cuenta está siendo eliminada...</string>
 </resources>
