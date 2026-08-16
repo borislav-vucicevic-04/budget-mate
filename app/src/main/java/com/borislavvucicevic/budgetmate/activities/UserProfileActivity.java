@@ -1,6 +1,5 @@
 package com.borislavvucicevic.budgetmate.activities;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.View;
@@ -25,12 +24,7 @@ import com.borislavvucicevic.budgetmate.models.UserProfile;
 import com.borislavvucicevic.budgetmate.enums.CurrencyCode;
 import com.borislavvucicevic.budgetmate.services.CacheService;
 import com.borislavvucicevic.budgetmate.services.LocalisationService;
-import com.google.android.gms.tasks.Tasks;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.firebase.auth.AuthCredential;
-import com.google.firebase.auth.EmailAuthProvider;
-
-import java.util.concurrent.Executors;
 
 /**
  * Activity responsible for displaying the authenticated user's profile
@@ -85,6 +79,7 @@ public class UserProfileActivity extends TemplateActivity {
 
   private Button btnDeleteAccount;
 
+  private UserProfile userProfile;
   /**
    * Called when the user profile activity is first created.
    *
@@ -109,8 +104,11 @@ public class UserProfileActivity extends TemplateActivity {
       return insets;
     });
 
-    // executing the heavy task on background process
-    Executors.newSingleThreadExecutor().execute(this::loadUserProfile);
+    // Loading user profile and displaying user data in widgets
+    this.doInBackground(
+            this::loadUserProfile,
+            this::fillWidgets
+    );
   }
 
   /**
@@ -133,14 +131,13 @@ public class UserProfileActivity extends TemplateActivity {
    */
   @Override
   protected void grabWidgets() {
+    super.grabWidgets();
     tvFullName = findViewById(R.id.tvFullName);
     tvEmail = findViewById(R.id.tvEmail);
     tvHomeCurrency = findViewById(R.id.tvHomeCurrency);
     formWrapper = findViewById(R.id.formWrapper);
     btnLogOut = findViewById(R.id.btnLogOut);
     btnDeleteAccount = findViewById(R.id.btnDeleteAccount);
-    progressBar = findViewById(R.id.progressBar);
-    localeSwitch = findViewById(R.id.localeSwitch);
   }
 
   /**
@@ -153,67 +150,65 @@ public class UserProfileActivity extends TemplateActivity {
    */
   @Override
   protected void setListeners() {
+    super.setListeners();
     btnLogOut.setOnClickListener(v -> this.handleSignOut());
     btnDeleteAccount.setOnClickListener(this::showDeleteAccountConfirmation);
-    localeSwitch.setOnItemSelectedListener(LocalisationService.getLocaleChangeHandler());
   }
 
   /**
-   * Retrieves the authenticated user's profile from the database and displays
-   * the profile information on the screen.
+   * Loads the authenticated user's profile from the database.
    *
-   * <p>The authenticated user's identifier is obtained from the authentication
-   * service and used to retrieve a corresponding {@link UserProfile} from the
-   * database.</p>
+   * <p>This method is passed from {@code onCreate} to
+   * {@code doInBackground)} as the {@code heavyTask} and is therefore
+   * executed on a background thread.</p>
    *
-   * <p>After the profile has been retrieved, the UI is updated on the main
-   * thread. The user's configured {@link CurrencyCode} is converted into its
-   * localized display value before being assigned to the home-currency text
-   * view.</p>
+   * <p>The retrieved profile is stored in {@link #userProfile} for later
+   * processing on the UI thread, by using {@code fillWidgets} passed to the {@code doInBackground} as
+   * the {@code whenDone}.</p>
    *
-   * <p>The supported currency values are:</p>
-   *
-   * <ul>
-   *   <li>{@link CurrencyCode#BAM}</li>
-   *   <li>{@link CurrencyCode#EUR}</li>
-   *   <li>{@link CurrencyCode#RSD}</li>
-   *   <li>{@link CurrencyCode#USD}</li>
-   * </ul>
-   *
-   * <p>Once all profile information has been displayed, the profile form is
-   * made visible and the progress indicator is hidden.</p>
-   *
-   * <p>If an exception occurs while retrieving or processing the profile,
-   * it is forwarded to the generic exception handler inherited from
-   * {@link TemplateActivity} on the main UI thread.</p>
+   * @see #doInBackground(Runnable, Runnable)
+   * @see UserProfileActivity#onCreate(Bundle)
+   * @see #fillWidgets()
    */
   private void loadUserProfile() {
     String uid = authService.getUserID();
-    try {
-      UserProfile userProfile = databaseService.getUserProfile(uid);
-      runOnUiThread(() -> {
-        // parsing homeCurrency
-        CurrencyCode currencyCode = userProfile.getHomeCurrency();
-        String homeCurrency = "";
+    this.userProfile = databaseService.getUserProfile(uid);
+  }
 
-        switch (currencyCode) {
-          case BAM: homeCurrency = getString(R.string.currency_bam); break;
-          case EUR: homeCurrency = getString(R.string.currency_eur); break;
-          case RSD: homeCurrency = getString(R.string.currency_rsd); break;
-          case USD: homeCurrency = getString(R.string.currency_usd); break;
-          default: /* DO NOTHING */ break;
-        }
-
-        // setting text to text views
-        tvFullName.setText(userProfile.getFullName());
-        tvEmail.setText(userProfile.getEmail());
-        tvHomeCurrency.setText(homeCurrency);
-        formWrapper.setVisibility(View.VISIBLE);
-        toggleProgressBarVisibility();
-      });
-    } catch (Exception exception) {
-      runOnUiThread(() -> this.handleException(exception, getString(R.string.error_general), UserProfileActivity.class));
+  /**
+   * Populates the profile widgets with the loaded user data.
+   *
+   * <p>This method is passed from {@code onCreate()} to {@code doInBackground(...)}
+   * as the {@code whenDone} action and is executed on the UI thread after the
+   * profile has been loaded successfully.</p>
+   *
+   * @throws IllegalStateException if {@link #userProfile} has not been loaded
+   *
+   * @see #doInBackground(Runnable, Runnable)
+   * @see UserProfileActivity#onCreate(Bundle)
+   * @see #loadUserProfile()
+   */
+  private void fillWidgets() {
+    if(userProfile == null) {
+      throw new IllegalStateException("For some reason the user is null.");
     }
+    // parsing homeCurrency
+    CurrencyCode currencyCode = userProfile.getHomeCurrency();
+    String homeCurrency = "";
+
+    switch (currencyCode) {
+      case BAM: homeCurrency = getString(R.string.currency_bam); break;
+      case EUR: homeCurrency = getString(R.string.currency_eur); break;
+      case RSD: homeCurrency = getString(R.string.currency_rsd); break;
+      case USD: homeCurrency = getString(R.string.currency_usd); break;
+      default: /* DO NOTHING */ break;
+    }
+
+    // setting text to text views
+    tvFullName.setText(userProfile.getFullName());
+    tvEmail.setText(userProfile.getEmail());
+    tvHomeCurrency.setText(homeCurrency);
+    formWrapper.setVisibility(View.VISIBLE);
   }
 
   /**
@@ -239,34 +234,32 @@ public class UserProfileActivity extends TemplateActivity {
 
     // Background
     etPassword.setBackgroundResource(R.drawable.bg_input_field);
-
     // Text color
     etPassword.setTextColor(ContextCompat.getColor(v.getContext(), R.color.black));
-
+    // Hint text color
     etPassword.setHintTextColor(ContextCompat.getColor(v.getContext(), R.color.gray));
-
     // Minimum height: 48dp
     etPassword.setMinHeight(minHeight);
-
     // Password input
     etPassword.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
-
     etPassword.setHint(getString(R.string.password));
-
-    // Container gives the EditText an 8dp margin around it
+    // Container gives the EditText a 8dp margin around it
     FrameLayout container = new FrameLayout(v.getContext());
-    container.setPadding(margin, margin, margin, margin);
-
+    // Layout parameters
     FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.WRAP_CONTENT
     );
 
+    // setting container padding and layout parameters
+    container.setPadding(margin, margin, margin, margin);
     container.addView(etPassword, params);
 
+    // creating the dialog
     MaterialAlertDialogBuilder dialog =
             new MaterialAlertDialogBuilder(this, R.style.CustomAlertDialogTheme);
 
+    // setting dialog parameters
     dialog.setTitle(getString(R.string.delete_account_dialog_title));
     dialog.setMessage(getString(R.string.delete_account_dialog_message));
     dialog.setView(container);
@@ -295,59 +288,53 @@ public class UserProfileActivity extends TemplateActivity {
   private void handleSignOut() {
     this.authService.signOut();
     CacheService.clearAll();
-    Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
-    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-    startActivity(intent);
+    this.openActivity(
+            LoginActivity.class,
+            true,
+            true,
+            true
+    );
   }
 
   /**
-   * Deletes the currently authenticated user's account using the provided password.
+   * Deletes the authenticated user's account asynchronously.
    *
-   * <p>This method hides the account deletion form, displays a progress indicator,
-   * and performs the deletion operation asynchronously on a background thread.
-   * It removes the user's profile from the database and then deletes the
-   * authentication account.</p>
+   * <p>Removes the user's profile and authentication account. On success,
+   * redirects to {@link LoginActivity} and clears the current activity task.</p>
    *
-   * <p>If the deletion succeeds, the user is redirected to {@link LoginActivity}
-   * and the existing activity task is cleared. If an error occurs, the form is
-   * shown again and the exception is passed to the application's exception
-   * handler.</p>
-   *
-   * @param password the current user's password used to authenticate the account
-   *                 deletion request; must not be {@code null}
-   */
+   * @param password the user's current password
+   * 
+   * @see #doInBackground(Runnable, Runnable) 
+   * */
   private void handleDeleteAccount(@NonNull String password) {
     formWrapper.setVisibility(View.GONE);
-    toggleProgressBarVisibility();
     showToast(getString(R.string.deleting_account));
-    Executors.newSingleThreadExecutor().execute(() -> {
-      try {
-        UserProfile userProfile = CacheService.read(CacheKey.USER_PROFILE, UserProfile.class);
-        String uid = authService.getUserID();
-        String email = userProfile.getEmail();
-        databaseService.deleteUserProfile(uid);
-        authService.deleteUserAccount(
-                email,
-                password,
-                this.databaseService
-        );
-        Thread.sleep(2000);
-        runOnUiThread(() -> {
-          showToast(getString(R.string.delete_account_success));
-          Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
-          intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-          startActivity(intent);
-        });
-      } catch (Exception exception) {
-        runOnUiThread(() -> {
-          formWrapper.setVisibility(View.VISIBLE);
-          handleException(
-                  exception,
-                  getString(R.string.error_general),
-                  UserProfileActivity.class
-          );
-        });
-      }
-    });
+    this.doInBackground(
+            () -> {
+              UserProfile userProfile = CacheService.read(CacheKey.USER_PROFILE, UserProfile.class);
+
+              if(userProfile == null) {
+                throw new IllegalStateException("For some reason user profile is null");
+              }
+
+              String uid = authService.getUserID();
+              String email = userProfile.getEmail();
+              databaseService.deleteUserProfile(uid);
+              authService.deleteUserAccount(
+                      email,
+                      password,
+                      this.databaseService
+              );
+            },
+            () -> {
+              this.showToast(getString(R.string.delete_account_success));
+              this.openActivity(
+                      LoginActivity.class,
+                      true,
+                      true,
+                      true
+              );
+            }
+    );
   }
 }

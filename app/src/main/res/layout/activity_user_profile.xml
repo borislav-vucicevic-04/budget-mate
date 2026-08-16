@@ -21,7 +21,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Activity title -->
     <TextView
         android:id="@+id/activityTitle"
         android:layout_width="wrap_content"
@@ -35,7 +34,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/appTitle" />
 
-    <!-- Scrollable login form -->
     <Spinner
         android:id="@+id/localeSwitch"
         android:layout_width="wrap_content"
@@ -84,11 +82,10 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginRight="48dp"
                 android:layout_marginBottom="8dp"
-                android:drawableStart="@drawable/ic_user_profile_tiny_blue"
+                app:drawableStartCompact="@drawable/ic_user_profile_tiny_blue"
                 android:drawablePadding="16dp"
-                android:drawableTint="@null"
+                app:drawableTint="@null"
                 android:gravity="center_vertical"
-                android:text="[User's full name]"
                 android:textColor="@color/black"
                 android:textSize="16sp"
                 android:textStyle="bold"
@@ -102,11 +99,10 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginRight="48dp"
                 android:layout_marginBottom="8dp"
-                android:drawableStart="@drawable/ic_email_tiny"
+                app:drawableStartCompact="@drawable/ic_email_tiny"
                 android:drawablePadding="16dp"
-                android:drawableTint="@null"
+                app:drawableTint="@null"
                 android:gravity="center_vertical"
-                android:text="[User's email]"
                 android:textColor="@color/black"
                 android:textSize="16sp"
                 android:textStyle="bold"
@@ -120,11 +116,10 @@
                 android:layout_marginTop="8dp"
                 android:layout_marginRight="48dp"
                 android:layout_marginBottom="8dp"
-                android:drawableStart="@drawable/euro_coin"
+                app:drawableStartCompact="@drawable/euro_coin"
                 android:drawablePadding="16dp"
-                android:drawableTint="@null"
+                app:drawableTint="@null"
                 android:gravity="center_vertical"
-                android:text="[User's email]"
                 android:textColor="@color/black"
                 android:textSize="16sp"
                 android:textStyle="bold"
@@ -167,10 +162,25 @@
         android:layout_width="match_parent"
         android:layout_height="80dp"
         android:indeterminateTint="@color/tomato"
-        android:visibility="visible"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/activityTitle" />
+
+
+    <!-- Blocker -->
+    <View
+        android:id="@+id/blocker"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@android:color/transparent"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
