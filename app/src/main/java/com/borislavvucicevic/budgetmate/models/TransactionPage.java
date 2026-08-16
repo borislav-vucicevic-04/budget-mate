@@ -19,7 +19,7 @@ import java.util.List;
  * @see DocumentSnapshot
  */
 public class TransactionPage {
-
+  public static final int PAGE_SIZE = 20;
   /**
    * List of transactions contained in the current page.
    */
