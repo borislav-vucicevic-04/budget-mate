@@ -4,14 +4,14 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.annotation.UiThread;
+import androidx.annotation.WorkerThread;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -34,7 +34,7 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.Executors;
+import java.util.stream.IntStream;
 
 /**
  * Activity responsible for displaying and managing the authenticated user's
@@ -77,12 +77,6 @@ public class TransactionsActivity extends TemplateActivity {
   );
 
   /**
-   * Maximum number of transactions retrieved from the database in a single
-   * pagination request.
-   */
-  private final int PAGE_SIZE = 20;
-
-  /**
    * List containing the transactions currently displayed by the activity.
    *
    * <p>The list is initially populated with transactions stored in
@@ -115,6 +109,12 @@ public class TransactionsActivity extends TemplateActivity {
   private boolean isLoadingTransactions = false;
 
   /**
+   * Holds the number of loaded transactions from the last load. Used to properly notify the
+   * recycler view about the changes.
+   * */
+  private int loadedTransactionsCount = 0;
+
+  /**
    * Adapter responsible for displaying transaction cards inside the
    * {@link RecyclerView}.
    */
@@ -124,18 +124,6 @@ public class TransactionsActivity extends TemplateActivity {
    * RecyclerView used to display the user's transactions.
    */
   private RecyclerView recyclerView;
-
-  /**
-   * Layout used as a visual indicator while a transaction operation is
-   * being processed.
-   */
-  private LinearLayout processIndicator;
-
-  /**
-   * Text view displaying the current process message inside the process
-   * indicator.
-   */
-  private TextView tvProcessMessage;
 
   /**
    * Floating action button used to open the transaction creation screen.
@@ -154,7 +142,7 @@ public class TransactionsActivity extends TemplateActivity {
    * {@link RecyclerView}.</p>
    *
    * <p>If no transactions are currently stored in the local list,
-   * {@link #loadTransactions()} is called to retrieve the first page from
+   * {@link #handleLoadTransactions()} is called to retrieve the first page from
    * the database.</p>
    *
    * @param savedInstanceState previously saved activity state, or
@@ -182,7 +170,7 @@ public class TransactionsActivity extends TemplateActivity {
 
     // load transactions
     if (transactionList.isEmpty()) {
-      this.loadTransactions();
+      this.handleLoadTransactions();
     }
   }
 
@@ -222,11 +210,9 @@ public class TransactionsActivity extends TemplateActivity {
    */
   @Override
   protected void grabWidgets() {
+    super.grabWidgets();
     recyclerView = findViewById(R.id.recyclerView);
-    processIndicator = findViewById(R.id.processIndicator);
-    tvProcessMessage = findViewById(R.id.tvProcessMessage);
     floatingActionButton = findViewById(R.id.floatingActionButton);
-    localeSwitch = findViewById(R.id.localeSwitch);
   }
 
   /**
@@ -239,8 +225,8 @@ public class TransactionsActivity extends TemplateActivity {
    */
   @Override
   protected void setListeners() {
+    super.setListeners();
     floatingActionButton.setOnClickListener(v -> this.openTransactionsUpsertActivity());
-    localeSwitch.setOnItemSelectedListener(LocalisationService.getLocaleChangeHandler());
   }
 
   /**
@@ -278,7 +264,7 @@ public class TransactionsActivity extends TemplateActivity {
         boolean isNearEnd = lastVisiblePosition >= totalItemCount - 5;
 
         if(isNearEnd && hasNextPage && !isLoadingTransactions) {
-          loadTransactions();
+          handleLoadTransactions();
         }
       }
     });
@@ -315,201 +301,176 @@ public class TransactionsActivity extends TemplateActivity {
    *
    * @param result result returned by {@link TransactionsUpsert}
    */
+  @UiThread
   private void handleUpsertResult(@NonNull ActivityResult result) {
     if(result.getResultCode() == Activity.RESULT_OK) {
       Transaction transactionUpsertObject = CacheService.read(CacheKey.TRANSACTION_UPSERT_OBJECT, Transaction.class);
-      int positionInView = -1;
+      int positionInView = IntStream.range(0, transactionList.size())
+              .filter(i -> transactionList.get(i).equals(transactionUpsertObject))
+              .findFirst()
+              .orElse(-1);
 
-      if(transactionUpsertObject != null) {
-        for(int i = 0; i < transactionList.size(); i++) {
-          Transaction transaction = transactionList.get(i);
-          if(transactionUpsertObject.getID().equals(transaction.getID())) {
-            positionInView = i;
-            break;
-          }
-        }
 
-        if(positionInView == -1) {
-          transactionList.add(0, transactionUpsertObject);
-          adapter.notifyItemInserted(0);
-        } else {
-          transactionList.set(positionInView, transactionUpsertObject);
-          adapter.notifyItemChanged(positionInView);
-        }
+      if(positionInView == -1) {
+        transactionList.add(0, transactionUpsertObject);
+        adapter.notifyItemInserted(0);
+      } else {
+        transactionList.set(positionInView, transactionUpsertObject);
+        adapter.notifyItemChanged(positionInView);
       }
+
     }
 
     CacheService.clear(CacheKey.TRANSACTION_UPSERT_OBJECT);
-    CacheService.clear(CacheKey.POSITION_IN_VIEW);
   }
 
   /**
-   * Toggles the visibility of the transaction process indicator.
-   *
-   * <p>If the indicator is currently hidden, it becomes visible. If it is
-   * visible, it becomes hidden. When a string resource identifier is supplied,
-   * the displayed process message is also updated.</p>
-   *
-   * @param resourceStringID resource identifier of the message to display,
-   *                         or {@code null} when the message should remain
-   *                         unchanged
+   * Toggles the visibility of the recycler view.
    */
-  private void toggleProcessIndicator(Integer resourceStringID) {
-    processIndicator.setVisibility(
-            processIndicator.getVisibility() == View.GONE ?
-                    View.VISIBLE :
-                    View.GONE
+  private void toggleRecyclerView() {
+    recyclerView.setVisibility(
+            recyclerView.getVisibility() != View.GONE ?
+                    View.GONE :
+                    View.VISIBLE
     );
-
-    if(resourceStringID != null) {
-      tvProcessMessage.setText(getString(resourceStringID));
-    }
   }
 
   /**
-   * Loads the next page of transactions from the database asynchronously.
+   * Starts loading the next page of transactions asynchronously
+   * by executing {@link #loadTransactions()} on the background thread.
    *
-   * <p>The method immediately returns if another loading operation is already
-   * running or if there are no additional pages available.</p>
+   * <p>The operation is skipped if transactions are already being loaded or no
+   * additional pages are available. On success, {@link #loadingSuccessful()} is
+   * executed on the UI thread.</p>
    *
-   * <p>The authenticated user's identifier, current page size, and last
-   * visible Firestore document are supplied to the database service. The
-   * returned {@link TransactionPage} updates the pagination state and provides
-   * the newly retrieved transactions.</p>
-   *
-   * <p>Each loaded transaction is associated with its corresponding
-   * {@link Category} from {@link CacheService}. If no cached category exists,
-   * a fallback category named {@code "No category"} is assigned.</p>
-   *
-   * <p>The transactions are appended to the displayed list, stored in the
-   * cache, and the adapter is notified of the inserted range on the main UI
-   * thread.</p>
-   *
-   * <p>The {@link #isLoadingTransactions} flag is reset in the
-   * {@code finally} block regardless of whether the operation succeeds or
-   * fails.</p>
+   * @see #doInBackground(Runnable, Runnable)
+   * @see #loadTransactions()
+   * @see #loadingSuccessful()
    */
-  private void loadTransactions() {
+  @UiThread
+  private void handleLoadTransactions() {
     // Exit immediately if loading is in process, or there are no more transactions to load
     if(this.isLoadingTransactions || !this.hasNextPage) {
       return;
     }
-
     this.isLoadingTransactions = true;
     showToast(getString(R.string.transactions_loading));
-
     // fetch transaction in background
-    Executors.newSingleThreadExecutor().execute(() -> {
-      try {
-        String uid = authService.getUserID();
-        TransactionPage page = databaseService.getTransactions(uid, PAGE_SIZE, this.lastVisibleDocument);
-        this.hasNextPage = page.hasNextPage();
-        this.lastVisibleDocument = page.getLastVisibleDocument();
-        List<Transaction> loadedTransactions = page.getTransactionList();
-
-        // fetching transaction categories
-        for(Transaction transaction : loadedTransactions) {
-          Category category = CacheService.get(CacheKey.CATEGORIES, transaction.getCategoryID(), Category.class);
-          transaction.setCategory(category != null ? category : new Category(transaction.getUserID(), null, "No category"));
-        }
-
-        this.transactionList.addAll(loadedTransactions);
-        CacheService.store(CacheKey.TRANSACTIONS, loadedTransactions);
-        runOnUiThread(() -> this.loadSuccess(transactionList.size() - loadedTransactions.size(), loadedTransactions.size()));
-      } catch (Exception exception) {
-        runOnUiThread(() -> this.handleException(exception, getString(R.string.error_general), TransactionsActivity.class));
-      } finally {
-        // opening the loading gate
-        this.isLoadingTransactions = false;
-      }
-    });
+    this.doInBackground(this::loadTransactions, this::loadingSuccessful);
   }
 
   /**
-   * Handles successful completion of a transaction-loading operation.
+   * Loads the next page of transactions and updates the pagination state.
    *
-   * <p>A localized success notification is displayed and the transaction
-   * adapter is informed about the range of newly inserted items.</p>
-   *
-   * @param positionStart index at which the newly loaded transactions begin
-   * @param itemCount     number of transactions that were loaded
+   * <p>Each transaction is assigned its cached category, then added to the
+   * transaction list and stored in the cache.</p>
+   * 
+   * @apiNote Called on the background thread as a heavy 
+   * task using {@link #doInBackground(Runnable, Runnable)}
    */
-  private void loadSuccess(int positionStart, int itemCount) {
+  @WorkerThread
+  private void loadTransactions() {
+    String uid = authService.getUserID();
+    TransactionPage page = databaseService.getTransactions(
+            uid,
+            TransactionPage.PAGE_SIZE,
+            this.lastVisibleDocument
+    );
+    this.hasNextPage = page.hasNextPage();
+    this.lastVisibleDocument = page.getLastVisibleDocument();
+    List<Transaction> loadedTransactions = page.getTransactionList();
+
+    // fetching transaction categories
+    for(Transaction transaction : loadedTransactions) {
+      Category category = CacheService.get(CacheKey.CATEGORIES, transaction.getCategoryID(), Category.class);
+      transaction.setCategory(
+              category != null ?
+                      category :
+                      new Category(
+                              transaction.getCategoryID(),
+                              "No category",
+                              transaction.getUserID()
+                      )
+      );
+    }
+
+    this.transactionList.addAll(loadedTransactions);
+    this.loadedTransactionsCount = loadedTransactions.size();
+    CacheService.store(CacheKey.TRANSACTIONS, loadedTransactions);
+  }
+
+  /**
+   * Handles successful transaction loading on the UI thread.
+   *
+   * <p>Resets the loading state, shows a confirmation message, and notifies the
+   * adapter about the newly inserted transactions.</p>
+   * 
+   * @apiNote Passed to {@code whenDone} parameter of the {@link #doInBackground(Runnable, Runnable)}
+   */
+  @UiThread
+  private void loadingSuccessful() {
+    isLoadingTransactions = false;
     showToast(getString(R.string.transactions_loaded));
+    // index at which the newly loaded transactions begin
+    int positionStart = transactionList.size() - loadedTransactionsCount;
     // refreshing data
-    adapter.notifyItemRangeInserted(positionStart, itemCount);
+    adapter.notifyItemRangeInserted(positionStart, loadedTransactionsCount);
   }
 
   /**
    * Displays a confirmation dialog before deleting a transaction.
    *
    * <p>The dialog asks the user to confirm the deletion. Selecting the
-   * positive action calls {@link #handleDeleteTransaction(String)}, while
+   * positive action calls {@link #handleDeleteTransaction()}, while
    * selecting the negative action dismisses the dialog without modifying
    * the transaction.</p>
-   *
-   * @param ID unique identifier of the transaction to delete
    */
-  private void showDeleteConfirmationDialog(@NonNull String ID) {
+  private void showDeleteConfirmationDialog() {
     new MaterialAlertDialogBuilder(this, R.style.CustomAlertDialogTheme)
             .setTitle(R.string.delete_transaction_title)
             .setMessage(R.string.delete_transaction_message)
-            .setPositiveButton(R.string.delete_transaction_yes, (d, which) -> handleDeleteTransaction(ID))
+            .setPositiveButton(R.string.delete_transaction_yes, (d, which) -> handleDeleteTransaction())
             .setNegativeButton(R.string.delete_transaction_no, (d, which) -> d.dismiss())
             .setCancelable(true)
             .show();
   }
 
   /**
-   * Deletes the transaction identified by the supplied identifier.
+   * Deletes the specified transaction asynchronously.
    *
-   * <p>The method first searches the currently displayed transaction list to
-   * determine the position of the transaction. A process indicator is then
-   * displayed while the deletion is executed on a background thread.</p>
-   *
-   * <p>After the transaction has been deleted from the database, it is removed
-   * from the local list. The method intentionally pauses for two seconds so
-   * that the process indicator remains visible before the UI is updated.</p>
-   *
-   * <p>After successful deletion, the process indicator is hidden, a localized
-   * confirmation message is displayed, and the adapter is notified that the
-   * item has been removed.</p>
-   *
-   * <p>If an exception occurs, the process indicator is hidden and the
-   * exception is forwarded to the generic activity exception handler.</p>
-   *
-   * @param ID unique identifier of the transaction to delete
+   * <p>On success, removes it from the local list, restores the transaction view,
+   * shows a confirmation message, and notifies the adapter.</p>
    */
-  private void handleDeleteTransaction(@NonNull String ID) {
-    int position = -1;
+  @UiThread
+  private void handleDeleteTransaction() {
+    String ID = CacheService.read(CacheKey.TRANSACTION_TO_DELETE_ID, String.class);
 
-    for(int i = 0; i < transactionList.size(); i++) {
-      Transaction transaction = transactionList.get(i);
-      if(transaction.getID().equals(ID)) {
-        position = i;
-        break;
-      }
+    if(ID == null) {
+      throw new IllegalArgumentException("For some reason, the ID of the chosen " +
+              "transaction has not been stored in cache.");
     }
 
-    this.toggleProcessIndicator(R.string.deleting_transaction);
-    int finalPosition = position;
-    Executors.newSingleThreadExecutor().execute(() -> {
-      try {
-        databaseService.deleteTransaction(ID);
-        transactionList.remove(finalPosition);
-        // fake pause of 2 seconds to make process indicator visible for at least 2 seconds
-        Thread.sleep(2000);
-        runOnUiThread(() -> {
-          toggleProcessIndicator(null);
-          showToast(getString(R.string.transaction_deleted));
-          adapter.notifyItemRemoved(finalPosition);
-        });
-      } catch(Exception exception) {
-        runOnUiThread(() -> {
-          toggleProcessIndicator(null);
-          handleException(exception, getString(R.string.error_general), TransactionsActivity.class);
-        });
-      }
-    });
+    int position = IntStream.range(0, transactionList.size())
+            .filter(i -> transactionList.get(i).getID().equals(ID))
+            .findFirst()
+            .orElse(-1);
+
+    this.toggleRecyclerView();
+    this.doInBackground(
+            // lambda function that actually deletes the transaction from database
+            // represents the heavy task
+            () -> {
+              databaseService.deleteTransaction(ID);
+              transactionList.remove(position);
+            },
+            // lambda function that updates the UI
+            // represents an action done when heavy task completes successfully
+            () -> {
+              CacheService.clear(CacheKey.TRANSACTION_TO_DELETE_ID);
+              toggleRecyclerView();
+              showToast(getString(R.string.transaction_deleted));
+              adapter.notifyItemRemoved(position);
+            }
+    );
   }
 }

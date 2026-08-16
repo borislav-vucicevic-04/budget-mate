@@ -9,7 +9,6 @@
     android:backgroundTint="@null"
     tools:context=".activities.TransactionsActivity">
 
-    <!-- Application title -->
     <TextView
         android:id="@+id/appTitle"
         android:layout_width="wrap_content"
@@ -23,7 +22,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Activity title -->
     <TextView
         android:id="@+id/activityTitle"
         android:layout_width="wrap_content"
@@ -65,41 +63,17 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <LinearLayout
-        android:id="@+id/processIndicator"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@color/indicator_overlay"
-        android:clickable="true"
-        android:elevation="20dp"
-        android:focusable="true"
-        android:gravity="center"
-        android:orientation="vertical"
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="?android:attr/progressBarStyle"
+        android:layout_width="match_parent"
+        android:layout_height="128dp"
+        android:indeterminateTint="@color/tomato"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <com.google.android.material.progressindicator.CircularProgressIndicator
-            android:id="@+id/progressBar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:indeterminate="true"
-            app:indicatorColor="@color/tomato"
-            app:indicatorSize="64dp"
-            app:trackThickness="6dp" />
-
-        <TextView
-            android:id="@+id/tvProcessMessage"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:textColor="@color/black"
-            android:textSize="24sp"
-            android:textStyle="bold" />
-
-    </LinearLayout>
+        app:layout_constraintTop_toTopOf="parent" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/floatingActionButton"
@@ -115,5 +89,19 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:srcCompat="@drawable/add"
         app:tint="@null"/>
+
+
+    <View
+        android:id="@+id/blocker"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@android:color/transparent"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

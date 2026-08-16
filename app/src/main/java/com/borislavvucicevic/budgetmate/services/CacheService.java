@@ -29,7 +29,6 @@ import java.util.List;
  * from multiple threads.</p>
  */
 public class CacheService {
-
   /**
    * Cached profile of the currently authenticated user.
    *
@@ -78,14 +77,7 @@ public class CacheService {
    */
   private static Transaction transactionUpsertObject = null;
 
-  /**
-   * Position of the transaction being created or edited in the associated
-   * RecyclerView.
-   *
-   * <p>The value is {@code null} when no RecyclerView position is currently
-   * cached.</p>
-   */
-  private static Integer positionInView = null;
+  private static String transactionToDeleteID = null;
 
   /**
    * Prevents the creation of {@code CacheService} instances.
@@ -111,7 +103,6 @@ public class CacheService {
    *       {@link DocumentSnapshot}.</li>
    *   <li>{@link CacheKey#TRANSACTION_UPSERT_OBJECT} requires a
    *       {@link Transaction}.</li>
-   *   <li>{@link CacheKey#POSITION_IN_VIEW} requires an {@link Integer}.</li>
    * </ul>
    *
    * <p>When categories or transactions are stored, they are added to or replace
@@ -178,11 +169,14 @@ public class CacheService {
         }
         break;
 
-      case POSITION_IN_VIEW:
-        if(object instanceof Integer) positionInView = (Integer) object;
-        else throw new IllegalArgumentException(
-                "Object must be an instance of class Integer."
-        );
+      case TRANSACTION_TO_DELETE_ID:
+        if(object instanceof String) {
+          transactionToDeleteID = (String) object;
+        } else {
+          throw new IllegalArgumentException(
+                  "Object must be an instance of class String."
+          );
+        }
         break;
     }
   }
@@ -226,8 +220,9 @@ public class CacheService {
       case TRANSACTION_UPSERT_OBJECT:
         return type.cast(transactionUpsertObject);
 
-      case POSITION_IN_VIEW:
-        return type.cast(positionInView);
+
+      case TRANSACTION_TO_DELETE_ID:
+        return type.cast(transactionToDeleteID);
 
       case CATEGORIES:
         throw new CacheException(
@@ -316,18 +311,20 @@ public class CacheService {
         break;
 
       case HAS_NEXT_PAGE:
-        hasNextPage = null;
+        hasNextPage = true;
         break;
 
       case LAST_VISIBLE_DOCUMENT:
         lastVisibleDocument = null;
+        break;
 
       case TRANSACTION_UPSERT_OBJECT:
         transactionUpsertObject = null;
         break;
 
-      case POSITION_IN_VIEW:
-        positionInView = null;
+      case TRANSACTION_TO_DELETE_ID:
+        transactionToDeleteID = null;
+        break;
     }
   }
 
@@ -341,10 +338,10 @@ public class CacheService {
     userProfile = null;
     categories.clear();
     transactions.clear();
-    hasNextPage = null;
+    hasNextPage = true;
     lastVisibleDocument = null;
     transactionUpsertObject = null;
-    positionInView = null;
+    transactionToDeleteID = null;
   }
 
   /**
