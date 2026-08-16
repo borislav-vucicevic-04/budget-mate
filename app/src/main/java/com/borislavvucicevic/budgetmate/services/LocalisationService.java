@@ -55,19 +55,6 @@ public final class LocalisationService {
   }
 
   /**
-   * Restores the application's language to the language configured on the
-   * user's device.
-   *
-   * <p>Passing an empty locale list removes the application's custom language
-   * preference and allows Android to use the system locale.</p>
-   */
-  public static void useSystemLanguage() {
-    AppCompatDelegate.setApplicationLocales(
-            LocaleListCompat.getEmptyLocaleList()
-    );
-  }
-
-  /**
    * Returns the language tag of the currently selected application locale.
    *
    * <p>For example, this method may return {@code "en"}, {@code "sr"},
