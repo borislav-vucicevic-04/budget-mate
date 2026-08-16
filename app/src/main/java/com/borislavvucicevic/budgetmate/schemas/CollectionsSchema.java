@@ -1,15 +1,22 @@
 package com.borislavvucicevic.budgetmate.schemas;
 
-import androidx.annotation.NonNull;
+/**
+ * Defines the collection names used in the Firebase Firestore Database.
+ */
+public final class CollectionsSchema {
 
-public fina Collections {
-  USERS,
-  TRANSACTIONS,
-  CATEGORIES;
+  /**
+   * The identifier for the "users" collection.
+   */
+  public static final String USERS = "users";
 
-  @NonNull
-  @Override
-  public String toString() {
-    return super.toString().toLowerCase();
-  }
+  /**
+   * The identifier for the "categories" collection.
+   */
+  public static final String CATEGORIES = "categories";
+
+  /**
+   * The identifier for the "transactions" collection.
+   */
+  public static final String TRANSACTIONS = "transactions";
 }

@@ -35,8 +35,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/appTitle" />
-
-    <!-- Scrollable login form -->
     <Spinner
         android:id="@+id/localeSwitch"
         android:layout_width="wrap_content"
@@ -75,7 +73,6 @@
             android:gravity="center_vertical"
             android:orientation="vertical">
 
-            <!-- Currency selector -->
             <Spinner
                 android:id="@+id/spReportType"
                 android:layout_width="match_parent"
@@ -87,7 +84,6 @@
                 android:paddingEnd="12dp"
                 android:spinnerMode="dialog" />
 
-            <!-- Login button -->
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/dpDate"
                 android:layout_width="match_parent"
@@ -139,6 +135,7 @@
                 android:layout_margin="8dp"
                 android:background="@drawable/bg_input_field"
                 android:foregroundTint="@color/black"
+                android:textColor="@color/black"
                 android:textColorHint="@color/input_hint_color"
                 android:hint="@string/report_year"
                 android:inputType="number"
@@ -202,7 +199,6 @@
                 android:textStyle="bold"
                 app:backgroundTint="@null" />
 
-            <!-- Error message -->
             <TextView
                 android:id="@+id/tvErrorWrapper"
                 android:layout_width="match_parent"
@@ -229,6 +225,20 @@
         android:id="@+id/webView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Blocker -->
+    <View
+        android:id="@+id/blocker"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@android:color/transparent"
+        android:clickable="true"
+        android:focusable="true"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
