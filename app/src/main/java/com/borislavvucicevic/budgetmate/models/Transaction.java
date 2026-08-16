@@ -1,9 +1,13 @@
 package com.borislavvucicevic.budgetmate.models;
 
+import androidx.annotation.Nullable;
+
 import com.borislavvucicevic.budgetmate.enums.TransactionType;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentId;
 import com.google.firebase.firestore.Exclude;
+
+import java.util.Objects;
 
 /**
  * Represents a financial transaction within the BudgetMate application.
@@ -256,5 +260,42 @@ public class Transaction {
    */
   public void setModifiedOn(Timestamp modifiedOn) {
     this.modifiedOn = modifiedOn;
+  }
+
+  /**
+   * Compares this transaction to another object for equality.
+   * <p>
+   * Two transaction instances are considered equal if they are of the exact same class
+   * and share the identical unique identifier (ID).
+   * </p>
+   *
+   * @param obj the reference object with which to compare
+   * @return {@code true} if this object is the same as the obj argument or has a matching ID;
+   *         {@code false} otherwise
+   */
+  @Exclude
+  @Override
+  public boolean equals(@Nullable Object obj) {
+    if(this == obj) return true;
+    if(obj == null) return false;
+    if(this.getClass() != obj.getClass()) return false;
+
+    return this.getID().equals(((Transaction) obj).getID());
+  }
+
+  /**
+   * Returns a hash code value for this transaction.
+   * <p>
+   * This method is supported for the benefit of hash tables such as those provided by
+   * {@link java.util.HashMap}. The hash code is generated strictly from the transaction's
+   * unique identifier (ID) to maintain consistency with the {@link #equals(Object)} method.
+   * </p>
+   *
+   * @return a hash code value for this object
+   */
+  @Exclude
+  @Override
+  public int hashCode() {
+    return Objects.hash(this.ID);
   }
 }
