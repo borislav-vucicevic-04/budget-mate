@@ -2,10 +2,10 @@ package com.borislavvucicevic.budgetmate;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.Button;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.WorkerThread;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -21,7 +21,6 @@ import com.borislavvucicevic.budgetmate.services.CacheService;
 import com.borislavvucicevic.budgetmate.services.LocalisationService;
 
 import java.util.List;
-import java.util.concurrent.Executors;
 
 /**
  * Main activity of the BudgetMate application.
@@ -106,7 +105,11 @@ public class MainActivity extends TemplateActivity {
     }
 
     // Fetch categories and user profile and store them in cache.
-    this.loadCategoriesAndUserProfile();
+    this.showToast(getString(R.string.loading_data));
+    this.doInBackground(
+            this::loadNecessaryData,
+            () -> this.showToast(getString(R.string.data_loaded))
+    );
   }
 
   /**
@@ -132,10 +135,10 @@ public class MainActivity extends TemplateActivity {
    */
   @Override
   protected void grabWidgets() {
+    super.grabWidgets();
     btnUserProfile = findViewById(R.id.btnUserProfile);
     btnGenerateReports = findViewById(R.id.btnGenerateReports);
     btnViewTransactions = findViewById(R.id.btnViewTransactions);
-    localeSwitch = findViewById(R.id.localeSwitch);
   }
 
   /**
@@ -147,70 +150,30 @@ public class MainActivity extends TemplateActivity {
    */
   @Override
   protected void setListeners() {
+    super.setListeners();
     btnUserProfile.setOnClickListener(v -> this.openActivity(UserProfileActivity.class));
     btnViewTransactions.setOnClickListener(v -> this.openActivity(TransactionsActivity.class));
     btnGenerateReports.setOnClickListener(v -> this.openActivity(ReportsActivity.class));
-    localeSwitch.setOnItemSelectedListener(LocalisationService.getLocaleChangeHandler());
-  }
-
-  private void toggleButtonsInteractivity() {
-    btnUserProfile.setEnabled(!btnUserProfile.isEnabled());
-    btnGenerateReports.setEnabled(!btnGenerateReports.isEnabled());
-    btnViewTransactions.setEnabled(!btnViewTransactions.isEnabled());
   }
 
   /**
    * Loads the authenticated user's categories and profile information
    * from the database.
    *
-   * <p>The operation is performed on a background thread to avoid
-   * blocking the Android UI thread. Before loading starts, all buttons
-   * are disabled, preventing navigation
-   * to other application screens while the required data is being
-   * retrieved.</p>
-   *
    * <p>After successful retrieval, the categories and user profile are
    * stored in {@link CacheService} using {@link CacheKey#CATEGORIES}
    * and {@link CacheKey#USER_PROFILE}. A success message is then shown
    * to the user.</p>
    */
-  private void loadCategoriesAndUserProfile() {
-    this.toggleButtonsInteractivity();
-    this.showToast(getString(R.string.loading_data));
-
-    Executors.newSingleThreadExecutor().execute(() -> {
-      try {
-        // Get user ID.
-        String uid = authService.getUserID();
-
-        // Fetch categories and user profile.
-        List<Category> categories = databaseService.getCategories(uid);
-        UserProfile userProfile = databaseService.getUserProfile(uid);
-
-        // Store retrieved data in cache.
-        CacheService.store(CacheKey.CATEGORIES, categories);
-        CacheService.store(CacheKey.USER_PROFILE, userProfile);
-        Log.d("MainActivity-DEBUG", "UserProfile: " + userProfile);
-        Log.d("MainActivity-DEBUG", "Categories: " + categories);
-        Thread.sleep(2000);
-        runOnUiThread(() -> {
-          this.toggleButtonsInteractivity();
-          // Display success message.
-          this.showToast(getString(R.string.data_loaded));
-        });
-
-      }
-      catch (InterruptedException exception) {
-        Thread.currentThread().interrupt();
-        throw new RuntimeException("Thread was interrupted", exception);
-      }
-      catch (Exception exception) {
-        runOnUiThread(() -> this.handleException(
-                  exception,
-                  getString(R.string.error_general),
-                  MainActivity.class
-        ));
-      }
-    });
+  @WorkerThread
+  private void loadNecessaryData() {
+    // Get user ID.
+    String uid = authService.getUserID();
+    // Fetch categories and user profile.
+    List<Category> categories = databaseService.getCategories(uid);
+    UserProfile userProfile = databaseService.getUserProfile(uid);
+    // Store retrieved data in cache.
+    CacheService.store(CacheKey.CATEGORIES, categories);
+    CacheService.store(CacheKey.USER_PROFILE, userProfile);
   }
 }
