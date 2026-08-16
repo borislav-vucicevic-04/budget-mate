@@ -1,15 +1,19 @@
 package com.borislavvucicevic.budgetmate.activities;
 
-import android.content.Intent;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AlertDialog;
+import androidx.annotation.UiThread;
+import androidx.annotation.WorkerThread;
+import androidx.core.content.ContextCompat;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
@@ -19,7 +23,9 @@ import com.borislavvucicevic.budgetmate.TemplateActivity;
 import com.borislavvucicevic.budgetmate.exceptions.AuthException;
 import com.borislavvucicevic.budgetmate.enums.FirebaseAuthErrorCodes;
 import com.borislavvucicevic.budgetmate.exceptions.ValidationException;
-import com.borislavvucicevic.budgetmate.services.LocalisationService;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
+import java.util.function.Consumer;
 
 /**
  * Activity responsible for authenticating users in the BudgetMate application.
@@ -80,8 +86,14 @@ public class LoginActivity extends TemplateActivity {
    */
   private Button btnLogin;
 
+  /**
+   * Holds the value of {@link LoginActivity#etEmail} widget
+   * */
   private String email;
 
+  /**
+   * Holds the value of {@link LoginActivity#etPassword} widget
+   * */
   private String password;
 
   /**
@@ -120,13 +132,12 @@ public class LoginActivity extends TemplateActivity {
             }
     );
 
-    // Check if the user is already logged in.
-    // If true, redirect directly to the main activity.
-    if (authService.isSignedIn()) {
-      startActivity(
-              new Intent(getApplicationContext(), MainActivity.class)
+    if(authService.isSignedIn()) {
+      this.openActivity(
+              MainActivity.class,
+              true,
+              true
       );
-      finish();
     }
   }
 
@@ -153,15 +164,13 @@ public class LoginActivity extends TemplateActivity {
    */
   @Override
   protected void grabWidgets() {
+    super.grabWidgets();
     etEmail = findViewById(R.id.etEmail);
     etPassword = findViewById(R.id.etPassword);
-    tvErrorWrapper = findViewById(R.id.tvErrorWrapper);
     tvVerifyEmailLink = findViewById(R.id.tvVerifyEmailLink);
-    progressBar = findViewById(R.id.progressBar);
     btnLogin = findViewById(R.id.btnLogin);
     tvPasswordResetLink = findViewById(R.id.tvPasswordResetLink);
     tvRegisterLink = findViewById(R.id.tvRegisterLink);
-    localeSwitch = findViewById(R.id.localeSwitch);
   }
 
   /**
@@ -173,6 +182,7 @@ public class LoginActivity extends TemplateActivity {
    */
   @Override
   protected void setListeners() {
+    super.setListeners();
     btnLogin.setOnClickListener(v -> this.btnLoginClickHandler());
     tvRegisterLink.setOnClickListener(v -> this.openActivity(
             RegisterActivity.class,
@@ -181,9 +191,11 @@ public class LoginActivity extends TemplateActivity {
     ));
     tvVerifyEmailLink.setOnClickListener(v -> this.handleVerifyEmailLink());
     tvPasswordResetLink.setOnClickListener(this::handleResetPasswordLink);
-    localeSwitch.setOnItemSelectedListener(LocalisationService.getLocaleChangeHandler());
   }
 
+  /**
+   * Grabs values of widgets and stores them in the class fields.
+   * */
   @Override
   protected void grabValues() {
     email = etEmail.getText().toString().trim();
@@ -202,118 +214,84 @@ public class LoginActivity extends TemplateActivity {
    */
   private void btnLoginClickHandler() {
     this.grabValues();
-    this.toggleProgressBarVisibility();
-    this.doInBackground(this::handleLogin);
+    this.doInBackground(
+            this::handleLogin,
+            this::handleSuccess,
+            this::handleAuthException,
+            AuthException.class
+    );
   }
 
   /**
    * Validates the login form and attempts to authenticate the user.
    *
-   * <p>The entered form values are first validated. If validation succeeds,
-   * the authentication service attempts to sign in the user using the supplied
-   * email address and password.</p>
+   * <p>This method performs the potentially blocking login operation and is intended
+   * to be executed as a background task by using {@code doInBackground}.</p>
    *
-   * <p>After successful authentication, {@link #handleSuccess()} is invoked on
-   * the main UI thread.</p>
+   * <p>Any exception thrown by validation or authentication is propagated to
+   * {@code doInBackground}, which handles it on the UI thread.</p>
    *
-   * <p>If an error occurs, the corresponding exception handler is invoked on
-   * the main UI thread:</p>
-   *
-   * <ul>
-   *   <li>{@link ValidationException} is handled as a form validation error.</li>
-   *   <li>{@link AuthException} is handled as an authentication error.</li>
-   *   <li>Any other {@link Exception} is handled as a general application error.</li>
-   * </ul>
-   *
-   * <p>This method is intended to be executed on a background thread.</p>
+   * @see #doInBackground(Runnable, Runnable, Consumer, Class)
    */
+  @WorkerThread
   private void handleLogin() {
-    try {
-      this.validateForm();
-      authService.signIn(email, password);
-      runOnUiThread(this::handleSuccess);
-    } catch (ValidationException exception) {
-      runOnUiThread(() -> this.handleException(
-              exception,
-              LoginActivity.class
-      ));
-    } catch (AuthException exception) {
-      runOnUiThread(() -> this.handleException(exception));
-    } catch (Exception exception) {
-      runOnUiThread(() -> this.handleException(
-              exception,
-              getString(R.string.error_general),
-              LoginActivity.class
-      ));
-    }
+    this.handleValidation();
+    authService.signIn(email, password);
   }
 
   /**
-   * Completes the login process after successful authentication.
+   * Handles a successful login on the UI thread, by redirecting user to the dashboard.
    *
-   * <p>A success notification is displayed before the user is redirected
-   * to {@link MainActivity}. The current login activity is then finished
-   * so that it is removed from the activity back stack.</p>
+   * <p>This method is passed to {@code doInBackground} as the {@code whenDone}
+   * action and is executed after the background login process completes successfully.</p>
+   * 
+   * @see #doInBackground(Runnable, Runnable, Consumer, Class)
    */
+  @UiThread
   private void handleSuccess() {
-    showToast(getString(R.string.login_success));
-
-    startActivity(
-            new Intent(getApplicationContext(), MainActivity.class)
-    );
-
+    this.showToast(getString(R.string.login_success));
+    this.openActivity(MainActivity.class, true, true);
     finish();
   }
 
   /**
-   * Handles authentication errors returned by the authentication service
-   * during the login process.
+   * Handles authentication errors raised during the background login process.
    *
-   * <p>The error code contained within the supplied {@link AuthException}
-   * is converted into a {@link FirebaseAuthErrorCodes} value and mapped to
-   * an appropriate localized message.</p>
+   * <p>This method is passed to {@code doInBackground} as the custom handler for
+   * {@link AuthException} and is executed on the UI thread when such an exception occurs.</p>
    *
-   * <p>If the user's email has not yet been verified, the email
-   * verification link is also made visible so that another verification
-   * email can be requested.</p>
+   * <p>The authentication error code is mapped to a localized message and then
+   * delegated to the general exception handler. For an unverified email address,
+   * the email verification link is also displayed.</p>
    *
-   * <p>The generated error message and original exception are then passed
-   * to the generic exception handler inherited from
-   * {@link TemplateActivity}.</p>
-   *
-   * @param exception authentication exception containing the Firebase
-   *                  authentication error code
+   * @param exception the authentication exception to handle
+   *                  
+   * @see #doInBackground(Runnable, Runnable, Consumer, Class) 
    */
-  private void handleException(@NonNull AuthException exception) {
+  @UiThread
+  private void handleAuthException(@NonNull AuthException exception) {
     String message;
-
     FirebaseAuthErrorCodes code = FirebaseAuthErrorCodes.parse(exception.getErrorCode());
+    switch (code) {
+      case ERROR_INVALID_EMAIL:
+        message = getString(R.string.error_invalid_email);
+        break;
 
-    // Extract localized message shown to the user.
-    if (code != null) {
-      switch (code) {
-        case ERROR_INVALID_EMAIL:
-          message = getString(R.string.error_invalid_email);
-          break;
+      case ERROR_INVALID_CREDENTIAL:
+        message = getString(R.string.error_invalid_credential);
+        break;
 
-        case ERROR_INVALID_CREDENTIAL:
-          message = getString(R.string.error_invalid_credential);
-          break;
+      case ERROR_TOO_MANY_REQUESTS:
+        message = getString(R.string.error_too_many_requests);
+        break;
 
-        case ERROR_TOO_MANY_REQUESTS:
-          message = getString(R.string.error_too_many_requests);
-          break;
+      case ERROR_EMAIL_NOT_VERIFIED:
+        message = getString(R.string.error_email_not_verified);
+        tvVerifyEmailLink.setVisibility(View.VISIBLE);
+        break;
 
-        case ERROR_EMAIL_NOT_VERIFIED:
-          message = getString(R.string.error_email_not_verified);
-          tvVerifyEmailLink.setVisibility(View.VISIBLE);
-          break;
-
-        default:
-          message = getString(R.string.error_general);
-      }
-    } else {
-      message = getString(R.string.error_general);
+      default:
+        message = getString(R.string.error_general);
     }
 
     // Log and display the message.
@@ -321,117 +299,106 @@ public class LoginActivity extends TemplateActivity {
   }
 
   /**
-   * Initiates the asynchronous email verification process.
+   * Sends a verification email asynchronously.
    *
-   * <p>The progress indicator is displayed before the authentication
-   * service attempts to send a verification email on a background thread.</p>
+   * <p>On success, updates the verification link and shows a confirmation message.
+   * Authentication errors are handled by {@link #handleAuthException(AuthException)}.</p>
    *
-   * <p>If the operation succeeds, the verification link text is changed
-   * to indicate that the email may be resent, the progress indicator is
-   * hidden, and a confirmation message is displayed.</p>
-   *
-   * <p>Authentication and unexpected errors are forwarded to their
-   * corresponding exception handlers on the main UI thread.</p>
+   * @see #doInBackground(Runnable, Runnable, Consumer, Class)
+   * @see #handleAuthException(AuthException)
    */
   private void handleVerifyEmailLink() {
-    toggleProgressBarVisibility();
-
-    this.doInBackground(() -> {
-      try {
-        authService.sendVerificationEmail();
-        runOnUiThread(() -> {
-          tvVerifyEmailLink.setText(getText(R.string.resend_verification_email));
-          toggleProgressBarVisibility();
-          showToast(getString(R.string.verification_email_sent));
-        });
-      } catch (AuthException exception) {
-        runOnUiThread(() -> this.handleException(exception));
-      } catch (Exception exception) {
-        runOnUiThread(() -> handleException(
-                        exception,
-                        getString(R.string.error_general),
-                        LoginActivity.class
-        ));
-      }
-    });
+    this.doInBackground(
+            // heavy task
+            authService::sendVerificationEmail,
+            // handler to be executed when task is done
+            () -> {
+              tvVerifyEmailLink.setText(getText(R.string.resend_verification_email));
+              showToast(getString(R.string.verification_email_sent));
+            },
+            // handler for custom exceptions
+            this::handleAuthException,
+            // type of possible custom exceptions
+            AuthException.class
+    );
   }
 
   /**
    * Displays a dialog that allows the user to request a password reset.
    *
-   * <p>The dialog contains an email input field and positive and negative
-   * action buttons. When the user confirms the request, the entered email
-   * address is passed to {@link #handleResetPassword(String)}.</p>
-   *
-   * <p>Selecting the negative action closes the dialog without performing
-   * any additional operation.</p>
-   *
    * @param v view that triggered the password reset action; its context
    *          is used when creating the dialog
    */
   private void handleResetPasswordLink(@NonNull View v) {
-    EditText resetMail = new EditText(v.getContext());
 
-    AlertDialog.Builder passwordResetDialog =
-            new AlertDialog.Builder(v.getContext());
+    EditText etPassword = new EditText(v.getContext());
 
-    passwordResetDialog.setTitle(
-            getString(R.string.password_reset_dialog_title)
+    int margin = getResources().getDimensionPixelSize(R.dimen.dialog_input_margin);
+    int minHeight = getResources().getDimensionPixelSize(R.dimen.dialog_input_min_height);
+
+    // Background
+    etPassword.setBackgroundResource(R.drawable.bg_input_field);
+    // Text color
+    etPassword.setTextColor(ContextCompat.getColor(v.getContext(), R.color.black));
+    // Hint text color
+    etPassword.setHintTextColor(ContextCompat.getColor(v.getContext(), R.color.gray));
+    // Minimum height: 48dp
+    etPassword.setMinHeight(minHeight);
+    // Password input
+    etPassword.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
+    etPassword.setHint(getString(R.string.password));
+    // Container gives the EditText a 8dp margin around it
+    FrameLayout container = new FrameLayout(v.getContext());
+    // Layout parameters
+    FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT
     );
 
-    passwordResetDialog.setMessage(
-            getString(R.string.password_reset_dialog_message)
-    );
+    // setting container padding and layout parameters
+    container.setPadding(margin, margin, margin, margin);
+    container.addView(etPassword, params);
 
-    passwordResetDialog.setView(resetMail);
+    // creating the dialog
+    MaterialAlertDialogBuilder dialog =
+            new MaterialAlertDialogBuilder(this, R.style.CustomAlertDialogTheme);
 
-    passwordResetDialog.setPositiveButton(
+    // setting dialog parameters
+    dialog.setTitle(getString(R.string.password_reset_dialog_title));
+    dialog.setMessage(getString(R.string.password_reset_dialog_message));
+    dialog.setView(container);
+    dialog.setPositiveButton(
             getString(R.string.password_reset_dialog_positive),
-            (dialog, which) ->
-                    this.handleResetPassword(
-                            resetMail.getText().toString().trim()
-                    )
-    );
-
-    passwordResetDialog.setNegativeButton(
-            getString(R.string.password_reset_dialog_negative),
-            (dialog, which) -> {
-              // Do nothing.
+            (d, which) -> {
+              String password = etPassword.getText().toString().trim();
+              this.handleResetPassword(password);
             }
     );
+    dialog.setNegativeButton(
+            getString(R.string.password_reset_dialog_negative),
+            (d, which) -> d.dismiss()
+    );
 
-    passwordResetDialog.show();
+    dialog.show();
   }
 
   /**
-   * Sends a password reset email to the supplied email address.
+   * Sends a password reset email asynchronously.
    *
-   * <p>The password reset operation is executed on a background thread
-   * using the authentication service. If the request succeeds, a
-   * confirmation message is displayed to the user on the main UI thread.</p>
+   * <p>On success, displays a confirmation message. Authentication errors are
+   * handled by {@link #handleAuthException(AuthException)}.</p>
    *
-   * <p>Authentication-related and unexpected exceptions are forwarded to
-   * the appropriate exception handlers.</p>
-   *
-   * @param email email address to which the password reset message
-   *              should be sent
+   * @param email the email address to send the reset link to
+   * @see #doInBackground(Runnable, Runnable, Consumer, Class) 
+   * @see #handleAuthException(AuthException) 
    */
   private void handleResetPassword(String email) {
-    this.doInBackground(() -> {
-      try {
-        authService.sendPasswordResetEmail(email);
-        runOnUiThread(() -> showToast(getString(R.string.password_reset_dialog_success)));
-      } catch (AuthException exception) {
-        runOnUiThread(() -> this.handleException(exception));
-
-      } catch (Exception exception) {
-        runOnUiThread(() -> this.handleException(
-                        exception,
-                        getString(R.string.error_general),
-                        LoginActivity.class
-        ));
-      }
-    });
+    this.doInBackground(
+            () -> authService.sendPasswordResetEmail(email),
+            () -> showToast(getString(R.string.password_reset_dialog_success)),
+            this::handleAuthException,
+            AuthException.class
+    );
   }
 
   /**
@@ -447,7 +414,7 @@ public class LoginActivity extends TemplateActivity {
    *
    * @throws ValidationException if the email or password field is empty
    */
-  private void validateForm() throws ValidationException {
+  private void handleValidation() throws ValidationException {
     if (email.isEmpty()) {throw new ValidationException(
               getString(R.string.email_required),
               R.id.etEmail

@@ -6,31 +6,8 @@
     android:id="@+id/activityLogin"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/activity_background"
     tools:context=".activities.LoginActivity">
-
-    <!-- Background image -->
-    <ImageView
-        android:id="@+id/backgroundImage"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:contentDescription="@null"
-        android:scaleType="centerCrop"
-        android:src="@drawable/activity_background_image"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <!-- Overlay -->
-    <View
-        android:id="@+id/backgroundOverlay"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@color/overlay_color"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
 
     <!-- Application title -->
     <TextView
@@ -60,7 +37,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/appTitle" />
 
-    <!-- Scrollable login form -->
+
     <Spinner
         android:id="@+id/localeSwitch"
         android:layout_width="wrap_content"
@@ -99,7 +76,7 @@
             android:gravity="center_vertical"
             android:orientation="vertical">
 
-            <!-- Email input -->
+
             <EditText
                 android:id="@+id/etEmail"
                 android:layout_width="match_parent"
@@ -115,7 +92,7 @@
                 android:textColorHint="@color/input_hint_color"
                 android:textSize="14sp" />
 
-            <!-- Password input -->
+
             <EditText
                 android:id="@+id/etPassword"
                 android:layout_width="match_parent"
@@ -131,7 +108,7 @@
                 android:textColorHint="@color/input_hint_color"
                 android:textSize="14sp" />
 
-            <!-- Login button -->
+
             <Button
                 android:id="@+id/btnLogin"
                 android:layout_width="match_parent"
@@ -146,7 +123,6 @@
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
-            <!-- Error message -->
             <TextView
                 android:id="@+id/tvErrorWrapper"
                 android:layout_width="match_parent"
@@ -157,7 +133,6 @@
                 android:textSize="14sp"
                 android:visibility="gone" />
 
-            <!-- Verify email link -->
             <TextView
                 android:id="@+id/tvVerifyEmailLink"
                 android:layout_width="match_parent"
@@ -172,7 +147,6 @@
                 android:visibility="gone"
                 android:textSize="14sp" />
 
-            <!-- Reset password link -->
             <TextView
                 android:id="@+id/tvPasswordResetLink"
                 android:layout_width="match_parent"
@@ -186,7 +160,6 @@
                 android:textColor="@color/link_color"
                 android:textSize="14sp" />
 
-            <!-- Register link -->
             <TextView
                 android:id="@+id/tvRegisterLink"
                 android:layout_width="match_parent"
@@ -208,5 +181,18 @@
         </LinearLayout>
 
     </ScrollView>
+
+    <View
+        android:id="@+id/blocker"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@android:color/transparent"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
