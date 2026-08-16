@@ -41,12 +41,13 @@ public class AuthService {
   }
 
   /**
-   * Checks if user is signed in.
+   * Checks if user is signed in and verified.
    *
-   * @return {@code true} if the user is logged in, otherwise {@code false}
+   * @return {@code true} if the user is logged in and verified, otherwise {@code false}
    * */
   public boolean isSignedIn() {
-    return firebaseAuth.getCurrentUser() != null;
+    FirebaseUser user = firebaseAuth.getCurrentUser();
+    return user != null && user.isEmailVerified();
   }
 
   /**
@@ -315,12 +316,11 @@ public class AuthService {
    *
    * @param email    the registered email address of the user
    * @param password the password for the account
-   * @return the unique Firebase UserProfile ID (UID) assigned to the authenticated account
    * @throws AuthException if sign-in fails due to Firebase errors (e.g., wrong password),
    *                       thread interruption, if the server returns an empty profile,
    *                       or if the user's email address is not verified
    */
-  public String signIn(String email, String password) throws AuthException {
+  public void signIn(String email, String password) throws AuthException {
     try {
       AuthResult result = Tasks.await(firebaseAuth.signInWithEmailAndPassword(email, password));
       FirebaseUser firebaseUser = result.getUser();
@@ -333,8 +333,6 @@ public class AuthService {
       if (!firebaseUser.isEmailVerified()) {
         throw new AuthException("ERROR_EMAIL_NOT_VERIFIED", "The email address for this account has not been verified.");
       }
-
-      return firebaseUser.getUid();
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
 
