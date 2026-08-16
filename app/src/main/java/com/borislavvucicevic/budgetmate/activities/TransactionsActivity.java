@@ -46,7 +46,7 @@ import java.util.stream.IntStream;
  * end of the currently loaded data.</p>
  *
  * <p>The activity supports creating and editing transactions through
- * {@link TransactionsUpsert}, deleting existing transactions after user
+ * {@link TransactionsUpsertActivity}, deleting existing transactions after user
  * confirmation, and preserving pagination information through
  * {@link CacheService}.</p>
  *
@@ -61,12 +61,12 @@ import java.util.stream.IntStream;
  * @see Transaction
  * @see TransactionCardAdapter
  * @see TransactionPage
- * @see TransactionsUpsert
+ * @see TransactionsUpsertActivity
  * @see CacheService
  */
 public class TransactionsActivity extends TemplateActivity {
   /**
-   * Activity result launcher used to open {@link TransactionsUpsert} and
+   * Activity result launcher used to open {@link TransactionsUpsertActivity} and
    * receive the transaction that was created or updated.
    *
    * <p>The returned result is processed by {@link #handleUpsertResult(ActivityResult)}.</p>
@@ -278,7 +278,7 @@ public class TransactionsActivity extends TemplateActivity {
    * the currently displayed list.</p>
    */
   private void openTransactionsUpsertActivity() {
-    Intent intent = new Intent(TransactionsActivity.this, TransactionsUpsert.class);
+    Intent intent = new Intent(TransactionsActivity.this, TransactionsUpsertActivity.class);
     transactionUpsertLauncher.launch(intent);
   }
 
@@ -299,7 +299,7 @@ public class TransactionsActivity extends TemplateActivity {
    * <p>Temporary cache values used by the upsert operation are cleared after
    * the result has been processed.</p>
    *
-   * @param result result returned by {@link TransactionsUpsert}
+   * @param result result returned by {@link TransactionsUpsertActivity}
    */
   @UiThread
   private void handleUpsertResult(@NonNull ActivityResult result) {

@@ -1,7 +1,6 @@
 package com.borislavvucicevic.budgetmate.adapters;
 
 import android.content.Context;
-import android.icu.text.SimpleDateFormat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,9 +20,14 @@ import com.borislavvucicevic.budgetmate.models.Transaction;
 import com.borislavvucicevic.budgetmate.models.UserProfile;
 import com.borislavvucicevic.budgetmate.services.CacheService;
 import com.google.android.material.card.MaterialCardView;
+import com.google.firebase.Timestamp;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Locale;
 
 /**
  * A {@link RecyclerView.Adapter} responsible for displaying a list of
@@ -44,7 +48,7 @@ import java.util.List;
  *
  * <p>The adapter also provides callback mechanisms for deleting and editing
  * transactions. Delete operations are delegated through
- * {@link DeleteTransactionHandler}, while edit operations store the selected
+ * DeleteTransactionHandler, while edit operations store the selected
  * transaction in {@link CacheService} before invoking the supplied activity
  * navigation callback.</p>
  *
@@ -54,25 +58,6 @@ import java.util.List;
  * @see CacheService
  */
 public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCardAdapter.ViewHolder> {
-
-  /**
-   * Functional callback interface used to request deletion of a transaction.
-   *
-   * <p>The adapter itself does not perform the database deletion. Instead,
-   * it forwards the selected transaction identifier to the component that
-   * supplied the handler.</p>
-   */
-  @FunctionalInterface
-  public interface DeleteTransactionHandler {
-
-    /**
-     * Called when the user requests deletion of a transaction.
-     *
-     * @param id unique identifier of the transaction to delete
-     */
-    void onDelete(@NonNull String id);
-  }
-
   /** Context used to inflate layouts and access application resources. */
   private final Context context;
 
@@ -83,7 +68,7 @@ public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCard
    * Callback invoked when the user selects the delete action on a transaction
    * card.
    */
-  private final DeleteTransactionHandler deleteTransactionHandler;
+  private final Runnable deleteTransactionHandler;
 
   /**
    * Callback used to open the transaction creation/update activity after the
@@ -107,12 +92,12 @@ public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCard
    */
   public TransactionCardAdapter(
           Context context,
-          List<Transaction> transactions,
-          DeleteTransactionHandler deleteTransactionHandler,
+          ArrayList<Transaction> transactions,
+          Runnable deleteTransactionHandler,
           Runnable openTransactionsUpsertActivity
   ) {
     this.context = context;
-    this.transactions = new ArrayList<>(transactions);
+    this.transactions = transactions;
     this.deleteTransactionHandler = deleteTransactionHandler;
     this.openTransactionsUpsertActivity = openTransactionsUpsertActivity;
   }
@@ -144,7 +129,7 @@ public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCard
    * {@link ViewHolder}.
    *
    * <p>The transaction details are displayed through
-   * {@link ViewHolder#setDetails(Transaction, int)}. Delete and edit actions
+   * {@link ViewHolder#setDetails(Transaction)}. Delete and edit actions
    * are also bound to the corresponding buttons for the selected
    * transaction.</p>
    *
@@ -157,7 +142,7 @@ public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCard
           int position
   ) {
     Transaction transaction = transactions.get(position);
-    holder.setDetails(transaction, position);
+    holder.setDetails(transaction);
     holder.bindDeleteTransactionMethod(deleteTransactionHandler, transaction.getID());
     holder.bindOpenTransactionUpsertActivityMethod(openTransactionsUpsertActivity, transaction);
   }
@@ -184,7 +169,7 @@ public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCard
    */
   public static class ViewHolder extends RecyclerView.ViewHolder {
 
-    /** Context used to access strings, colours, and other resources. */
+    /** Context used to access strings, colors, and other resources. */
     private final Context context;
 
 
@@ -271,7 +256,7 @@ public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCard
      * card.</p>
      *
      * <p>The amount is prefixed with a plus sign for income or a minus sign
-     * for expenses. Its text colour is also changed according to the
+     * for expenses. Its text colur is also changed according to the
      * transaction type.</p>
      *
      * <p>Creation and modification timestamps are formatted using the
@@ -283,9 +268,8 @@ public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCard
      * available.</p>
      *
      * @param transaction the transaction whose details should be displayed
-     * @param position the transaction's position in the RecyclerView
      */
-    private void setDetails(Transaction transaction, int position) {
+    private void setDetails(Transaction transaction) {
       // Getting the user profile from the cache.
       UserProfile userProfile = CacheService.read(CacheKey.USER_PROFILE, UserProfile.class);
 
@@ -295,8 +279,6 @@ public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCard
       }
 
       // Formatter used for creation and modification dates.
-      SimpleDateFormat dateTimeFormatter =
-              new SimpleDateFormat("dd.MM.yyyy hh:mm:ss");
 
       // Parsing values.
       String id = transaction.getID();
@@ -308,14 +290,14 @@ public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCard
 
       String amount =
               (transaction.getType() == TransactionType.INCOME ? "+" : "-")
-                      + String.format("%.2f", transaction.getAmount())
+                      + String.format(Locale.US, "%.2f", transaction.getAmount())
                       + " "
                       + CurrencyCode.parse(userProfile.getHomeCurrency());
 
       String categoryAndType =
               transaction.getCategory().getName() + " – " + type;
 
-      // Selecting the amount colour based on the transaction type.
+      // Selecting the amount color based on the transaction type.
       int amountTextColor =
               transaction.getType() == TransactionType.EXPENSE
                       ? context.getColor(R.color.red)
@@ -325,23 +307,21 @@ public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCard
       tvTransactionId.setText(id);
       tvTransactionCategoryAndType.setText(categoryAndType);
       tvTransactionAmount.setText(amount);
-      tvTransactionCreatedOn.setText(
-              dateTimeFormatter.format(
-                      transaction.getCreatedOn().toDate()
-              ).replace(" ", "\n")
-      );
+      tvTransactionCreatedOn.setText(this.formatTimestamp(
+              transaction.getCreatedOn()
+      ));
 
       tvTransactionAmount.setTextColor(amountTextColor);
 
       // Displaying modification information when available.
       if (transaction.getModifiedOn() != null) {
-        tvTransactionModifiedOn.setText(
-                dateTimeFormatter.format(
-                        transaction.getModifiedOn().toDate()
-                ).replace(" ", "\n")
-        );
+        tvTransactionModifiedOn.setText(this.formatTimestamp(
+                transaction.getModifiedOn()
+        ));
 
         layoutModifiedOn.setVisibility(View.VISIBLE);
+      } else {
+        layoutModifiedOn.setVisibility(View.GONE);
       }
 
       // Displaying transaction notes when available.
@@ -354,18 +334,38 @@ public class TransactionCardAdapter extends RecyclerView.Adapter<TransactionCard
     }
 
     /**
+     * Formats a timestamp to a local date string using pattern dd.MM.yyyy.
+     *
+     * @param timestamp a timestamp to be formatted.
+     * @return a string representing given timestamp as a local date in format dd.MM.yyyy.
+     * */
+    @NonNull
+    private String formatTimestamp(@NonNull Timestamp timestamp) {
+      DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+      Instant instant = Instant.ofEpochSecond(timestamp.getSeconds(), timestamp.getNanoseconds());
+
+      // Convert to LocalDateTime using the device's current timezone
+      LocalDateTime localDateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault());
+
+      return localDateTime.format(dateTimeFormatter);
+    }
+
+    /**
      * Binds the delete button to the supplied transaction deletion handler.
      *
      * <p>When the delete button is clicked, the transaction identifier is
-     * forwarded to {@link DeleteTransactionHandler#onDelete(String)}. The
+     * forwarded to  DeleteTransactionHandler#onDelete(String). The
      * actual deletion operation is therefore handled outside the adapter.</p>
      *
      * @param deleteTransactionHandler callback responsible for handling the
      *                                 transaction deletion request
      * @param ID unique identifier of the transaction represented by this card
      */
-    private void bindDeleteTransactionMethod(DeleteTransactionHandler deleteTransactionHandler, String ID) {
-      btnDeleteTransaction.setOnClickListener((v) -> deleteTransactionHandler.onDelete(ID));
+    private void bindDeleteTransactionMethod(Runnable deleteTransactionHandler, String ID) {
+      btnDeleteTransaction.setOnClickListener((v) -> {
+        CacheService.store(CacheKey.TRANSACTION_TO_DELETE_ID, ID);
+        deleteTransactionHandler.run();
+      });
     }
 
     /**

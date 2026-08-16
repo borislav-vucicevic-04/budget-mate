@@ -7,9 +7,8 @@
     android:layout_height="match_parent"
     android:background="@drawable/activity_background"
     android:backgroundTint="@null"
-    tools:context=".activities.TransactionsUpsert">
+    tools:context=".activities.TransactionsUpsertActivity">
 
-    <!-- Application title -->
     <TextView
         android:id="@+id/appTitle"
         android:layout_width="wrap_content"
@@ -23,7 +22,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Activity title -->
     <TextView
         android:id="@+id/activityTitle"
         android:layout_width="wrap_content"
@@ -37,7 +35,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/appTitle" />
 
-    <!-- Scrollable login form -->
     <Spinner
         android:id="@+id/localeSwitch"
         android:layout_width="wrap_content"
@@ -76,7 +73,6 @@
             android:gravity="center_vertical"
             android:orientation="vertical">
 
-            <!-- 1. Amount Field -->
             <EditText
                 android:id="@+id/etAmount"
                 android:layout_width="match_parent"
@@ -101,7 +97,6 @@
                 android:paddingEnd="12dp"
                 android:spinnerMode="dialog" />
 
-           <!-- 2. Category Field (Searchable Spinner/Dropdown) -->
             <AutoCompleteTextView
                 android:id="@+id/etCategory"
                 android:layout_width="match_parent"
@@ -116,7 +111,6 @@
                 android:completionThreshold="1"
                 android:inputType="textCapWords" />
 
-            <!-- 3. Notes Field -->
             <EditText
                 android:id="@+id/etNotes"
                 android:layout_width="match_parent"
@@ -132,7 +126,6 @@
                 android:inputType="textMultiLine"
                 android:lines="8" />
 
-            <!-- Create new transaction button -->
             <Button
                 android:id="@+id/btnUpsertTransaction"
                 android:layout_width="match_parent"
@@ -147,7 +140,6 @@
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
-            <!-- Error message -->
             <TextView
                 android:id="@+id/tvErrorWrapper"
                 android:layout_width="match_parent"
@@ -169,5 +161,18 @@
         </LinearLayout>
 
     </ScrollView>
+
+    <View
+        android:id="@+id/blocker"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@android:color/transparent"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
