@@ -161,4 +161,5 @@
     <string name="delete_account_dialog_yes">Eliminar</string>
     <string name="delete_account_dialog_no">Cancelar</string>
     <string name="deleting_account">Tu cuenta está siendo eliminada...</string>
+    <string name="month">Mes</string>
 </resources>

@@ -158,4 +158,5 @@
     <string name="delete_account_dialog_yes">Obriši</string>
     <string name="delete_account_dialog_no">Odustani</string>
     <string name="deleting_account">Vaš nalog se briše...</string>
+    <string name="month">Mesec</string>
 </resources>

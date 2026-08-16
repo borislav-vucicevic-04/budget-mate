@@ -9,7 +9,7 @@
       </colgroup>
       <thead>
         <tr>
-          <th>Month</th>
+          <th>[month text]</th>
           <th class="income">[income text]</th>
           <th class="expense">[expense text]</th>
         </tr>

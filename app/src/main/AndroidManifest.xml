@@ -39,7 +39,7 @@
             android:theme="@style/Theme.BudgetMate"
             android:windowSoftInputMode="adjustResize" />
         <activity
-            android:name=".activities.TransactionsUpsert"
+            android:name=".activities.TransactionsUpsertActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
         <activity
