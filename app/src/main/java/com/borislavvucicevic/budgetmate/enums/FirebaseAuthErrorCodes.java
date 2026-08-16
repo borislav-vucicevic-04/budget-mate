@@ -1,5 +1,7 @@
 package com.borislavvucicevic.budgetmate.enums;
 
+import androidx.annotation.NonNull;
+
 import java.util.Arrays;
 
 /**
@@ -36,26 +38,30 @@ public enum FirebaseAuthErrorCodes {
   /**
    * Indicates that user sent too many requests
    * */
-  ERROR_TOO_MANY_REQUESTS;
+  ERROR_TOO_MANY_REQUESTS,
+
+  /**
+   * Indicates that there is no specific constant for this error code.
+   * */
+  NOT_SPECIFIED;
+
   /**
    * Parses a raw string value into its corresponding enum constant.
    *
-   * <p>This method strips leading/trailing whitespace and performs a case-insensitive
-   * match against existing enum names.</p>
-   *
-   * @param value the raw error code string to evaluate, may be {@code null}
-   * @return the matching {@code FirebaseAuthErrorCodes} constant, or {@code null} if the
+   * @param value the raw error code string to evaluate.
+   * @return the matching {@code FirebaseAuthErrorCodes} constant, or {@code NOT_SPECIFIED} if the
    *         input is {@code null} or does not match any known error code
    */
+  @NonNull
   public static FirebaseAuthErrorCodes parse(String value) {
     if (value == null) {
-      return null;
+      return NOT_SPECIFIED;
     }
 
     String normalized = value.trim();
     return Arrays.stream(FirebaseAuthErrorCodes.values())
             .filter(status -> status.name().equalsIgnoreCase(normalized))
             .findFirst()
-            .orElse(null);
+            .orElse(NOT_SPECIFIED);
   }
 }
