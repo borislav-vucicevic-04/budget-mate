@@ -50,8 +50,7 @@ public enum CacheKey {
   TRANSACTION_UPSERT_OBJECT,
 
   /**
-   * Key used to store the position of a transaction within the displayed
-   * transaction list.
-   */
-  POSITION_IN_VIEW
+   * Key used to store the ID of a transaction user wants to delete.
+   * */
+  TRANSACTION_TO_DELETE_ID
 }
